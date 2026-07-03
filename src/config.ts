@@ -54,6 +54,7 @@ export const DEFAULT_FLOAT_RULES: Array<FloatRule> = [
     { class: 'git-credential-manager' },
     { class: 'xwaylandvideobridge' },
     { class: 'net.sapples.LiveCaptions' },
+    { class: 'io.github.bugaevc.wl-clipboard' },
 ] as const;
 
 export class Config {
