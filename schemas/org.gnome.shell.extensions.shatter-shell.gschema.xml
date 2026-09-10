@@ -28,11 +28,6 @@
             <summary>Gap surrounding tiled windows, in pixels</summary>
         </key>
 
-        <key type="b" name="show-skip-taskbar">
-            <default>true</default>
-            <summary>Handle minimized to tray windows</summary>
-        </key>
-
         <key type="b" name="mouse-cursor-follows-active-window">
             <default>false</default>
             <summary>Move cursor to active window when navigating with keyboard shortcuts or touchpad gestures</summary>

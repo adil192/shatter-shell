@@ -60,14 +60,6 @@ const {
 } = Main;
 import type { Misc } from '@girs/gnome-shell';
 import { ScreenShield } from 'resource:///org/gnome/shell/ui/screenShield.js';
-import {
-    // AppSwitcher,
-    // AppIcon,
-    WindowSwitcherPopup,
-} from 'resource:///org/gnome/shell/ui/altTab.js';
-// import { SwitcherList } from 'resource:///org/gnome/shell/ui/switcherPopup.js';
-import { Workspace } from 'resource:///org/gnome/shell/ui/workspace.js';
-import { WorkspaceThumbnail } from 'resource:///org/gnome/shell/ui/workspaceThumbnail.js';
 import Tags from './tags.js';
 import { get_current_path } from './paths.js';
 import { clampRect, fmtRect } from './rectangle.js';
@@ -1882,12 +1874,6 @@ export class Ext extends Ecs.System<ExtEvent> {
                     this.on_smart_gap();
                     this.show_border_on_focused();
                     break;
-                case 'show-skip-taskbar':
-                    if (this.settings.show_skiptaskbar()) {
-                        _show_skip_taskbar_windows(this);
-                    } else {
-                        _hide_skip_taskbar_windows();
-                    }
             }
         });
 
@@ -2623,12 +2609,6 @@ export default class ShatterShellExtension extends Extension {
             });
         }
 
-        if (ext.settings.show_skiptaskbar()) {
-            _show_skip_taskbar_windows(ext);
-        } else {
-            _hide_skip_taskbar_windows();
-        }
-
         if (ext.was_locked) {
             ext.was_locked = false;
             return;
@@ -2677,8 +2657,6 @@ export default class ShatterShellExtension extends Extension {
                 ext.auto_tiler.destroy(ext);
                 ext.auto_tiler = null;
             }
-
-            _hide_skip_taskbar_windows();
         }
 
         if (indicator) {
@@ -2756,134 +2734,4 @@ function* iter_workspaces(manager: Meta.WorkspaceManager): IterableIterator<[num
         idx += 1;
         ws = manager.get_workspace_by_index(idx);
     }
-}
-
-let default_isoverviewwindow_ws: typeof Workspace.prototype._isOverviewWindow | null;
-let default_isoverviewwindow_ws_thumbnail: typeof WorkspaceThumbnail.prototype._isOverviewWindow | null;
-let default_getwindowlist_windowswitcher: typeof WindowSwitcherPopup.prototype._getWindowList | null;
-
-/**
- * Decorates the default gnome-shell workspace/overview handling
- * of skip_task_bar. And have those window types included in shatter-shell.
- * Should only be called on extension#enable()
- *
- * NOTE to future maintainer:
- * Skip taskbar has been left out by upstream for a reason. And the
- * Shell.WindowTracker seems to skip handling skip taskbar windows, so they are
- * null or undefined. GNOME 40+ and lower version checking should be done to
- * constantly support having them within shatter-shell.
- *
- * Known skip taskbars ddterm, conky, guake, minimized to tray apps, etc.
- *
- * While minimize to tray are the target for this feature,
- * skip taskbars that float/and avail workspace all
- * need to added to config.ts as default floating
- *
- */
-function _show_skip_taskbar_windows(ext: Ext) {
-    // Handle the overview
-    if (!default_isoverviewwindow_ws) {
-        default_isoverviewwindow_ws = Workspace.prototype._isOverviewWindow;
-        Workspace.prototype._isOverviewWindow = function (win: Meta.Window) {
-            return is_valid_minimize_to_tray(win, ext) || default_isoverviewwindow_ws!(win);
-        };
-    }
-
-    // Handle the workspace thumbnail
-    if (!default_isoverviewwindow_ws_thumbnail) {
-        default_isoverviewwindow_ws_thumbnail = WorkspaceThumbnail.prototype._isOverviewWindow;
-        WorkspaceThumbnail.prototype._isOverviewWindow = function (win) {
-            const meta_win = win.get_meta_window();
-            return is_valid_minimize_to_tray(meta_win, ext) || default_isoverviewwindow_ws_thumbnail!(win);
-        };
-    }
-
-    // Handle switch-windows
-    if (!default_getwindowlist_windowswitcher) {
-        default_getwindowlist_windowswitcher = WindowSwitcherPopup.prototype._getWindowList;
-        const settings = new Gio.Settings({ schema_id: 'org.gnome.shell.app-switcher' });
-        WindowSwitcherPopup.prototype._getWindowList = function () {
-            let workspace = null;
-            if (settings.get_boolean('current-workspace-only')) {
-                const workspaceManager = global.workspace_manager;
-                workspace = workspaceManager.get_active_workspace();
-            }
-
-            const windows = global.display.get_tab_list(Meta.TabList.NORMAL_ALL, workspace);
-            return windows
-                .map((w) => {
-                    const meta_win = w.is_attached_dialog() ? w.get_transient_for() : w;
-                    if (meta_win) {
-                        if (!meta_win.skip_taskbar || is_valid_minimize_to_tray(meta_win, ext)) {
-                            return meta_win;
-                        }
-                    }
-                    return null;
-                })
-                .filter((window) => window != null)
-                .filter((window, i, windows) => /* deduplicate */ windows.indexOf(window) == i);
-        };
-    }
-}
-
-/**
- * This is the cleanup/restore of the decorator for skip_taskbar when shatter-shell
- * is disabled.
- * Should only be called on extension#disable()
- *
- * Default functions should be checked if they exist,
- * especially when skip taskbar setting was left on during an update
- *
- */
-function _hide_skip_taskbar_windows() {
-    if (default_isoverviewwindow_ws) {
-        Workspace.prototype._isOverviewWindow = default_isoverviewwindow_ws;
-        default_isoverviewwindow_ws = null;
-    }
-
-    if (default_isoverviewwindow_ws_thumbnail) {
-        WorkspaceThumbnail.prototype._isOverviewWindow = default_isoverviewwindow_ws_thumbnail;
-        default_isoverviewwindow_ws_thumbnail = null;
-    }
-
-    if (default_getwindowlist_windowswitcher) {
-        WindowSwitcherPopup.prototype._getWindowList = default_getwindowlist_windowswitcher;
-        default_getwindowlist_windowswitcher = null;
-    }
-}
-
-/**
- * Moved skip task bar checking on this function/method
- * Synchronized with ShellTracker type checks and watch out for attached dialogs
- *
- * Thanks to Bananaman and upstream gnome-shell devs for the information
- *
- * https://github.com/pop-os/shell/issues/1251
- */
-function is_valid_minimize_to_tray(meta_win: Meta.Window | null, ext: Ext): boolean {
-    if (!meta_win) return false;
-
-    const cfg = ext.conf;
-    let valid_min_to_tray = false;
-    switch (meta_win.window_type) {
-        case Meta.WindowType.NORMAL:
-        case Meta.WindowType.UTILITY: // Gimp (Non-Single Window Mode)
-            // Don't track OR (override redirect)-windows since those are never
-            // allowed to be window managed:
-            valid_min_to_tray = !meta_win.is_override_redirect();
-            break;
-    }
-
-    const gnome_shell_wm_class = meta_win.get_wm_class() === 'Gjs' || meta_win.get_wm_class() === 'Gnome-shell';
-    const show_skiptb = !cfg.skiptaskbar_shall_hide(meta_win);
-
-    valid_min_to_tray =
-        valid_min_to_tray &&
-        !meta_win.is_attached_dialog() &&
-        show_skiptb &&
-        meta_win.skip_taskbar &&
-        meta_win.get_wm_class() !== null &&
-        !gnome_shell_wm_class;
-
-    return valid_min_to_tray;
 }

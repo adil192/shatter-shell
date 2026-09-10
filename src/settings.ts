@@ -52,7 +52,6 @@ const UNTILE_RESET_WINDOWS = 'untile-reset-windows';
 const HINT_COLOR_RGBA = 'hint-color-rgba';
 const DEFAULT_RGBA_COLOR = 'rgba(251, 184, 108, 1)'; //pop-orange
 const LOG_LEVEL = 'log-level';
-const SHOW_SKIPTASKBAR = 'show-skip-taskbar';
 const MOUSE_CURSOR_FOLLOWS_ACTIVE_WINDOW = 'mouse-cursor-follows-active-window';
 const MOUSE_CURSOR_FOCUS_LOCATION = 'mouse-cursor-focus-location';
 const MAX_WINDOW_WIDTH = 'max-window-width';
@@ -149,10 +148,6 @@ export class ExtensionSettings {
         return this.ext.get_uint(LOG_LEVEL);
     }
 
-    show_skiptaskbar(): boolean {
-        return this.ext.get_boolean(SHOW_SKIPTASKBAR);
-    }
-
     mouse_cursor_follows_active_window(): boolean {
         return this.ext.get_boolean(MOUSE_CURSOR_FOLLOWS_ACTIVE_WINDOW);
     }
@@ -231,10 +226,6 @@ export class ExtensionSettings {
 
     set_log_level(set: number) {
         this.ext.set_uint(LOG_LEVEL, set);
-    }
-
-    set_show_skiptaskbar(set: boolean) {
-        this.ext.set_boolean(SHOW_SKIPTASKBAR, set);
     }
 
     set_mouse_cursor_follows_active_window(set: boolean) {
