@@ -24,9 +24,9 @@ interface AppWidgets {
     untile_reset_windows: Gtk.Switch;
 }
 
-export default class PopShellPreferences extends ExtensionPreferences {
+export default class ShatterShellPreferences extends ExtensionPreferences {
     getPreferencesWidget() {
-        globalThis.popShellExtension = this;
+        globalThis.shatterShellExtension = this;
         const dialog = settings_dialog_new();
         dialog.show();
         log.debug(JSON.stringify(dialog));

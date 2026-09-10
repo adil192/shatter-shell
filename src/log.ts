@@ -8,13 +8,13 @@ export enum LOG_LEVELS {
 }
 
 /**
- * parse level at runtime so we don't have to restart popshell
+ * parse level at runtime so we don't have to restart shattershell
  */
 export function log_level(): LOG_LEVELS {
-    // log.js is at the level of prefs.js where the popshell Ext instance
+    // log.js is at the level of prefs.js where the shattershell Ext instance
     // is not yet available or visible, so we have to use the built in
     // ExtensionUtils to get the current settings
-    const settings = globalThis.popShellExtension?.getSettings();
+    const settings = globalThis.shatterShellExtension?.getSettings();
     const log_level = settings?.get_uint('log-level') ?? LOG_LEVELS.OFF;
     return log_level;
 }

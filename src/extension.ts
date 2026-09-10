@@ -2616,14 +2616,14 @@ let ext: Ext | null = null;
 let indicator: Indicator | null = null;
 
 declare global {
-    var popShellExtension: {
+    var shatterShellExtension: {
         getSettings(schema?: string): Gio.Settings;
     } | undefined;
 }
 
-export default class PopShellExtension extends Extension {
+export default class ShatterShellExtension extends Extension {
     enable() {
-        globalThis.popShellExtension = this;
+        globalThis.shatterShellExtension = this;
         log.info('enable');
 
         if (!ext) {
@@ -2672,7 +2672,7 @@ export default class PopShellExtension extends Extension {
                 return;
             }
 
-            delete globalThis.popShellExtension;
+            delete globalThis.shatterShellExtension;
             ext.injections_remove();
             ext.signals_remove();
             ext.exit_modes();
