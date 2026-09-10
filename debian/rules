@@ -4,7 +4,7 @@
 # Uncomment this to turn on verbose mode.
 #export DH_VERBOSE=1
 
-BASEDIR=debian/pop-shell/usr/share/gnome-shell/extensions/pop-shell@system76.com
+BASEDIR=debian/shatter-shell/usr/share/gnome-shell/extensions/shatter-shell@adilhanney.com
 
 %:
 	dh $@

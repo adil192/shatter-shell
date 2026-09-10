@@ -102,7 +102,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     // Widgets
 
     /** An overlay which shows a preview of where a window will be moved */
-    overlay: St.Viewport = new St.BoxLayout({ style_class: 'pop-shell-overlay', visible: false });
+    overlay: St.Viewport = new St.BoxLayout({ style_class: 'shatter-shell-overlay', visible: false });
 
     /** The application launcher, focus search, and calculator dialog */
     window_search: Launcher = new launcher.Launcher(this);
@@ -2616,14 +2616,14 @@ let ext: Ext | null = null;
 let indicator: Indicator | null = null;
 
 declare global {
-    var popShellExtension: {
+    var shatterShellExtension: {
         getSettings(schema?: string): Gio.Settings;
     } | undefined;
 }
 
-export default class PopShellExtension extends Extension {
+export default class ShatterShellExtension extends Extension {
     enable() {
-        globalThis.popShellExtension = this;
+        globalThis.shatterShellExtension = this;
         log.info('enable');
 
         if (!ext) {
@@ -2654,7 +2654,7 @@ export default class PopShellExtension extends Extension {
 
         if (!indicator) {
             indicator = new PanelSettings.Indicator(ext);
-            panel.addToStatusArea('pop-shell', indicator.button);
+            panel.addToStatusArea('shatter-shell', indicator.button);
         }
 
         ext.keybindings.enable(ext.keybindings.global).enable(ext.keybindings.window_focus);
@@ -2672,7 +2672,7 @@ export default class PopShellExtension extends Extension {
                 return;
             }
 
-            delete globalThis.popShellExtension;
+            delete globalThis.shatterShellExtension;
             ext.injections_remove();
             ext.signals_remove();
             ext.exit_modes();
@@ -2724,13 +2724,13 @@ function stylesheet_path(name: string) {
 
 // Supplements the loaded theme with the extension's theme.
 function load_theme(style: Style): string | null {
-    const pop_stylesheet = Number(style);
+    const shatter_stylesheet = Number(style);
     try {
         const theme_context = St.ThemeContext.get_for_stage(global.stage);
 
         const existing_theme: St.Theme | null = theme_context.get_theme();
 
-        const pop_stylesheet_path = STYLESHEET_PATHS[pop_stylesheet];
+        const shatter_stylesheet_path = STYLESHEET_PATHS[shatter_stylesheet];
 
         if (existing_theme) {
             /* Must unload stylesheets, or else the previously loaded
@@ -2741,18 +2741,18 @@ function load_theme(style: Style): string | null {
                 existing_theme.unload_stylesheet(s);
             }
 
-            // Merge theme update with pop shell styling
-            existing_theme.load_stylesheet(STYLESHEETS[pop_stylesheet]);
+            // Merge theme update with shatter shell styling
+            existing_theme.load_stylesheet(STYLESHEETS[shatter_stylesheet]);
 
             // Perform theme update
             theme_context.set_theme(existing_theme);
         } else {
-            // User does not have a theme loaded, so use pop styling + default
-            setThemeStylesheet(pop_stylesheet_path);
+            // User does not have a theme loaded, so use shatter styling + default
+            setThemeStylesheet(shatter_stylesheet_path);
             loadTheme();
         }
 
-        return pop_stylesheet_path;
+        return shatter_stylesheet_path;
     } catch (e) {
         log.error('failed to load stylesheet: ' + e);
         return null;
@@ -2775,14 +2775,14 @@ let default_getwindowlist_windowswitcher: typeof WindowSwitcherPopup.prototype._
 
 /**
  * Decorates the default gnome-shell workspace/overview handling
- * of skip_task_bar. And have those window types included in pop-shell.
+ * of skip_task_bar. And have those window types included in shatter-shell.
  * Should only be called on extension#enable()
  *
  * NOTE to future maintainer:
  * Skip taskbar has been left out by upstream for a reason. And the
  * Shell.WindowTracker seems to skip handling skip taskbar windows, so they are
  * null or undefined. GNOME 40+ and lower version checking should be done to
- * constantly support having them within pop-shell.
+ * constantly support having them within shatter-shell.
  *
  * Known skip taskbars ddterm, conky, guake, minimized to tray apps, etc.
  *
@@ -2838,7 +2838,7 @@ function _show_skip_taskbar_windows(ext: Ext) {
 }
 
 /**
- * This is the cleanup/restore of the decorator for skip_taskbar when pop-shell
+ * This is the cleanup/restore of the decorator for skip_taskbar when shatter-shell
  * is disabled.
  * Should only be called on extension#disable()
  *
