@@ -2724,13 +2724,13 @@ function stylesheet_path(name: string) {
 
 // Supplements the loaded theme with the extension's theme.
 function load_theme(style: Style): string | null {
-    const pop_stylesheet = Number(style);
+    const shatter_stylesheet = Number(style);
     try {
         const theme_context = St.ThemeContext.get_for_stage(global.stage);
 
         const existing_theme: St.Theme | null = theme_context.get_theme();
 
-        const pop_stylesheet_path = STYLESHEET_PATHS[pop_stylesheet];
+        const shatter_stylesheet_path = STYLESHEET_PATHS[shatter_stylesheet];
 
         if (existing_theme) {
             /* Must unload stylesheets, or else the previously loaded
@@ -2741,18 +2741,18 @@ function load_theme(style: Style): string | null {
                 existing_theme.unload_stylesheet(s);
             }
 
-            // Merge theme update with pop shell styling
-            existing_theme.load_stylesheet(STYLESHEETS[pop_stylesheet]);
+            // Merge theme update with shatter shell styling
+            existing_theme.load_stylesheet(STYLESHEETS[shatter_stylesheet]);
 
             // Perform theme update
             theme_context.set_theme(existing_theme);
         } else {
-            // User does not have a theme loaded, so use pop styling + default
-            setThemeStylesheet(pop_stylesheet_path);
+            // User does not have a theme loaded, so use shatter styling + default
+            setThemeStylesheet(shatter_stylesheet_path);
             loadTheme();
         }
 
-        return pop_stylesheet_path;
+        return shatter_stylesheet_path;
     } catch (e) {
         log.error('failed to load stylesheet: ' + e);
         return null;
