@@ -136,10 +136,6 @@ Shatter Shell provides an integrated launcher which interfaces directly with our
 
 Gaps improve the aesthetics of tiled windows and make it easier to grab the edge of a specific window. We've decided to add support for inner and outer gaps, and made these settings configurable in the extension's popup menu.
 
-### Hiding Window Title Bars
-
-Windows with server-side decorations may have their title bars completely hidden, resulting in additional screen real estate for your applications, and a visually cleaner environment. This feature can be toggled in the extension's popup menu. Windows can be moved with the mouse by holding `Super` when clicking and dragging a window to another location, or using the keyboard shortcuts native to shatter-shell. Windows may be closed by pressing `Super` + `Q`, and maximized with `Super` + `M`.
-
 ---
 
 ## Floating Mode

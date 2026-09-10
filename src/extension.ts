@@ -1651,14 +1651,6 @@ export class Ext extends Ecs.System<ExtEvent> {
         this.unset_grab_op();
     }
 
-    on_show_window_titles() {
-        const show_title = this.settings.show_title();
-
-        if (indicator) {
-            indicator.toggle_titles.setToggleState(show_title);
-        }
-    }
-
     on_smart_gap() {
         if (this.auto_tiler) {
             const smart_gaps = this.settings.smart_gaps();
@@ -1885,9 +1877,6 @@ export class Ext extends Ecs.System<ExtEvent> {
                     break;
                 case 'gap-outer':
                     this.on_gap_outer();
-                    break;
-                case 'show-title':
-                    this.on_show_window_titles();
                     break;
                 case 'smart-gaps':
                     this.on_smart_gap();

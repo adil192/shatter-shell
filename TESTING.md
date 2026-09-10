@@ -93,11 +93,6 @@ Tasks for a tester to verify when approving a patch. Use complex window layouts 
     - `pops` returns Popsicle first
     - `shop` returns the Pop!_Shop first
 
-### Window Titles
-
-- [ ] Disabling window titles using global (Shatter Shell) option works for Shell Shortcuts, LibreOffice, etc.
-- [ ] Disabling window titles in Firefox works (Check debian and flatpak packages)
-
 ### Floating Exceptions
 
 - [ ] Add a window to floating exceptions-- it should float immediately.

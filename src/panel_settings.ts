@@ -20,7 +20,6 @@ export class Indicator {
     button;
 
     toggle_tiled;
-    toggle_titles;
     toggle_active;
     border_radius;
 
@@ -72,9 +71,6 @@ export class Indicator {
         bm.addMenuItem(shortcuts(bm));
         bm.addMenuItem(settings_button(bm));
         bm.addMenuItem(menu_separator(''));
-
-        this.toggle_titles = show_title(ext);
-        bm.addMenuItem(this.toggle_titles);
 
         bm.addMenuItem(this.toggle_active);
         bm.addMenuItem(this.border_radius);
@@ -282,12 +278,6 @@ function parse_number(text: string): number {
     }
 
     return number;
-}
-
-function show_title(ext: Ext) {
-    return toggle(_('Show Window Titles'), ext.settings.show_title(), (toggle) => {
-        ext.settings.set_show_title(toggle.state);
-    });
 }
 
 function toggle(desc: string, active: boolean, connect: (toggle: PopupSwitchMenuItem, state: boolean) => void) {
