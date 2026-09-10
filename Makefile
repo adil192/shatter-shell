@@ -48,6 +48,7 @@ node_modules/.package-lock.json: package.json package-lock.json
 	npm ci
 
 enable:
+	gnome-extensions disable "pop-shell@system76.com"
 	gnome-extensions enable "shatter-shell@adilhanney.com"
 
 disable:
