@@ -41,7 +41,6 @@ const ACTIVE_HINT_BORDER_RADIUS = 'active-hint-border-radius';
 const STACKING_WITH_MOUSE = 'stacking-with-mouse';
 const COLUMN_SIZE = 'column-size';
 const EDGE_TILING = 'edge-tiling';
-const FULLSCREEN_LAUNCHER = 'fullscreen-launcher';
 const GAP_INNER = 'gap-inner';
 const GAP_OUTER = 'gap-outer';
 const ROW_SIZE = 'row-size';
@@ -82,10 +81,6 @@ export class ExtensionSettings {
 
     dynamic_workspaces(): boolean {
         return this.mutter ? this.mutter.get_boolean('dynamic-workspaces') : false;
-    }
-
-    fullscreen_launcher(): boolean {
-        return this.ext.get_boolean(FULLSCREEN_LAUNCHER);
     }
 
     gap_inner(): number {
@@ -180,10 +175,6 @@ export class ExtensionSettings {
 
     set_edge_tiling(enable: boolean) {
         this.mutter?.set_boolean(EDGE_TILING, enable);
-    }
-
-    set_fullscreen_launcher(enable: boolean) {
-        this.ext.set_boolean(FULLSCREEN_LAUNCHER, enable);
     }
 
     set_gap_inner(gap: number) {

@@ -3,7 +3,6 @@ import * as error from './error.js';
 import * as log from './log.js';
 
 import Gio from 'gi://Gio';
-import GLib from 'gi://GLib';
 import GObject from 'gi://GObject';
 const { Ok, Err } = result;
 const { Error } = error;
@@ -28,10 +27,6 @@ export function read_to_string(path: string): result.Result<string, error.Error>
     } catch (e) {
         return Err(new Error(String(e)).context(`failed to load contents of ${path}`));
     }
-}
-
-export function source_remove(id: SignalID): boolean {
-    return GLib.source_remove(id);
 }
 
 export function exists(path: string): boolean {
@@ -102,14 +97,7 @@ export function async_process(argv: Array<string>, input = null, cancellable: Gi
     });
 }
 
-export type AsyncIPC = {
-    child: Gio.Subprocess;
-    stdin: Gio.DataOutputStream;
-    stdout: Gio.DataInputStream;
-    cancellable: Gio.Cancellable;
-};
-
-export function async_process_ipc(argv: Array<string>): AsyncIPC | null {
+export function async_process_ipc(argv: Array<string>) {
     const { SubprocessLauncher, SubprocessFlags } = Gio;
 
     const launcher = new SubprocessLauncher({
@@ -158,18 +146,4 @@ export function map_eq<K, V>(map1: Map<K, V>, map2: Map<K, V>) {
     }
 
     return true;
-}
-
-export function os_release(): null | string {
-    const [ok, bytes] = GLib.file_get_contents('/etc/os-release');
-    if (!ok) return null;
-
-    const contents: string = imports.byteArray.toString(bytes);
-    for (const line of contents.split('\n')) {
-        if (line.startsWith('VERSION_ID')) {
-            return line.split('"')[1];
-        }
-    }
-
-    return null;
 }

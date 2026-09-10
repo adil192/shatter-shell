@@ -12,7 +12,6 @@ import * as PanelSettings from './panel_settings.js';
 import * as Settings from './settings.js';
 import * as Tiling from './tiling.js';
 import * as Window from './window.js';
-import * as launcher from './launcher.js';
 import * as auto_tiler from './auto_tiler.js';
 import * as node from './node.js';
 import * as utils from './utils.js';
@@ -26,7 +25,6 @@ import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';
 import type { Entity } from './ecs.js';
 import type { ExtEvent } from './events.js';
 import type { Indicator } from './panel_settings.js';
-import type { Launcher } from './launcher.js';
 
 import { Fork } from './fork.js';
 
@@ -94,9 +92,6 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     /** An overlay which shows a preview of where a window will be moved */
     overlay: St.Viewport = new St.BoxLayout({ style_class: 'shatter-shell-overlay', visible: false });
-
-    /** The application launcher, focus search, and calculator dialog */
-    window_search: Launcher = new launcher.Launcher(this);
 
     /** DBus */
     dbus: dbus_service.Service = new dbus_service.Service();
@@ -247,7 +242,6 @@ export class Ext extends Ecs.System<ExtEvent> {
         this.dbus.FocusDown = () => this.focus_down();
         this.dbus.FocusLeft = () => this.focus_left();
         this.dbus.FocusRight = () => this.focus_right();
-        this.dbus.Launcher = () => this.window_search.open(this);
 
         this.dbus.WindowFocus = (window: [number, number]) => {
             const target_window = this.windows.get(window);
@@ -255,7 +249,6 @@ export class Ext extends Ecs.System<ExtEvent> {
                 target_window.activate();
                 this.on_focused(target_window);
             }
-            this.window_search.close();
         };
 
         this.dbus.WindowList = () => {
@@ -271,7 +264,6 @@ export class Ext extends Ecs.System<ExtEvent> {
 
         this.dbus.WindowQuit = (win: [number, number]) => {
             this.windows.get(win)?.meta.delete(global.get_current_time());
-            this.window_search.close();
         };
     }
 
@@ -574,8 +566,6 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     exit_modes() {
         this.tiler.exit(this);
-        this.window_search.reset();
-        this.window_search.close();
         this.overlay.visible = false;
     }
 
@@ -2088,10 +2078,6 @@ export class Ext extends Ecs.System<ExtEvent> {
         this.workspace_by_id(id)?.activate(global.get_current_time());
     }
 
-    stop_launcher_services() {
-        this.window_search.stop_services(this);
-    }
-
     tab_list(tablist: number, workspace: Meta.Workspace | null): Array<Window.ShellWindow> {
         const windows = display.get_tab_list(tablist, workspace);
 
@@ -2643,9 +2629,7 @@ export default class ShatterShellExtension extends Extension {
             ext.injections_remove();
             ext.signals_remove();
             ext.exit_modes();
-            ext.stop_launcher_services();
             ext.hide_all_borders();
-            ext.window_search.remove_injections();
 
             layoutManager.removeChrome(ext.overlay);
 
