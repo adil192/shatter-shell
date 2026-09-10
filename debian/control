@@ -17,5 +17,5 @@ Depends:
 Replaces: gnome-control-center-data (<< 1:3.38.1-2ubuntu1pop1~)
 Replaces: pop-shell
 Breaks: gnome-control-center-data (<< 1:3.38.1-2ubuntu1pop1~)
-Break: pop-shell
+Breaks: pop-shell
 Description: Shatter Shell
