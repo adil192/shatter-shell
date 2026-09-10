@@ -1,7 +1,7 @@
 Source: shatter-shell
 Section: gnome
 Priority: optional
-Maintainer: System76 <info@system76.com>
+Maintainer: Adil Hanney <adilhanney@disroot.org>
 Build-Depends: debhelper-compat (=10), libglib2.0-bin, node-typescript
 Standards-Version: 3.9.8
 Homepage: https://github.com/adil192/shatter-shell

@@ -1,6 +1,6 @@
 # Retrieve the UUID from ``metadata.json``
 UUID = $(shell grep -E '^[ ]*"uuid":' ./metadata.json | sed 's@^[ ]*"uuid":[ ]*"\(.\+\)",[ ]*@\1@')
-VERSION = $(shell grep version tsconfig.json | awk -F\" '{print $$4}')
+VERSION_NAME = $(shell grep version-name metadata.json | awk -F\" '{print $$4}')
 
 ifeq ($(XDG_DATA_HOME),)
 XDG_DATA_HOME = $(HOME)/.local/share
@@ -21,7 +21,7 @@ SOURCES = src/*.ts src/color_dialog/src/*.ts src/floating_exceptions/src/*.ts *.
 all: compile
 
 clean:
-	rm -rf _build target .eslintcache tsconfig.tsbuildinfo
+	rm -rf _build target .eslintcache tsconfig.tsbuildinfo $(UUID)_*.zip
 
 # Configure local settings on system
 configure:
@@ -38,10 +38,10 @@ node_modules/.package-lock.json: package.json package-lock.json
 
 enable:
 	-gnome-extensions disable "pop-shell@system76.com"
-	gnome-extensions enable "shatter-shell@adilhanney.com"
+	gnome-extensions enable "$(UUID)"
 
 disable:
-	gnome-extensions disable "shatter-shell@adilhanney.com"
+	gnome-extensions disable "$(UUID)"
 
 nested:
 	@if [ "$$(gnome-shell --version | awk '{print int($$3)}')" -ge 49 ]; then \
@@ -71,8 +71,8 @@ update-repository:
 	git reset --hard origin/master
 	git clean -fd
 
-zip-file: $(UUID)_$(VERSION).zip
-$(UUID)_$(VERSION).zip: compile
-	cd _build && zip -qr "../$(UUID)_$(VERSION).zip" .
+zip-file: $(UUID)_$(VERSION_NAME).zip
+$(UUID)_$(VERSION_NAME).zip: compile
+	cd _build && zip -qr "../$(UUID)_$(VERSION_NAME).zip" .
 
 .NOTPARALLEL: debug local-install

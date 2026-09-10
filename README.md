@@ -6,37 +6,15 @@ Tiling window management in GNOME is virtually nonexistent, which makes the desk
 
 Therefore, we see an opportunity here to advance the usability of the GNOME desktop to better accommodate the needs of our community with Shatter Shell. Advanced tiling window management is a must for the desktop, so we've merged i3-like tiling window management with the GNOME desktop for the best of both worlds.
 
-[![](./screenshot.webp)](https://raw.githubusercontent.com/adil192/shatter-shell/master/screenshot.webp)
+[![](./screenshot.webp)](https://raw.githubusercontent.com/adil192/shatter-shell/refs/heads/master_resolute/screenshot.webp)
 
 ## Fork notice
 
 This is a fork of the original [pop-os/shell](https://github.com/pop-os/shell) repo.
 
-I'm working on this just for fun: there isn't much interesting here from a user perspective.
+I'm working on this just for fun: there isn't too much interesting here from a user perspective.
 
-Summary of my changes:
-- Features:
-  - Added GNOME 51 support.
-  - Added a setting to stop Shatter Shell from resetting your windows' positions when untiling.
-  - Adwaita-themed tab bar for stacked windows: the tabs are bigger and easier to click.
-  - Added a fade transition when switching between stacked windows.
-- Fixes:
-  - Fixed some tiling jank with a fixed [`area_right` function](https://github.com/adil192/shatter-shell/blob/63f0fa4df67182119b2c54b2377f1290e2ec2063/src/fork.ts#L77).
-    This can possibly be upstreamed but needs benchmarking to see if it's actually an improvement or just placebo.
-  - Fixed brief flickers in active hints when tiling/untiling/moving windows.
-- Floating window exceptions:
-  - New: Steam sign-in dialog
-  - New: Firefox Picture-in-Picture windows
-  - New: Git Credential Manager login popups
-  - New: Firefox "About" dialog
-  - Fixed: Floating Window Exceptions config window
-- Development:
-  - Replaced manual `.d.ts` bindings with [gjsify/gnome-shell](https://github.com/gjsify/gnome-shell).
-  - Updated to [Typescript 7](https://devblogs.microsoft.com/typescript/announcing-typescript-7-0/) for 10x faster builds and type checking.
-  - Enabled eslint for code style and reducing dynamic types.
-  - Removed legacy code for X11 and old GNOME versions (3.x). This is now Wayland only, just like GNOME.
-  - Rebranded from Pop Shell to Shatter Shell.
-  - Added some basic CI to make sure code at least compiles.
+Find a summary of this fork's changes in [CHANGELOG.md](https://github.com/adil192/shatter-shell/blob/master_resolute/CHANGELOG.md).
 
 ## Installation
 
