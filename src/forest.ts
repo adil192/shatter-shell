@@ -244,13 +244,13 @@ export class Forest extends Ecs.World {
 
             return fork.is_horizontal()
                 ? [
-                    new Mtk.Rectangle({ y, height, width: width / 2, x: x }),
-                    new Mtk.Rectangle({ y, height, width: width / 2, x: x + width / 2 }),
-                ]
+                        new Mtk.Rectangle({ y, height, width: width / 2, x: x }),
+                        new Mtk.Rectangle({ y, height, width: width / 2, x: x + width / 2 }),
+                    ]
                 : [
-                    new Mtk.Rectangle({ x, width, height: height / 2, y: y }),
-                    new Mtk.Rectangle({ x, width, height: height / 2, y: y + height / 2 }),
-                ];
+                        new Mtk.Rectangle({ x, width, height: height / 2, y: y }),
+                        new Mtk.Rectangle({ x, width, height: height / 2, y: y + height / 2 }),
+                    ];
         }
 
         /** Create a fork and place this new fork on the left branch */
@@ -458,7 +458,7 @@ export class Forest extends Ecs.World {
         }
 
         if (stack_detach) {
-            ext.windows.with(window, (w) => (w.stack = null));
+            ext.windows.with(window, w => (w.stack = null));
         }
 
         this.on_detach(window);
@@ -544,7 +544,7 @@ export class Forest extends Ecs.World {
     }
 
     /** Walks the tree starting at a given fork entity, and filtering by node kind. */
-    *iter(entity: Entity, kind: Node.NodeKind | null = null): IterableIterator<Node.Node> {
+    * iter(entity: Entity, kind: Node.NodeKind | null = null): IterableIterator<Node.Node> {
         let fork = this.forks.get(entity);
         const forks = new Array(2);
 
@@ -891,8 +891,9 @@ export class Forest extends Ecs.World {
                 return fork ? this.display_fork(ext, branch.inner.entity, fork, scope + 1) : 'Missing Fork';
             case 2:
                 const window = ext.windows.get(branch.inner.entity);
-                return `Window(${branch.inner.entity}) (${window ? fmtRect(window.rect()) : 'unknown area'
-                    }; parent: ${ext.auto_tiler?.attached.get(branch.inner.entity)})`;
+                const area = window ? fmtRect(window.rect()) : 'unknown area';
+                const parent = ext.auto_tiler?.attached.get(branch.inner.entity);
+                return `Window(${branch.inner.entity}) (${area}; parent: ${parent})`;
             case 3:
                 let fmt = 'Stack(';
 

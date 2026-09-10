@@ -38,7 +38,7 @@ export class Storage<T> {
     }
 
     /// Private method for iterating across allocated slots
-    *_iter(): IterableIterator<[number, [number, T]]> {
+    * _iter(): IterableIterator<[number, [number, T]]> {
         let idx = 0;
         for (const slot of this.store) {
             if (slot) yield [idx, slot];
@@ -47,21 +47,21 @@ export class Storage<T> {
     }
 
     /// Iterates across each stored component, and their entities
-    *iter(): IterableIterator<[Entity, T]> {
+    * iter(): IterableIterator<[Entity, T]> {
         for (const [idx, [gen, value]] of this._iter()) {
             yield [entity_new(idx, gen), value];
         }
     }
 
     /// Finds values with the matching component
-    *find(func: (value: T) => boolean): IterableIterator<Entity> {
+    * find(func: (value: T) => boolean): IterableIterator<Entity> {
         for (const [idx, [gen, value]] of this._iter()) {
             if (func(value)) yield entity_new(idx, gen);
         }
     }
 
     /// Iterates across each stored component
-    *values(): IterableIterator<T> {
+    * values(): IterableIterator<T> {
         for (const [, [, value]] of this._iter()) {
             yield value;
         }
@@ -186,7 +186,7 @@ export class World {
     }
 
     /// Iterates across entities in the world
-    *entities(): IterableIterator<Entity> {
+    * entities(): IterableIterator<Entity> {
         for (const entity of this.entities_.values()) {
             if (!(this.free_slots.indexOf(entity[0]) > -1)) yield entity;
         }

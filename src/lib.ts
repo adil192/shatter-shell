@@ -50,7 +50,7 @@ export function current_monitor(): Mtk.Rectangle {
 export function cursor_rect(): Mtk.Rectangle {
     const [x, y] = global.get_pointer();
     return new Mtk.Rectangle({
-        x, y, width: 1, height: 1
+        x, y, width: 1, height: 1,
     });
 }
 
@@ -88,12 +88,12 @@ export function is_keyboard_op(op: number): boolean {
 }
 
 export function is_resize_op(op: number): boolean {
-    const window_dir_mask =
-        (Meta.GrabOp.RESIZING_N | Meta.GrabOp.RESIZING_E | Meta.GrabOp.RESIZING_S | Meta.GrabOp.RESIZING_W) &
-        ~Meta.GrabOp.WINDOW_BASE;
+    const window_dir_mask
+        = (Meta.GrabOp.RESIZING_N | Meta.GrabOp.RESIZING_E | Meta.GrabOp.RESIZING_S | Meta.GrabOp.RESIZING_W)
+            & ~Meta.GrabOp.WINDOW_BASE;
     return (
-        (op & window_dir_mask) != 0 ||
-        (op & Meta.GrabOp.KEYBOARD_RESIZING_UNKNOWN) == Meta.GrabOp.KEYBOARD_RESIZING_UNKNOWN
+        (op & window_dir_mask) != 0
+        || (op & Meta.GrabOp.KEYBOARD_RESIZING_UNKNOWN) == Meta.GrabOp.KEYBOARD_RESIZING_UNKNOWN
     );
 }
 

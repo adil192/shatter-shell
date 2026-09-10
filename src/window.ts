@@ -181,8 +181,6 @@ export class ShellWindow {
         const pid = this.meta.get_pid();
         if (pid === -1) return null;
 
-
-
         const path = '/proc/' + pid + '/cmdline';
         if (!utils.exists(path)) return null;
 
@@ -214,7 +212,7 @@ export class ShellWindow {
     ignore_decoration(): boolean {
         const name = this.meta.get_wm_class();
         if (name === null) return true;
-        return WM_TITLE_BLACKLIST.findIndex((n) => name.startsWith(n)) !== -1;
+        return WM_TITLE_BLACKLIST.findIndex(n => name.startsWith(n)) !== -1;
     }
 
     is_maximized(): boolean {
@@ -276,11 +274,11 @@ export class ShellWindow {
 
             // Only normal windows will be considered for tiling
             return (
-                this.meta.window_type == Meta.WindowType.NORMAL &&
+                this.meta.window_type == Meta.WindowType.NORMAL
                 // Transient windows are most likely dialogs
-                !this.is_transient() &&
+                && !this.is_transient()
                 // If a window lacks a class, it's probably a web browser dialog
-                wm_class !== null
+                && wm_class !== null
             );
         };
 
@@ -370,11 +368,11 @@ export class ShellWindow {
 
             const permitted = () => {
                 return (
-                    this.actor_exists() &&
-                    this.ext.focus_window() == this &&
-                    !this.meta.is_fullscreen() &&
-                    (!this.is_single_max_screen() || this.is_snap_edge()) &&
-                    !this.meta.minimized
+                    this.actor_exists()
+                    && this.ext.focus_window() == this
+                    && !this.meta.is_fullscreen()
+                    && (!this.is_single_max_screen() || this.is_snap_edge())
+                    && !this.meta.minimized
                 );
             };
 
@@ -617,12 +615,12 @@ export function activate(ext: Ext, move_mouse: boolean, win: Meta.Window) {
         workspace.activate_with_focus(win, global.get_current_time());
         win.raise();
 
-        const pointer_placement_permitted =
-            move_mouse &&
-            Main.modalCount === 0 &&
-            ext.settings.mouse_cursor_follows_active_window() &&
-            !pointer_already_on_window(win) &&
-            pointer_in_work_area();
+        const pointer_placement_permitted
+            = move_mouse
+                && Main.modalCount === 0
+                && ext.settings.mouse_cursor_follows_active_window()
+                && !pointer_already_on_window(win)
+                && pointer_in_work_area();
 
         if (pointer_placement_permitted) {
             place_pointer_on(ext, win);

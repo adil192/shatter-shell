@@ -49,7 +49,7 @@ const SNAP_TO_GRID = 'snap-to-grid';
 const TILE_BY_DEFAULT = 'tile-by-default';
 const UNTILE_RESET_WINDOWS = 'untile-reset-windows';
 const HINT_COLOR_RGBA = 'hint-color-rgba';
-const DEFAULT_RGBA_COLOR = 'rgba(251, 184, 108, 1)'; //pop-orange
+const DEFAULT_RGBA_COLOR = 'rgba(251, 184, 108, 1)'; // pop-orange
 const LOG_LEVEL = 'log-level';
 const MOUSE_CURSOR_FOLLOWS_ACTIVE_WINDOW = 'mouse-cursor-follows-active-window';
 const MOUSE_CURSOR_FOCUS_LOCATION = 'mouse-cursor-focus-location';
@@ -108,7 +108,7 @@ export class ExtensionSettings {
 
     is_dark(): boolean {
         const theme = this.theme().toLowerCase();
-        return DARK.some((dark) => theme.includes(dark));
+        return DARK.some(dark => theme.includes(dark));
     }
 
     is_high_contrast(): boolean {

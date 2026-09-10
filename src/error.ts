@@ -13,7 +13,7 @@ export class Error {
         return error;
     }
 
-    *chain(): IterableIterator<Error> {
+    * chain(): IterableIterator<Error> {
         // eslint-disable-next-line @typescript-eslint/no-this-alias
         let current: Error | null = this;
 

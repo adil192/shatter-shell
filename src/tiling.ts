@@ -136,18 +136,18 @@ export class Tiler {
 
         if (
             // Do not use change if maxima cannot be found
-            min_x === null ||
-            min_y === null ||
-            max_x === null ||
-            max_y === null ||
+            min_x === null
+            || min_y === null
+            || max_x === null
+            || max_y === null
             // Prevent moving too far left
-            changed.x < min_x ||
+            || changed.x < min_x
             // Prevent moving too far right
-            changed.x + changed.width > max_x ||
+            || changed.x + changed.width > max_x
             // Prevent moving too far up
-            changed.y < min_y ||
+            || changed.y < min_y
             // Prevent moving too far down
-            changed.y + changed.height > max_y
+            || changed.y + changed.height > max_y
         )
             return this;
 
@@ -947,10 +947,10 @@ function tile_monitors(rect: Mtk.Rectangle): Array<Mtk.Rectangle> {
         .map((_mon, i: number) => workspace.get_work_area_for_monitor(i))
         .filter((monitor: Mtk.Rectangle) => {
             return (
-                rect.x + rect.width > monitor.x &&
-                rect.y + rect.height > monitor.y &&
-                rect.x < monitor.x + monitor.width &&
-                rect.y < monitor.y + monitor.height
+                rect.x + rect.width > monitor.x
+                && rect.y + rect.height > monitor.y
+                && rect.x < monitor.x + monitor.width
+                && rect.y < monitor.y + monitor.height
             );
         })
         .sort(total_size);

@@ -9,7 +9,7 @@ const EXT_PATH_DEFAULTS = [
     GLib.get_home_dir() + '/.local/share/gnome-shell/extensions/',
     '/usr/share/gnome-shell/extensions/',
 ];
-const DEFAULT_HINT_COLOR = 'rgba(251, 184, 108, 1)'; //pop-orange
+const DEFAULT_HINT_COLOR = 'rgba(251, 184, 108, 1)'; // pop-orange
 
 /** Look for the extension in path */
 function getExtensionPath(uuid: string) {

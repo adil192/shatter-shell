@@ -39,7 +39,7 @@ export class AddExceptionDialog {
         });
 
         this.dialog.addButton({
-            label: "This App's Windows",
+            label: 'This App\'s Windows',
             action: () => {
                 this_app();
                 on_close();

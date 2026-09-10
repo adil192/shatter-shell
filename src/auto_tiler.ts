@@ -240,7 +240,7 @@ export class AutoTiler {
 
     /** Detaches the window from a tiling branch, if it is attached to one. */
     detach_window(ext: Ext, win: Entity) {
-        this.attached.take_with(win, (prev_fork: Entity) => {
+        this.attached.take_with(win, (prev_fork) => {
             const reflow_fork = this.forest.detach(ext, prev_fork, win);
 
             if (reflow_fork) {
@@ -254,7 +254,7 @@ export class AutoTiler {
                 this.tile(ext, fork, fork.area);
             }
 
-            ext.windows.with(win, (info) => (info.ignore_detach = false));
+            ext.windows.with(win, info => (info.ignore_detach = false));
         });
     }
 
@@ -408,8 +408,8 @@ export class AutoTiler {
 
         const is_sibling = this.windows_are_siblings(win.entity, attach_to.entity);
 
-        const attach_area: Mtk.Rectangle =
-            (win.stack === null && attach_to.stack === null && is_sibling) || (win.stack === null && is_sibling)
+        const attach_area: Mtk.Rectangle
+            = (win.stack === null && attach_to.stack === null && is_sibling) || (win.stack === null && is_sibling)
                 ? fork.area
                 : attach_to.meta.get_frame_rect();
 
@@ -432,8 +432,8 @@ export class AutoTiler {
         };
 
         if (placement) {
-            const direction =
-                placement.orientation === lib.Orientation.HORIZONTAL
+            const direction
+                = placement.orientation === lib.Orientation.HORIZONTAL
                     ? placement.swap
                         ? Left
                         : Right
@@ -713,7 +713,7 @@ export class AutoTiler {
 
         const fork = this.forest.forks.get(fork_entity);
         if (!fork) {
-            return Err("window's fork attachment does not exist");
+            return Err('window\'s fork attachment does not exist');
         }
 
         if (!fork.right) return Ok(void 0);
@@ -747,8 +747,8 @@ export function cursor_placement(ext: Ext, area: Mtk.Rectangle, cursor: Mtk.Rect
 
     const [, side] = geom.nearest_side(ext, [cursor.x, cursor.y], area);
 
-    const res: null | [lib.Orientation, boolean] =
-        side === LEFT
+    const res: null | [lib.Orientation, boolean]
+        = side === LEFT
             ? [HORIZONTAL, true]
             : side === RIGHT
                 ? [HORIZONTAL, false]

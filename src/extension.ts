@@ -62,7 +62,7 @@ import { get_current_path } from './paths.js';
 import { clampRect, fmtRect } from './rectangle.js';
 
 const STYLESHEET_PATHS = ['light', 'dark', 'highcontrast'].map(stylesheet_path);
-const STYLESHEETS = STYLESHEET_PATHS.map((path) => Gio.File.new_for_path(path));
+const STYLESHEETS = STYLESHEET_PATHS.map(path => Gio.File.new_for_path(path));
 
 enum Style {
     Light,
@@ -805,7 +805,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                 if (fork?.right?.is_window(win)) {
                     const entity = fork.right.inner.kind === 3 ? fork.right.inner.entities[0] : fork.right.inner.entity;
 
-                    this.windows.with(entity, (sibling) => sibling.activate());
+                    this.windows.with(entity, sibling => sibling.activate());
                 }
             }
         }
@@ -868,12 +868,12 @@ export class Ext extends Ecs.System<ExtEvent> {
             const is_attached = this.auto_tiler.attached.contains(this.prev_focused[0]);
 
             if (
-                prev &&
-                prev !== win &&
-                is_attached &&
-                prev.actor_exists() &&
-                prev.name(this) !== win.name(this) &&
-                prev.workspace_id() === win.workspace_id()
+                prev
+                && prev !== win
+                && is_attached
+                && prev.actor_exists()
+                && prev.name(this) !== win.name(this)
+                && prev.workspace_id() === win.workspace_id()
             ) {
                 if (prev.rect().contains_rect(win.rect())) {
                     if (prev.is_maximized()) {
@@ -887,15 +887,15 @@ export class Ext extends Ecs.System<ExtEvent> {
         }
 
         if (this.conf.log_on_focus) {
-            let msg =
-                `focused Window(${win.entity}) {\n` +
-                `  class: "${win.meta.get_wm_class()}",\n` +
-                `  cmdline: ${win.cmdline()},\n` +
-                `  monitor: ${win.meta.get_monitor()},\n` +
-                `  name: ${win.name(this)},\n` +
-                `  rect: ${fmtRect(win.rect())},\n` +
-                `  workspace: ${win.workspace_id()},\n` +
-                `  stack: ${win.stack},\n`;
+            let msg
+                = `focused Window(${win.entity}) {\n`
+                    + `  class: "${win.meta.get_wm_class()}",\n`
+                    + `  cmdline: ${win.cmdline()},\n`
+                    + `  monitor: ${win.meta.get_monitor()},\n`
+                    + `  name: ${win.name(this)},\n`
+                    + `  rect: ${fmtRect(win.rect())},\n`
+                    + `  workspace: ${win.workspace_id()},\n`
+                    + `  stack: ${win.stack},\n`;
 
             if (this.auto_tiler) {
                 msg += `  fork: (${this.auto_tiler.attached.get(win.entity)}),\n`;
@@ -992,14 +992,14 @@ export class Ext extends Ecs.System<ExtEvent> {
             const work = win.meta.get_workspace().index();
 
             for (const [, compare] of this.windows.iter()) {
-                const is_same_space =
-                    compare.meta.get_monitor() === mon && compare.meta.get_workspace().index() === work;
+                const is_same_space
+                    = compare.meta.get_monitor() === mon && compare.meta.get_workspace().index() === work;
 
                 if (
-                    is_same_space &&
-                    !this.contains_tag(compare.entity, Tags.Floating) &&
-                    compare.is_maximized() &&
-                    win.entity[0] !== compare.entity[0]
+                    is_same_space
+                    && !this.contains_tag(compare.entity, Tags.Floating)
+                    && compare.is_maximized()
+                    && win.entity[0] !== compare.entity[0]
                 ) {
                     compare.meta.unmaximize();
                 }
@@ -1286,10 +1286,10 @@ export class Ext extends Ecs.System<ExtEvent> {
                     const other_monitor = window.meta.get_monitor();
                     const other_index = window.meta.get_workspace().index();
                     if (
-                        !this.contains_tag(entity, Tags.Floating) &&
-                        other_monitor == monitor &&
-                        other_index === index &&
-                        !Ecs.entity_eq(win.entity, window.entity)
+                        !this.contains_tag(entity, Tags.Floating)
+                        && other_monitor == monitor
+                        && other_index === index
+                        && !Ecs.entity_eq(win.entity, window.entity)
                     ) {
                         const other_rect = window.rect();
                         const other_coord: [number, number] = [other_rect.x, other_rect.y];
@@ -1345,7 +1345,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                     // Move everything one workspace down
                     this.on_workspace_modify(
                         () => true,
-                        (current) => current + 1,
+                        current => current + 1,
                         true,
                     );
 
@@ -1447,9 +1447,9 @@ export class Ext extends Ecs.System<ExtEvent> {
                     } else if (attach_to) {
                         const is_sibling = this.auto_tiler.windows_are_siblings(entity, attach_to.entity);
 
-                        [area, monitor_attachment] =
-                            (win.stack === null && attach_to.stack === null && is_sibling) ||
-                                (win.stack === null && is_sibling)
+                        [area, monitor_attachment]
+                            = (win.stack === null && attach_to.stack === null && is_sibling)
+                                || (win.stack === null && is_sibling)
                                 ? [fork.area, false]
                                 : [attach_to.meta.get_frame_rect(), false];
                     } else {
@@ -1474,8 +1474,8 @@ export class Ext extends Ecs.System<ExtEvent> {
                     const half_width = area.width / 2;
                     const half_height = area.height / 2;
 
-                    const new_area: [number, number, number, number] =
-                        orientation === Lib.Orientation.HORIZONTAL
+                    const new_area: [number, number, number, number]
+                        = orientation === Lib.Orientation.HORIZONTAL
                             ? swap
                                 ? [area.x, area.y, half_width, area.height]
                                 : [area.x + half_width, area.y, half_width, area.height]
@@ -1692,8 +1692,8 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     on_workspace_index_changed(prev: number, next: number) {
         this.on_workspace_modify(
-            (current) => current == prev,
-            (_) => next,
+            current => current == prev,
+            _ => next,
         );
     }
 
@@ -1769,8 +1769,8 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     on_workspace_removed(number: number) {
         this.on_workspace_modify(
-            (current) => current > number,
-            (prev) => prev - 1,
+            current => current > number,
+            prev => prev - 1,
         );
     }
 
@@ -2091,7 +2091,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         return matched;
     }
 
-    *tiled_windows(): IterableIterator<Entity> {
+    * tiled_windows(): IterableIterator<Entity> {
         for (const entity of this.entities()) {
             if (this.contains_tag(entity, Tags.Tiled)) {
                 yield entity;
@@ -2445,7 +2445,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     update_snapped() {
-        for (const entity of this.snapped.find((val) => val)) {
+        for (const entity of this.snapped.find(val => val)) {
             const window = this.windows.get(entity);
             if (window) this.tiler.snap(this, window);
         }
@@ -2464,7 +2464,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         }
 
         // Locate the window entity with the matching ID
-        let entity = this.ids.find((comp) => comp == id).next().value;
+        let entity = this.ids.find(comp => comp == id).next().value;
 
         // If not found, create a new entity with a ShellWindow component.
         if (!entity) {
@@ -2522,8 +2522,8 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     /// Returns the tilable window(s) that the mouse pointer is currently hovering above.
-    *windows_at_pointer(cursor: Mtk.Rectangle, monitor: number, workspace: number): IterableIterator<Window.ShellWindow> {
-        for (const entity of this.monitors.find((m) => m[0] == monitor && m[1] == workspace)) {
+    * windows_at_pointer(cursor: Mtk.Rectangle, monitor: number, workspace: number): IterableIterator<Window.ShellWindow> {
+        for (const entity of this.monitors.find(m => m[0] == monitor && m[1] == workspace)) {
             const window = this.windows.with(entity, (window) => {
                 return window.is_tilable(this) && window.rect().contains_rect(cursor) ? window : null;
             });
@@ -2616,6 +2616,7 @@ export default class ShatterShellExtension extends Extension {
             ext.auto_tile_on();
         }
     }
+
     disable() {
         log.info('disable');
 

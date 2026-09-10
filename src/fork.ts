@@ -355,8 +355,8 @@ export class Fork {
 
     /** Toggles the orientation of this fork */
     toggle_orientation() {
-        this.orientation =
-            Lib.Orientation.HORIZONTAL === this.orientation ? Lib.Orientation.VERTICAL : Lib.Orientation.HORIZONTAL;
+        this.orientation
+            = Lib.Orientation.HORIZONTAL === this.orientation ? Lib.Orientation.VERTICAL : Lib.Orientation.HORIZONTAL;
 
         this.orientation_changed = true;
         if (this.n_toggled === 1) {

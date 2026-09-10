@@ -55,11 +55,9 @@ const TabButton = GObject.registerClass(
     class TabButton extends St.Button {
         _title?: St.Label;
 
-        _styles: {
-            class: string;
-        } = {
-                class: 'shatter-shell-tab shatter-shell-tab-inactive',
-            };
+        _styles: { class: string } = {
+            class: 'shatter-shell-tab shatter-shell-tab-inactive',
+        };
 
         _init(window: ShellWindow) {
             const icon = window.icon(Math.floor(TAB_HEIGHT_UNSCALED * 0.4));
@@ -300,6 +298,7 @@ export class Stack {
             mode: Clutter.AnimationMode.EASE_OUT,
         });
     }
+
     private fade_out(actor: Clutter.Actor) {
         if (!actor.visible) return;
         actor.remove_all_transitions();
