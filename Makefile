@@ -18,12 +18,11 @@ endif
 INSTALLNAME = $(UUID)
 
 PROJECTS = color_dialog floating_exceptions
+SOURCES = src/*.ts src/color_dialog/src/*.ts src/floating_exceptions/src/*.ts *.scss icons/*.svg schemas/*.gschema.xml metadata.json README.md
 
 .PHONY: all clean install zip-file
 
-sources = src/*.ts *.scss
-
-all: depcheck compile
+all: compile
 
 clean:
 	rm -rf _build target .eslintcache tsconfig.tsbuildinfo
@@ -32,18 +31,12 @@ clean:
 configure:
 	sh scripts/configure.sh
 
-compile: node_modules/.package-lock.json $(sources) clean
+compile: _build/extension.js
+_build/extension.js: node_modules/.package-lock.json $(SOURCES) scripts/transpile.sh
 	env PROJECTS="$(PROJECTS)" ./scripts/transpile.sh
 
-debug: depcheck compile install configure enable nested
+debug: compile install configure enable nested
 
-depcheck:
-	@echo depcheck
-	@if ! command -v npm >/dev/null || ! command -v npx >/dev/null; then \
-		echo; \
-		echo 'You must install Node.js: ("sudo apt install npm" on Debian systems)'; \
-		exit 1; \
-	fi
 node_modules/.package-lock.json: package.json package-lock.json
 	npm ci
 
@@ -64,9 +57,9 @@ nested:
 listen:
 	journalctl -o cat -n 0 -f "$$(which gnome-shell)" | grep -v warning
 
-local-install: depcheck compile install configure restart-shell enable
+local-install: compile install configure restart-shell enable
 
-install:
+install: compile
 	rm -rf $(INSTALLBASE)/$(INSTALLNAME)
 	mkdir -p $(INSTALLBASE)/$(INSTALLNAME) $(PLUGIN_BASE) $(SCRIPTS_BASE)
 	cp -r _build/* $(INSTALLBASE)/$(INSTALLNAME)/
@@ -82,7 +75,8 @@ update-repository:
 	git reset --hard origin/master
 	git clean -fd
 
-zip-file: all
+zip-file: $(UUID)_$(VERSION).zip
+$(UUID)_$(VERSION).zip: compile
 	cd _build && zip -qr "../$(UUID)_$(VERSION).zip" .
 
 .NOTPARALLEL: debug local-install
