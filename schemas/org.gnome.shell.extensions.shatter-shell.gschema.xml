@@ -8,7 +8,7 @@
         </key>
 
         <key type="u" name="active-hint-border-radius">
-            <default>5</default>
+            <default>15</default>
             <range min="0" max="30"/>
             <summary>Border radius for active window hint, in pixels</summary>
         </key>
@@ -34,7 +34,7 @@
         </key>
 
         <key type="b" name="mouse-cursor-follows-active-window">
-            <default>true</default>
+            <default>false</default>
             <summary>Move cursor to active window when navigating with keyboard shortcuts or touchpad gestures</summary>
         </key>
 
