@@ -1,5 +1,5 @@
 {
-    "name": "pop-shell",
+    "name": "shatter-shell",
     "main": "src/extension.ts",
     "type": "module",
     "private": true,

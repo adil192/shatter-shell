@@ -21,7 +21,7 @@ let overview_toggle: typeof Overview.prototype['toggle'] | null = null;
 
 export class Search {
     dialog: ModalDialog = new ModalDialog({
-        styleClass: 'pop-shell-search modal-dialog',
+        styleClass: 'shatter-shell-search modal-dialog',
         destroyOnClose: false,
         shellReactive: true,
         shouldFadeIn: false,
@@ -53,7 +53,7 @@ export class Search {
         this.active_id = 0;
         this.widgets = [];
         this.entry = new St.Entry({
-            style_class: 'pop-shell-entry',
+            style_class: 'shatter-shell-entry',
             can_focus: true,
             x_expand: true,
         });
@@ -206,7 +206,7 @@ export class Search {
         });
 
         this.list = new St.BoxLayout({
-            styleClass: 'pop-shell-search-list',
+            styleClass: 'shatter-shell-search-list',
             orientation: Clutter.Orientation.VERTICAL,
         });
 
@@ -447,7 +447,7 @@ export class SearchOption {
         layout.add_child(info_box);
         layout.add_child(this.shortcut);
 
-        this.widget = new St.Button({ style_class: 'pop-shell-search-element' });
+        this.widget = new St.Button({ style_class: 'shatter-shell-search-element' });
         this.widget.add_child(layout);
     }
 }
@@ -488,7 +488,7 @@ function generate_icon(icon: JsonIPC.IconSource, icon_size: number): null | St.W
     }
 
     if (app_icon) {
-        app_icon.style_class = 'pop-shell-search-icon';
+        app_icon.style_class = 'shatter-shell-search-icon';
     }
 
     return app_icon;

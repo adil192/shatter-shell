@@ -20,7 +20,7 @@ export function log_level(): LOG_LEVELS {
 }
 
 export function log(text: string) {
-    globalThis.log('pop-shell: ' + text);
+    globalThis.log('shatter-shell: ' + text);
 }
 
 export function error(text: string) {

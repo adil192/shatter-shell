@@ -8,12 +8,12 @@ endif
 
 ifeq ($(strip $(DESTDIR)),)
 INSTALLBASE = $(XDG_DATA_HOME)/gnome-shell/extensions
-PLUGIN_BASE = $(XDG_DATA_HOME)/pop-shell/launcher
-SCRIPTS_BASE = $(XDG_DATA_HOME)/pop-shell/scripts
+PLUGIN_BASE = $(XDG_DATA_HOME)/shatter-shell/launcher
+SCRIPTS_BASE = $(XDG_DATA_HOME)/shatter-shell/scripts
 else
 INSTALLBASE = $(DESTDIR)/usr/share/gnome-shell/extensions
-PLUGIN_BASE = $(DESTDIR)/usr/lib/pop-shell/launcher
-SCRIPTS_BASE = $(DESTDIR)/usr/lib/pop-shell/scripts
+PLUGIN_BASE = $(DESTDIR)/usr/lib/shatter-shell/launcher
+SCRIPTS_BASE = $(DESTDIR)/usr/lib/shatter-shell/scripts
 endif
 INSTALLNAME = $(UUID)
 
@@ -48,10 +48,10 @@ node_modules/.package-lock.json: package.json package-lock.json
 	npm ci
 
 enable:
-	gnome-extensions enable "pop-shell@system76.com"
+	gnome-extensions enable "shatter-shell@adilhanney.com"
 
 disable:
-	gnome-extensions disable "pop-shell@system76.com"
+	gnome-extensions disable "shatter-shell@adilhanney.com"
 
 nested:
 	@if [ "$$(gnome-shell --version | awk '{print int($$3)}')" -ge 49 ]; then \

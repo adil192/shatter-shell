@@ -4,19 +4,19 @@
     $active-tab-bg-color: rgba(0, 0, 0, .2),
 );
 
-.pop-shell-entry:indeterminate {
+.shatter-shell-entry:indeterminate {
     font-style: italic;
 }
 
-.pop-shell-tab {
+.shatter-shell-tab {
     border: 1px solid;
 }
 
-.pop-shell-tab-active {
+.shatter-shell-tab-active {
     background: black;
     color: white;
 }
 
-.pop-shell-tab-active:hover {
+.shatter-shell-tab-active:hover {
     background: #666;
 }

@@ -34,7 +34,7 @@ interface StackWidgets {
 
 function stack_widgets_new(): StackWidgets {
     const tabs = new St.BoxLayout({
-        style_class: 'pop-shell-stack',
+        style_class: 'shatter-shell-stack',
         x_expand: true,
     });
 
@@ -58,7 +58,7 @@ const TabButton = GObject.registerClass(
         _styles: {
             class: string;
         } = {
-                class: 'pop-shell-tab pop-shell-tab-inactive',
+                class: 'shatter-shell-tab shatter-shell-tab-inactive',
             };
 
         _init(window: ShellWindow) {
@@ -84,7 +84,7 @@ const TabButton = GObject.registerClass(
                 y_expand: true,
                 x_align: Clutter.ActorAlign.END,
                 y_align: Clutter.ActorAlign.CENTER,
-                style_class: 'pop-window-close',
+                style_class: 'shatter-shell-window-close',
             });
             close_button.connect('clicked', () => {
                 window.meta.delete(global.get_current_time());
@@ -117,16 +117,16 @@ const TabButton = GObject.registerClass(
         set_active(style: TabActive, settings: ExtensionSettings) {
             switch (style) {
                 case TabActive.active:
-                    this._styles.class = 'pop-shell-tab pop-shell-tab-active';
+                    this._styles.class = 'shatter-shell-tab shatter-shell-tab-active';
                     break;
                 case TabActive.inactive:
                     // Don't dismiss urgent state
-                    if (this._styles.class.includes('pop-shell-tab-urgent')) return;
+                    if (this._styles.class.includes('shatter-shell-tab-urgent')) return;
 
-                    this._styles.class = 'pop-shell-tab pop-shell-tab-inactive';
+                    this._styles.class = 'shatter-shell-tab shatter-shell-tab-inactive';
                     break;
                 case TabActive.urgent:
-                    this._styles.class = 'pop-shell-tab pop-shell-tab-urgent';
+                    this._styles.class = 'shatter-shell-tab shatter-shell-tab-urgent';
                     break;
             }
             this._update_style(settings);

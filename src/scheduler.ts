@@ -40,6 +40,7 @@ export function setForeground(win: Meta.Window) {
 }
 
 function errorHandler(error: unknown) {
+    // TODO: Remove system76-scheduler
     log.warn(`system76-scheduler may not be installed and running: ${error}`);
     failed = true;
 }

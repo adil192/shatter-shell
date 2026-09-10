@@ -28,10 +28,10 @@ export class Indicator {
 
     constructor(ext: Ext) {
         const path = get_current_path();
-        ext.button_auto_on_icon = Gio.icon_new_for_string(`${path}/icons/pop-shell-auto-on-symbolic.svg`);
-        ext.button_auto_off_icon = Gio.icon_new_for_string(`${path}/icons/pop-shell-auto-off-symbolic.svg`);
+        ext.button_auto_on_icon = Gio.icon_new_for_string(`${path}/icons/shatter-shell-auto-on-symbolic.svg`);
+        ext.button_auto_off_icon = Gio.icon_new_for_string(`${path}/icons/shatter-shell-auto-off-symbolic.svg`);
 
-        ext.button = this.button = new PanelMenu.Button(0.0, _('Pop Shell Settings')) as
+        ext.button = this.button = new PanelMenu.Button(0.0, _('Shatter Shell Settings')) as
             PanelMenu.Button & { icon: St.Icon | null, };
         this.button.icon = new St.Icon({
             gicon: ext.settings.tile_by_default() ? ext.button_auto_on_icon : ext.button_auto_off_icon,
@@ -97,7 +97,7 @@ function menu_separator(text: string) {
 function settings_button(menu: PopupMenu) {
     const item = new PopupMenuItem(_('View All'));
     item.connect('activate', () => {
-        const path = GLib.find_program_in_path('pop-shell-shortcuts');
+        const path = GLib.find_program_in_path('shatter-shell-shortcuts');
         const [_success, _pid] = GLib.spawn_async(
             null,
             path
@@ -148,7 +148,7 @@ function shortcuts(menu: PopupMenu) {
     const item = new PopupBaseMenuItem();
     item.add_child(widget);
     item.connect('activate', () => {
-        const path = GLib.find_program_in_path('pop-shell-shortcuts');
+        const path = GLib.find_program_in_path('shatter-shell-shortcuts');
         const [_success, _pid] = GLib.spawn_async(
             null,
             path

@@ -28,7 +28,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v7
         with:
-          path: pop-shell@system76.com_*.zip
+          path: shatter-shell@adilhanney.com_*.zip
           if-no-files-found: error
           archive: false
 

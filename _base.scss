@@ -9,7 +9,7 @@ $warning-fg-color: rgb(0 0 0 / 80%) !default;
 
 $active-tab-bg-color: rgba(0, 0, 0, .09) !default;
 
-.pop-shell-active-hint {
+.shatter-shell-active-hint {
     border-style: solid;
     border-color: var(--accent-color, #3584e4);
     border-width: 3px;
@@ -17,65 +17,65 @@ $active-tab-bg-color: rgba(0, 0, 0, .09) !default;
     box-shadow: inset 0 0 0 1px $headerbar-shade-color;
 }
 
-.pop-shell-overlay {
+.shatter-shell-overlay {
     background: rgb(from var(--accent-color, #3584e4) r g b / 0.3);
 }
 
-.pop-shell-search-element:select {
+.shatter-shell-search-element:select {
     background: $active-tab-bg-color;
     color: $headerbar-fg-color;
     border-radius: 5px;
 }
 
-.pop-shell-search-icon {
+.shatter-shell-search-icon {
     margin-right: 10px;
 }
 
-.pop-shell-search-cat {
+.shatter-shell-search-cat {
     margin-right: 10px;
 }
 
-.pop-shell-search-element {
+.shatter-shell-search-element {
     padding-left: 10px;
     padding-right: 2px;
     padding-top: 6px;
     padding-bottom: 6px;
 }
 
-.pop-shell-stack {
+.shatter-shell-stack {
     background: $headerbar-bg-color;
     color: $headerbar-fg-color;
     border-radius: 9px;
 }
 
-.pop-shell-tab {
+.shatter-shell-tab {
     border-radius: 8px;
     margin: 3px;
 }
 
-.pop-shell-tab:hover {
+.shatter-shell-tab:hover {
     background: color.scale($active-tab-bg-color, $alpha: -50%);
 }
 
-.pop-shell-tab-active {
+.shatter-shell-tab-active {
     background: $active-tab-bg-color;
 }
 
-.pop-shell-tab-active:hover {
+.shatter-shell-tab-active:hover {
     background: color.scale($active-tab-bg-color, $alpha: +2%);
 }
 
-.pop-shell-tab-urgent {
+.shatter-shell-tab-urgent {
     background: $warning-bg-color;
     color: $warning-fg-color;
 }
 
-.pop-window-close {
+.shatter-shell-window-close {
     padding: 4px;
     margin: 4px;
     border-radius: 100px;
 }
 
-.pop-window-close:hover {
+.shatter-shell-window-close:hover {
     background: color.scale($active-tab-bg-color, $alpha: -50%);
 }

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<schemalist gettext-domain="pop-shell">
-    <schema id="org.gnome.shell.extensions.pop-shell" path="/org/gnome/shell/extensions/pop-shell/">
+<schemalist gettext-domain="shatter-shell">
+    <schema id="org.gnome.shell.extensions.shatter-shell" path="/org/gnome/shell/extensions/shatter-shell/">
         <!-- Appearance Options -->
         <key type="b" name="active-hint">
             <default>false</default>

@@ -2,7 +2,7 @@ import GLib from 'gi://GLib';
 import Gio from 'gi://Gio';
 import Meta from 'gi://Meta';
 
-const CONF_DIR = GLib.get_user_config_dir() + '/pop-shell';
+const CONF_DIR = GLib.get_user_config_dir() + '/shatter-shell';
 export const CONF_FILE = CONF_DIR + '/config.json';
 
 export interface FloatRule {
@@ -30,7 +30,7 @@ export const DEFAULT_FLOAT_RULES: Array<FloatRule> = [
     { class: 'Conky' },
     { title: 'Discord Updater' },
     { class: 'Enpass', title: 'Enpass Assistant' },
-    { class: 'pop-shell-exceptions' },
+    { class: 'shatter-shell-exceptions' },
     { class: 'Gjs', title: 'Settings' },
     { class: 'Gnome-initial-setup' },
     { class: 'Gnome-terminal', title: 'Preferences – General' },
@@ -260,11 +260,11 @@ export class Config {
             if (!conf.query_exists(null)) {
                 const dir = Gio.File.new_for_path(CONF_DIR);
                 if (!dir.query_exists(null) && !dir.make_directory(null)) {
-                    return { tag: 1, why: 'failed to create pop-shell config directory' };
+                    return { tag: 1, why: 'failed to create shatter-shell config directory' };
                 }
 
                 const example = new Config();
-                example.float.push({ class: 'pop-shell-example', title: 'pop-shell-example' });
+                example.float.push({ class: 'shatter-shell-example', title: 'shatter-shell-example' });
 
                 conf.create(Gio.FileCreateFlags.NONE, null).write_all(JSON.stringify(example, undefined, 2), null);
             }
@@ -284,7 +284,7 @@ export class Config {
 
             return { tag: 0, value: imports.byteArray.toString(buffer) };
         } catch (why) {
-            return { tag: 1, why: `failed to read pop-shell config: ${why}` };
+            return { tag: 1, why: `failed to read shatter-shell config: ${why}` };
         }
     }
 

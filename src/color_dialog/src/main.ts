@@ -29,7 +29,7 @@ function getExtensionPath(uuid: string) {
 }
 
 function getSettings(schema: string) {
-    const extensionPath = getExtensionPath('pop-shell@system76.com');
+    const extensionPath = getExtensionPath('shatter-shell@adilhanney.com');
     if (!extensionPath) throw new Error('getSettings() can only be called when extension is available');
 
     // The following will load a custom path for a user defined gsettings/schemas folder
@@ -48,11 +48,11 @@ function getSettings(schema: string) {
     return new Gio.Settings({ settings_schema: schemaObj });
 }
 /**
- * Launch a Gtk.ColorChooserDialog. And then save the color RGBA/alpha values in GSettings of Pop-Shell.
+ * Launch a Gtk.ColorChooserDialog. And then save the color RGBA/alpha values in GSettings of shatter-shell.
  * Using the settings.connect('changed') mechanism, the extension is able to listen to when the color changes in realtime.
  */
 function launch_color_dialog() {
-    const popshell_settings = getSettings('org.gnome.shell.extensions.pop-shell');
+    const popshell_settings = getSettings('org.gnome.shell.extensions.shatter-shell');
 
     const color_dialog = new Gtk.ColorChooserDialog({
         title: 'Choose Color',

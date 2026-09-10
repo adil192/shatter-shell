@@ -61,7 +61,7 @@ export class ShellWindow {
     smart_gapped: boolean = false;
 
     border: null | St.Bin = new St.Bin({
-        style_class: 'pop-shell-active-hint pop-shell-border-normal',
+        style_class: 'shatter-shell-active-hint shatter-shell-border-normal',
     });
 
     prev_rect: null | Mtk.Rectangle = null;

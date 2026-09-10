@@ -52,7 +52,7 @@ export const ShortcutOverlay = GObject.registerClass(
 
         _init(title: string, columns: Array<Column>) {
             super._init({
-                styleClass: 'pop-shell-shortcuts',
+                styleClass: 'shatter-shell-shortcuts',
                 destroyOnClose: false,
                 shellReactive: true,
                 shouldFadeIn: true,
@@ -60,13 +60,13 @@ export const ShortcutOverlay = GObject.registerClass(
             });
 
             const columns_layout = new St.BoxLayout({
-                styleClass: 'pop-shell-shortcuts-columns',
+                styleClass: 'shatter-shell-shortcuts-columns',
                 orientation: Clutter.Orientation.HORIZONTAL,
             });
 
             for (const column of columns) {
                 const column_layout = new St.BoxLayout({
-                    styleClass: 'pop-shell-shortcuts-column',
+                    styleClass: 'shatter-shell-shortcuts-column',
                 });
 
                 for (const section of column.sections) {
@@ -78,7 +78,7 @@ export const ShortcutOverlay = GObject.registerClass(
 
             this.add_child(
                 new St.Label({
-                    styleClass: 'pop-shell-shortcuts-title',
+                    styleClass: 'shatter-shell-shortcuts-title',
                     text: title,
                 }),
             );
@@ -90,7 +90,7 @@ export const ShortcutOverlay = GObject.registerClass(
 
         gen_combination(combination: Array<string>) {
             const layout = new St.BoxLayout({
-                styleClass: 'pop-shell-binding',
+                styleClass: 'shatter-shell-binding',
                 orientation: Clutter.Orientation.HORIZONTAL,
             });
 
@@ -103,12 +103,12 @@ export const ShortcutOverlay = GObject.registerClass(
 
         gen_section(section: Section) {
             const layout = new St.BoxLayout({
-                style_class: 'pop-shell-section',
+                style_class: 'shatter-shell-section',
             });
 
             layout.add_child(
                 new St.Label({
-                    styleClass: 'pop-shell-section-header',
+                    styleClass: 'shatter-shell-section-header',
                     text: section.header,
                 }),
             );
@@ -123,7 +123,7 @@ export const ShortcutOverlay = GObject.registerClass(
 
         gen_shortcut(shortcut: Shortcut) {
             const layout = new St.BoxLayout({
-                styleClass: 'pop-shell-shortcut',
+                styleClass: 'shatter-shell-shortcut',
                 orientation: Clutter.Orientation.HORIZONTAL,
             });
 
