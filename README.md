@@ -61,7 +61,9 @@ If you want to uninstall the extension, you may invoke `make uninstall`, and the
 My fork is not packaged for general use.
 You must build from source with `make local-install` to use it.
 
-The only package currently resides in my personal testing COPR repository, which I don't recommend you use.
+#### Unstable package
+
+The only existing package currently resides in my personal testing COPR repository, which I don't recommend you use.
 Nontheless, if you don't care about breaking your system, run this to install:
 ```bash
 sudo dnf copr enable adil192/backports
