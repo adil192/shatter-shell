@@ -91,6 +91,7 @@ const TabButton = GObject.registerClass(
             const container = new St.BoxLayout({
                 y_expand: true,
                 y_align: Clutter.ActorAlign.CENTER,
+                style_class: 'shatter-shell-tab-inner',
             });
             container.add_child(icon);
             container.add_child(title);
