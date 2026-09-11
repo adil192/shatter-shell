@@ -60,15 +60,15 @@ $active-tab-bg-color: rgba(0, 0, 0, .09) !default;
     background: color.scale($active-tab-bg-color, $alpha: -50%);
 }
 
-.shatter-shell-tab-active .shatter-shell-tab-inner {
+.shatter-shell-tab:checked .shatter-shell-tab-inner {
     background: $active-tab-bg-color;
 }
 
-.shatter-shell-tab-active:hover .shatter-shell-tab-inner {
+.shatter-shell-tab:checked:hover .shatter-shell-tab-inner {
     background: color.scale($active-tab-bg-color, $alpha: +2%);
 }
 
-.shatter-shell-tab-urgent .shatter-shell-tab-inner {
+.shatter-shell-tab.shatter-shell-tab-urgent .shatter-shell-tab-inner {
     background: $warning-bg-color;
     color: $warning-fg-color;
 }

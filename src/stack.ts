@@ -2,8 +2,9 @@ import type { Entity } from './ecs.js';
 import type { Ext } from './extension.js';
 import type { ShellWindow } from './window.js';
 
-import * as Ecs from './ecs.js';
 import * as a from './arena.js';
+import * as Ecs from './ecs.js';
+import type * as Settings from './settings.js';
 
 const Arena = a.Arena;
 import Clutter from 'gi://Clutter';
@@ -11,13 +12,12 @@ import GObject from 'gi://GObject';
 import Meta from 'gi://Meta';
 import Mtk from 'gi://Mtk';
 import St from 'gi://St';
-import { ExtensionSettings } from './settings.js';
 
 enum TabActive { active, inactive, urgent }
 
 export const TAB_HEIGHT_UNSCALED = 43 as const;
 
-/** Space between the tab bar and the window. This should be subtracted from TAB_HEIGHT_UNSCALED. */
+/** Space between the tab bar and the window. This is already included in {@link TAB_HEIGHT_UNSCALED}. */
 const TAB_SEPARATION_UNSCALED = 3 as const;
 
 interface Tab {
@@ -45,7 +45,7 @@ function stack_widgets_new(): StackWidgets {
 
 interface TabButton extends St.Button {
     set_title: (title: string) => void;
-    set_active: (style: TabActive, settings: ExtensionSettings) => void;
+    set_active: (style: TabActive) => void;
 }
 
 const TabButton = GObject.registerClass(
@@ -53,18 +53,17 @@ const TabButton = GObject.registerClass(
         Signals: { activate: {} },
     },
     class TabButton extends St.Button {
-        _title?: St.Label;
+        declare _title: St.Label;
+        declare _settings: Settings.ExtensionSettings;
 
-        _styles: { class: string } = {
-            class: 'shatter-shell-tab shatter-shell-tab-inactive',
-        };
+        _init(window: ShellWindow, settings: Settings.ExtensionSettings) {
+            this._settings = settings;
 
-        _init(window: ShellWindow) {
             const icon = window.icon(Math.floor(TAB_HEIGHT_UNSCALED * 0.4));
             icon.set_x_align(Clutter.ActorAlign.START);
             icon.set_style('padding: 4px; margin-left: 4px;');
 
-            const title = new St.Label({
+            const title = this._title = new St.Label({
                 y_expand: true,
                 x_expand: true,
                 x_align: Clutter.ActorAlign.CENTER,
@@ -98,45 +97,40 @@ const TabButton = GObject.registerClass(
             container.add_child(close_button);
 
             super._init({
-                child: container,
                 x_expand: true,
                 y_expand: true,
                 y_align: Clutter.ActorAlign.CENTER,
+                toggle_mode: true,
+                child: container,
             });
-
-            this._title = title;
         }
 
         set_title(text: string) {
-            if (this._title) {
-                this._title.text = text;
-            }
+            this._title.text = text;
         }
 
-        set_active(style: TabActive, settings: ExtensionSettings) {
-            switch (style) {
+        set_active(tabActive: TabActive) {
+            const hint_color_rgba = this._settings.hint_color_rgba();
+            this.style = `--accent-color: ${hint_color_rgba};`;
+
+            switch (tabActive) {
                 case TabActive.active:
-                    this._styles.class = 'shatter-shell-tab shatter-shell-tab-active';
+                    this.style_class = 'shatter-shell-tab';
+                    this.checked = true;
                     break;
                 case TabActive.inactive:
                     // Don't dismiss urgent state
-                    if (this._styles.class.includes('shatter-shell-tab-urgent')) return;
-
-                    this._styles.class = 'shatter-shell-tab shatter-shell-tab-inactive';
+                    const wasUrgent = this.has_style_class_name('shatter-shell-tab-urgent');
+                    if (!wasUrgent) {
+                        this.style_class = 'shatter-shell-tab';
+                        this.checked = false;
+                    }
                     break;
                 case TabActive.urgent:
-                    this._styles.class = 'shatter-shell-tab shatter-shell-tab-urgent';
+                    this.style_class = 'shatter-shell-tab shatter-shell-tab-urgent';
+                    this.checked = true;
                     break;
             }
-            this._update_style(settings);
-        }
-
-        _update_style(settings: ExtensionSettings) {
-            const hint_color_rgba = settings.hint_color_rgba();
-            const style = `--accent-color: ${hint_color_rgba}; `;
-
-            this.set_style_class_name(this._styles.class);
-            this.set_style(style);
         }
     },
 );
@@ -198,8 +192,9 @@ export class Stack {
         const entity = window.entity;
         const active = Ecs.entity_eq(entity, this.active);
 
-        const button = new TabButton(window);
+        const button = new TabButton(window, this.ext.settings);
         button.natural_height = this.tab_height - this.tab_separation;
+        button.set_active(active ? TabActive.active : TabActive.inactive);
         const id = this.buttons.insert(button);
 
         const tab: Tab = { active, entity, signals: [], button: id, button_signal: null };
@@ -280,7 +275,7 @@ export class Stack {
 
                 const button = this.buttons.get(tab.button);
                 if (button) {
-                    button.set_active(tab_active, this.ext.settings);
+                    button.set_active(tab_active);
                 }
             });
 
@@ -366,7 +361,7 @@ export class Stack {
             const change_id = settings.ext.connect('changed', (_, key) => {
                 if (key === 'hint-color-rgba') {
                     const active = Ecs.entity_eq(tab.entity, this.active);
-                    button.set_active(active ? TabActive.active : TabActive.inactive, settings);
+                    button.set_active(active ? TabActive.active : TabActive.inactive);
                 }
                 return false;
             });
@@ -374,7 +369,7 @@ export class Stack {
                 settings.ext.disconnect(change_id);
             });
             const active = Ecs.entity_eq(tab.entity, this.active);
-            button.set_active(active ? TabActive.active : TabActive.inactive, settings);
+            button.set_active(active ? TabActive.active : TabActive.inactive);
         }
     }
 
@@ -695,9 +690,9 @@ export class Stack {
                 this.reposition();
 
                 for (const comp of this.tabs) {
-                    this.buttons.get(comp.button)?.set_active(TabActive.inactive, this.ext.settings);
+                    this.buttons.get(comp.button)?.set_active(TabActive.inactive);
                 }
-                widget.set_active(TabActive.active, this.ext.settings);
+                widget.set_active(TabActive.active);
             });
         });
 
@@ -717,7 +712,7 @@ export class Stack {
             window.meta.connect('notify::urgent', () => {
                 this.window_exec(comp, entity, (window) => {
                     if (!window.meta.has_focus()) {
-                        this.buttons.get(button)?.set_active(TabActive.urgent, this.ext.settings);
+                        this.buttons.get(button)?.set_active(TabActive.urgent);
                     }
                 });
             }),

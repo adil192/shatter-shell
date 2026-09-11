@@ -12,11 +12,11 @@
     border: 1px solid;
 }
 
-.shatter-shell-tab-active {
+.shatter-shell-tab:checked .shatter-shell-tab-inner {
     background: black;
     color: white;
 }
 
-.shatter-shell-tab-active:hover {
+.shatter-shell-tab:checked:hover .shatter-shell-tab-inner {
     background: #666;
 }
