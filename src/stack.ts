@@ -294,8 +294,8 @@ export class Stack {
         actor.show();
         actor.ease({
             opacity: 255,
-            duration: 100 * (1 - actor.opacity / 255),
-            mode: Clutter.AnimationMode.EASE_OUT,
+            duration: 150 * (1 - actor.opacity / 255),
+            mode: Clutter.AnimationMode.EASE_OUT_QUART,
         });
     }
 
@@ -305,7 +305,7 @@ export class Stack {
         actor.ease({
             opacity: 0,
             duration: 150 * (actor.opacity / 255),
-            mode: Clutter.AnimationMode.EASE_IN,
+            mode: Clutter.AnimationMode.EASE_IN_QUART,
             onComplete: () => {
                 actor.hide();
                 actor.opacity = 255;
