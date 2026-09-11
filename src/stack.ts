@@ -212,12 +212,11 @@ export class Stack {
         if (actor) {
             actor.remove_all_transitions();
             if (active) {
-                actor.opacity = 255;
                 actor.show();
             } else {
-                actor.opacity = 0;
                 actor.hide();
             }
+            actor.opacity = 255;
         }
     }
 
@@ -291,6 +290,7 @@ export class Stack {
     private fade_in(actor: Clutter.Actor) {
         if (actor.visible && actor.opacity >= 255) return;
         actor.remove_all_transitions();
+        if (actor.opacity > 250) actor.opacity = 0;
         actor.show();
         actor.ease({
             opacity: 255,
@@ -306,7 +306,10 @@ export class Stack {
             opacity: 0,
             duration: 150 * (actor.opacity / 255),
             mode: Clutter.AnimationMode.EASE_IN,
-            onComplete: () => actor.hide(),
+            onComplete: () => {
+                actor.hide();
+                actor.opacity = 255;
+            },
         });
     }
 

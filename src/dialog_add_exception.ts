@@ -9,8 +9,6 @@ export class AddExceptionDialog {
         styleClass: 'shatter-shell-search modal-dialog',
         destroyOnClose: false,
         shellReactive: true,
-        shouldFadeIn: false,
-        shouldFadeOut: false,
     });
 
     constructor(cancel: () => void, this_app: () => void, current_window: () => void, on_close: () => void) {
@@ -61,12 +59,7 @@ export class AddExceptionDialog {
         this.dialog.close();
     }
 
-    show() {
-        this.dialog.show();
-    }
-
     open() {
         this.dialog.open();
-        this.show();
     }
 }
