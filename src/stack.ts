@@ -198,10 +198,9 @@ export class Stack {
         const id = this.buttons.insert(button);
 
         const tab: Tab = { active, entity, signals: [], button: id, button_signal: null };
-        const comp = this.tabs.length;
         this.bind_hint_events(tab);
         this.tabs.push(tab);
-        this.watch_signals(comp, id, window);
+        this.watch_signals(tab, window);
         this.widgets.tabs.add_child(button);
 
         const actor = window.meta.get_compositor_private<Clutter.Actor | null>();
@@ -255,11 +254,10 @@ export class Stack {
         this.active_connect(win.meta, entity);
 
         let id = 0;
-
         for (const [_idx, tab] of this.tabs.entries()) {
             let tab_active: TabActive;
 
-            this.window_exec(id, tab.entity, (window) => {
+            this.window_exec(tab, tab.entity, (window) => {
                 const actor = window.meta.get_compositor_private<Clutter.Actor | null>();
 
                 if (Ecs.entity_eq(entity, tab.entity)) {
@@ -539,10 +537,10 @@ export class Stack {
 
     replace(window: ShellWindow) {
         if (!this.widgets) return;
-        const c = this.tabs[this.active_id],
-            actor = window.meta.get_compositor_private<Clutter.Actor | null>();
-        if (c && actor) {
-            this.tab_disconnect(c);
+        const tab = this.tabs[this.active_id];
+        const actor = window.meta.get_compositor_private<Clutter.Actor | null>();
+        if (tab && actor) {
+            this.tab_disconnect(tab);
 
             if (Ecs.entity_eq(window.entity, this.active)) {
                 this.active_connect(window.meta, window.entity);
@@ -551,8 +549,8 @@ export class Stack {
                 this.fade_out(actor);
             }
 
-            this.watch_signals(this.active_id, c.button, window);
-            this.buttons.get(c.button)?.set_title(window.title());
+            this.watch_signals(tab, window);
+            this.buttons.get(tab.button)?.set_title(window.title());
             this.activate(window.entity);
         }
     }
@@ -603,7 +601,7 @@ export class Stack {
         let idx = 0;
 
         for (const c of this.tabs) {
-            this.window_exec(idx, c.entity, (window) => {
+            this.window_exec(c, c.entity, (window) => {
                 const actor = window.meta.get_compositor_private<Clutter.Actor | null>();
                 if (!actor) return;
                 if (permitted && this.active_id === idx) {
@@ -667,20 +665,18 @@ export class Stack {
         this.widgets.tabs.width = rect.width;
     }
 
-    private watch_signals(comp: number, button: number, window: ShellWindow) {
+    private watch_signals(tab: Tab, window: ShellWindow) {
         const entity = window.entity;
-        const widget = this.buttons.get(button);
+        const widget = this.buttons.get(tab.button);
         if (!widget) return;
 
-        const c = this.tabs[comp];
-
         // Detach button signal if it's still attached
-        if (c.button_signal) widget.disconnect(c.button_signal);
+        if (tab.button_signal) widget.disconnect(tab.button_signal);
 
         // Connect tab-clicked signal
-        c.button_signal = widget.connect('clicked', () => {
+        tab.button_signal = widget.connect('clicked', () => {
             this.activate(entity);
-            this.window_exec(comp, entity, (window) => {
+            this.window_exec(tab, entity, (window) => {
                 const actor = window.meta.get_compositor_private<Clutter.Actor | null>();
                 if (!actor) return;
 
@@ -697,22 +693,22 @@ export class Stack {
         });
 
         // Detach signals if they're still attached
-        if (this.tabs[comp].signals) {
-            for (const c of this.tabs[comp].signals) window.meta.disconnect(c);
+        if (tab.signals) {
+            for (const signal of tab.signals) window.meta.disconnect(signal);
         }
 
         // Attach new signals
-        this.tabs[comp].signals = [
+        tab.signals = [
             window.meta.connect('notify::title', () => {
-                this.window_exec(comp, entity, (window) => {
-                    this.buttons.get(button)?.set_title(window.title());
+                this.window_exec(tab, entity, (window) => {
+                    this.buttons.get(tab.button)?.set_title(window.title());
                 });
             }),
 
             window.meta.connect('notify::urgent', () => {
-                this.window_exec(comp, entity, (window) => {
+                this.window_exec(tab, entity, (window) => {
                     if (!window.meta.has_focus()) {
-                        this.buttons.get(button)?.set_active(TabActive.urgent);
+                        this.buttons.get(tab.button)?.set_active(TabActive.urgent);
                     }
                 });
             }),
@@ -723,13 +719,12 @@ export class Stack {
         this.ext.show_border_on_focused();
     }
 
-    private window_exec(comp: number, entity: Entity, func: (window: ShellWindow) => void) {
+    private window_exec(tab: Tab, entity: Entity, func: (window: ShellWindow) => void) {
         const window = this.ext.windows.get(entity);
         if (window && window.actor_exists()) {
             func(window);
         } else {
-            const tab = this.tabs[comp];
-            if (tab) this.tab_disconnect(tab);
+            this.tab_disconnect(tab);
         }
     }
 }
