@@ -14,7 +14,7 @@ This is a fork of the original [pop-os/shell](https://github.com/pop-os/shell) r
 
 I'm working on this just for fun: there isn't too much interesting here from a user perspective.
 
-Find a summary of this fork's changes in [CHANGELOG.md](https://github.com/adil192/shatter-shell/blob/master_resolute/CHANGELOG.md).
+For a summary of this fork's changes, see [Releases](https://github.com/adil192/shatter-shell/releases).
 
 ## Installation
 
