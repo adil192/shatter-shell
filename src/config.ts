@@ -66,6 +66,16 @@ export const DEFAULT_FLOAT_RULES: Array<FloatRule> = [
     { class: 'xwaylandvideobridge' },
 ];
 
+const _regExpCache = new Map<string, RegExp>();
+function getRegExp(pattern: string) {
+    let regExp = _regExpCache.get(pattern);
+    if (!regExp) {
+        regExp = new RegExp(pattern, 'i');
+        _regExpCache.set(pattern, regExp);
+    }
+    return regExp;
+}
+
 export class Config {
     /** List of windows that should float, regardless of their WM hints */
     float: Array<FloatRule> = [];
@@ -95,9 +105,9 @@ export class Config {
 
     window_shall_float(wclass: string, title: string): boolean {
         for (const rule of this.float.concat(DEFAULT_FLOAT_RULES)) {
-            if (rule.class && !new RegExp(rule.class, 'i').test(wclass)) continue;
+            if (rule.class && !getRegExp(rule.class).test(wclass)) continue;
 
-            if (rule.title && !new RegExp(rule.title, 'i').test(title)) continue;
+            if (rule.title && !getRegExp(rule.title).test(title)) continue;
 
             return !rule.disabled;
         }
