@@ -37,7 +37,7 @@ node_modules/.package-lock.json: package.json package-lock.json
 	npm ci
 
 enable:
-	-gnome-extensions disable "pop-shell@system76.com"
+	-gnome-extensions disable "pop-shell@system76.com" 2>/dev/null || true
 	gnome-extensions enable "$(UUID)"
 
 disable:
