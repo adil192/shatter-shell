@@ -244,46 +244,34 @@ export class ShellWindow {
     }
 
     is_tilable(ext: Ext): boolean {
-        const tile_checks = () => {
-            let wm_class = this.meta.get_wm_class();
+        if (ext.contains_tag(this.entity, Tags.Floating)) return false;
 
-            if (wm_class !== null && wm_class.trim().length === 0) {
-                wm_class = this.name(ext);
-            }
+        let wm_class = this.meta.get_wm_class();
+        if (wm_class !== null && !wm_class.trim().length) {
+            wm_class = this.name(ext);
+        }
 
-            const role = this.meta.get_role();
+        // Quake-style terminals such as Tilix's quake mode.
+        if (this.meta.get_role() === 'quake') return false;
 
-            // Quake-style terminals such as Tilix's quake mode.
-            if (role === 'quake') return false;
+        if (!this.meta.allows_resize()) return false;
+        if (!this.meta.allows_move()) return false;
 
-            // Steam loading window is less than 400px wide and 200px tall
-            if (this.meta.get_title() === 'Steam') {
-                const rect = this.rect();
+        // Blacklist any windows that happen to leak through our filter
+        // Windows that are tagged ForceTile are considered tilable despite exemption
+        if (wm_class !== null && ext.conf.window_shall_float(wm_class, this.title())) {
+            return ext.contains_tag(this.entity, Tags.ForceTile);
+        }
 
-                const is_dialog = rect.width < 400 && rect.height < 200;
-                const is_first_login = rect.width === 432 && rect.height === 438;
-
-                if (is_dialog || is_first_login) return false;
-            }
-
-            // Blacklist any windows that happen to leak through our filter
-            // Windows that are tagged ForceTile are considered tilable despite exemption
-            if (wm_class !== null && ext.conf.window_shall_float(wm_class, this.title())) {
-                return ext.contains_tag(this.entity, Tags.ForceTile);
-            }
-
-            // Only normal windows will be considered for tiling
-            return (
-                this.meta.window_type == Meta.WindowType.NORMAL
-                // Transient windows are most likely dialogs
-                && !this.is_transient()
-                // If a window lacks a class, it's probably a web browser dialog
-                && wm_class !== null
-            );
-        };
-
-        return !ext.contains_tag(this.entity, Tags.Floating) && tile_checks();
-    }
+        // Only normal windows will be considered for tiling
+        return (
+            this.meta.window_type == Meta.WindowType.NORMAL
+            // Transient windows are most likely dialogs
+            && !this.is_transient()
+            // If a window lacks a class, it's probably a web browser dialog
+            && wm_class !== null
+        );
+    };
 
     is_transient(): boolean {
         return this.meta.get_transient_for() !== null;
@@ -617,10 +605,10 @@ export function activate(ext: Ext, move_mouse: boolean, win: Meta.Window) {
 
         const pointer_placement_permitted
             = move_mouse
-                && Main.modalCount === 0
-                && ext.settings.mouse_cursor_follows_active_window()
-                && !pointer_already_on_window(win)
-                && pointer_in_work_area();
+            && Main.modalCount === 0
+            && ext.settings.mouse_cursor_follows_active_window()
+            && !pointer_already_on_window(win)
+            && pointer_in_work_area();
 
         if (pointer_placement_permitted) {
             place_pointer_on(ext, win);

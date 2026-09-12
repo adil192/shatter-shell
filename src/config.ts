@@ -95,19 +95,11 @@ export class Config {
 
     window_shall_float(wclass: string, title: string): boolean {
         for (const rule of this.float.concat(DEFAULT_FLOAT_RULES)) {
-            if (rule.class) {
-                if (!new RegExp(rule.class, 'i').test(wclass)) {
-                    continue;
-                }
-            }
+            if (rule.class && !new RegExp(rule.class, 'i').test(wclass)) continue;
 
-            if (rule.title) {
-                if (!new RegExp(rule.title, 'i').test(title)) {
-                    continue;
-                }
-            }
+            if (rule.title && !new RegExp(rule.title, 'i').test(title)) continue;
 
-            return rule.disabled ? false : true;
+            return !rule.disabled;
         }
 
         return false;
