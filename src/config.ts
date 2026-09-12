@@ -61,6 +61,7 @@ export const DEFAULT_FLOAT_RULES: Array<FloatRule> = [
     { class: '^.*action=join.*$' },
     { class: 'gjs' },
     { class: 'git-credential-manager' },
+    { class: 'xwaylandvideobridge' },
 ];
 
 export interface WindowRule {
