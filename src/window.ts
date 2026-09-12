@@ -263,9 +263,10 @@ export class ShellWindow {
             return ext.contains_tag(this.entity, Tags.ForceTile);
         }
 
-        // Only normal windows will be considered for tiling
         return (
+            // Only normal windows will be considered for tiling
             this.meta.window_type == Meta.WindowType.NORMAL
+            && !this.meta.is_skip_taskbar()
             // Transient windows are most likely dialogs
             && !this.is_transient()
             // If a window lacks a class, it's probably a web browser dialog
