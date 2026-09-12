@@ -83,8 +83,9 @@ const TabButton = GObject.registerClass(
                 y_align: Clutter.ActorAlign.CENTER,
                 style_class: 'shatter-shell-window-close',
             });
-            close_button.connect('clicked', () => {
+            const on_close = close_button.connect('clicked', () => {
                 window.meta.delete(global.get_current_time());
+                close_button.disconnect(on_close);
             });
 
             const container = new St.BoxLayout({
