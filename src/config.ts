@@ -1,6 +1,5 @@
 import GLib from 'gi://GLib';
 import Gio from 'gi://Gio';
-import Meta from 'gi://Meta';
 
 const CONF_DIR = GLib.get_user_config_dir() + '/shatter-shell';
 export const CONF_FILE = CONF_DIR + '/config.json';
@@ -67,38 +66,9 @@ export const DEFAULT_FLOAT_RULES: Array<FloatRule> = [
     { class: 'xwaylandvideobridge' },
 ];
 
-export interface WindowRule {
-    class?: string;
-    title?: string;
-    disabled?: boolean;
-}
-
-/**
- * These windows will skip showing in Overview, Thumbnails or SwitcherList
- * And any rule here should be added on the DEFAULT_RULES above
- */
-export const SKIPTASKBAR_EXCEPTIONS: Array<WindowRule> = [
-    { class: 'Conky' },
-    { class: 'gjs' },
-    { class: 'Guake' },
-    { class: 'Com.github.amezin.ddterm' },
-    { class: 'plank' },
-];
-
-export interface FloatRule {
-    class?: string;
-    title?: string;
-}
-
 export class Config {
     /** List of windows that should float, regardless of their WM hints */
     float: Array<FloatRule> = [];
-
-    /**
-     * List of Windows with skip taskbar true but still hidden in Overview,
-     * Switchers, Workspace Thumbnails
-     */
-    skiptaskbarhidden: Array<WindowRule> = [];
 
     /** Logs window details on focus of window */
     log_on_focus: boolean = false;
@@ -133,31 +103,6 @@ export class Config {
 
             if (rule.title) {
                 if (!new RegExp(rule.title, 'i').test(title)) {
-                    continue;
-                }
-            }
-
-            return rule.disabled ? false : true;
-        }
-
-        return false;
-    }
-
-    skiptaskbar_shall_hide(meta_window: Meta.Window) {
-        const wmclass = meta_window.get_wm_class();
-        const wmtitle = meta_window.get_title();
-
-        if (!meta_window.is_skip_taskbar()) return false;
-
-        for (const rule of this.skiptaskbarhidden.concat(SKIPTASKBAR_EXCEPTIONS)) {
-            if (rule.class && wmclass) {
-                if (!new RegExp(rule.class, 'i').test(wmclass)) {
-                    continue;
-                }
-            }
-
-            if (rule.title) {
-                if (!new RegExp(rule.title, 'i').test(wmtitle)) {
                     continue;
                 }
             }
