@@ -1,7 +1,7 @@
 {
     "name": "Shatter Shell",
     "uuid": "shatter-shell@adilhanney.com",
-    "version-name": "2.0.1",
+    "version-name": "2.1.0",
     "settings-schema": "org.gnome.shell.extensions.shatter-shell",
     "url": "https://github.com/adil192/shatter-shell/",
     "description": "Shatter Shell is a keyboard-driven layer for GNOME Shell which allows for quick and sensible navigation and management of windows. The core feature of Shatter Shell is the addition of advanced tiling window management — a feature that has been highly sought within our community. For many — ourselves included — i3wm has become the leading competitor to the GNOME desktop.\nTiling window management in GNOME is virtually nonexistent, which makes the desktop awkward to interact with when your needs exceed that of two windows at a given time. Luckily, GNOME Shell is an extensible desktop with the foundations that make it possible to implement a tiling window manager on top of the desktop.\nTherefore, we see an opportunity here to advance the usability of the GNOME desktop to better accommodate the needs of our community with Shatter Shell. Advanced tiling window management is a must for the desktop, so we've merged i3-like tiling window management with the GNOME desktop for the best of both worlds.",
