@@ -5,5 +5,6 @@ import '@girs/gnome-shell/ambient';
 import '@girs/gnome-shell/extensions/global';
 import '@girs/gobject-2.0';
 import '@girs/gtk-3.0';
+import '@girs/gtk-4.0';
 import '@girs/meta-18';
 import '@girs/mtk-18';
