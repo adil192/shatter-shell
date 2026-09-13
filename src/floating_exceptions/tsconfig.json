@@ -12,8 +12,6 @@
         "skipLibCheck": true,
         "pretty": true,
         "composite": true,
-        "noUnusedLocals": true,
-        "noUnusedParameters": true,
         "moduleResolution": "NodeNext",
         "module": "NodeNext",
     },

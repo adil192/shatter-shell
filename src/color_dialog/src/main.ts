@@ -2,7 +2,7 @@
 
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
-import Gtk from 'gi://Gtk?version=3.0';
+import Gtk from 'gi://Gtk';
 import Gdk from 'gi://Gdk';
 
 const EXT_PATH_DEFAULTS = [
@@ -48,40 +48,44 @@ function getSettings(schema: string) {
     return new Gio.Settings({ settings_schema: schemaObj });
 }
 /**
- * Launch a Gtk.ColorChooserDialog. And then save the color RGBA/alpha values in GSettings of shatter-shell.
+ * Launch a Gtk.ColorDialog. And then save the color RGBA/alpha values in GSettings of shatter-shell.
  * Using the settings.connect('changed') mechanism, the extension is able to listen to when the color changes in realtime.
  */
-function launch_color_dialog() {
-    const shattershell_settings = getSettings('org.gnome.shell.extensions.shatter-shell');
+function launch_color_dialog(application: Gtk.Application) {
+    const settings = getSettings('org.gnome.shell.extensions.shatter-shell');
 
-    const color_dialog = new Gtk.ColorChooserDialog({
+    const win = new Gtk.ApplicationWindow({
+        application,
         title: 'Choose Color',
+        modal: true,
+        visible: false,
     });
-    color_dialog.show_editor = true;
-    color_dialog.show_all();
 
-    // Use the new spec format for Gtk.Color thru Gdk.RGBA
     const rgba = new Gdk.RGBA();
-    if (rgba.parse(shattershell_settings.get_string('hint-color-rgba'))) {
-        color_dialog.set_rgba(rgba);
-    } else {
-        rgba.parse(DEFAULT_HINT_COLOR);
-        color_dialog.set_rgba(rgba);
-    }
+    const _ = rgba.parse(settings.get_string('hint-color-rgba')) || rgba.parse(DEFAULT_HINT_COLOR);
 
-    const response = color_dialog.run();
+    const color_dialog = new Gtk.ColorDialog({
+        title: 'Choose Color',
+        with_alpha: true,
+    });
 
-    if (response === Gtk.ResponseType.CANCEL) {
-        color_dialog.destroy();
-    } else if (response === Gtk.ResponseType.OK) {
-        // save the selected RGBA to GSettings
-        // TODO, save alpha instead of always 1.0
-        shattershell_settings.set_string('hint-color-rgba', color_dialog.get_rgba().to_string());
-        Gio.Settings.sync();
-        color_dialog.destroy();
-    }
+    color_dialog.choose_rgba(win, rgba, null, (_, result) => {
+        try {
+            const rgba = color_dialog.choose_rgba_finish(result);
+            settings.set_string('hint-color-rgba', rgba.to_string());
+            Gio.Settings.sync();
+        } catch { /* Dialog dismissed by user */ }
+        win.close();
+        application.quit();
+    });
 }
 
-Gtk.init(null);
+function main() {
+    const application = new Gtk.Application({
+        application_id: 'org.gnome.shell.extensions.shatter-shell.color-dialog',
+    });
+    application.connect('activate', () => launch_color_dialog(application));
+    return application.run(null);
+}
 
-launch_color_dialog();
+main();
