@@ -23,12 +23,6 @@ let SCHEDULED_RESTACK: number | null = null;
 /** Contains SourceID of an active hint operation. */
 let ACTIVE_HINT_SHOW_ID: number | null = null;
 
-const WM_TITLE_BLACKLIST: Array<string> = [
-    'Firefox',
-    'Nightly', // Firefox Nightly
-    'Tor Browser',
-];
-
 enum RESTACK_STATE {
     RAISED,
     WORKSPACE_CHANGED,
@@ -209,23 +203,16 @@ export class ShellWindow {
         return icon;
     }
 
-    ignore_decoration(): boolean {
-        const name = this.meta.get_wm_class();
-        if (name === null) return true;
-        return WM_TITLE_BLACKLIST.findIndex(n => name.startsWith(n)) !== -1;
-    }
-
+    /** Whether the window is maximized horizontally or vertically (not necessarily both). */
     is_maximized(): boolean {
         return this.meta.maximized_horizontally || this.meta.maximized_vertically;
     }
 
-    /**
-     * Window is maximized, 0 gapped or smart gapped
-     */
-    is_max_screen(): boolean {
-        // log.debug(`title: ${this.meta.get_title()}`);
-        // log.debug(`max: ${this.is_maximized()}, 0-gap: ${this.ext.settings.gap_inner() === 0}, smart: ${this.smart_gapped}`);
-        return this.is_maximized() || this.ext.settings.gap_inner() === 0 || this.smart_gapped;
+    /** Window is maximized, 0 gapped, or smart gapped */
+    private is_max_screen(): boolean {
+        return this.is_maximized()
+            || this.ext.settings.gap_inner() === 0
+            || this.smart_gapped;
     }
 
     is_single_max_screen(): boolean {
@@ -239,6 +226,7 @@ export class ShellWindow {
         return false;
     }
 
+    /** Whether the window has been "snapped" to the left or right. */
     is_snap_edge(): boolean {
         return this.meta.maximized_vertically && !this.meta.maximized_horizontally;
     }
