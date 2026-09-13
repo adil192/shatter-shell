@@ -252,9 +252,6 @@ function println(message: string) {
 
 /** Initialize GTK and start the application */
 function main() {
-    GLib.set_prgname(WM_CLASS_ID);
-    GLib.set_application_name('Shatter Shell Floating Window Exceptions');
-
     const application = new Adw.Application({
         application_id: WM_CLASS_ID,
     });

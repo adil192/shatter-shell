@@ -13,7 +13,6 @@
         "@girs/giounix-2.0": "^4.6.0",
         "@girs/gjs": "^4.6.0",
         "@girs/gnome-shell": "^50.0.4",
-        "@girs/gtk-3.0": "^4.6.0",
         "@girs/gtk-4.0": "^4.6.0",
         "@girs/mtk-18": "^4.6.0",
         "@stylistic/eslint-plugin": "^5.10.0",
