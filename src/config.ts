@@ -24,8 +24,8 @@ type Result<T> = Ok<T> | Error;
 
 export const DEFAULT_FLOAT_RULES: Array<FloatRule> = [
     { class: 'Authy Desktop' },
-    { class: 'Com.github.amezin.ddterm' },
-    { class: 'Com.github.donadigo.eddy' },
+    { class: 'com.github.amezin.ddterm' },
+    { class: 'com.github.donadigo.eddy' },
     { class: 'Conky' },
     { title: 'Discord Updater' },
     { class: 'Enpass', title: 'Enpass Assistant' },
