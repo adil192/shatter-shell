@@ -243,7 +243,7 @@ export class World {
     /** Unregisters an old component storage from our world */
     unregister_storage(storage: Storage<unknown>) {
         const matched = this.storages.indexOf(storage);
-        if (matched) {
+        if (matched !== -1) {
             swap_remove(this.storages, matched);
         }
     }
