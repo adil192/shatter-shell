@@ -18,33 +18,28 @@ import * as config from './config.js';
 const WM_CLASS_ID = 'org.gnome.shell.extensions.shatter-shell.exceptions';
 
 interface SelectWindow {
-    tag: 0;
+    tag: 'select';
 }
 
-enum ViewNum {
-    MainView = 0,
-    Exceptions = 1,
-}
-
-interface SwitchTo {
-    tag: 1;
-    view: ViewNum;
+interface SwitchPage {
+    tag: 'switch-page';
+    page: 'main' | 'exceptions';
 }
 
 interface ToggleException {
-    tag: 2;
+    tag: 'toggle-exception';
     wmclass: string | undefined;
     wmtitle: string | undefined;
     enable: boolean;
 }
 
 interface RemoveException {
-    tag: 3;
+    tag: 'remove-exception';
     wmclass: string | undefined;
     wmtitle: string | undefined;
 }
 
-type Event = SelectWindow | SwitchTo | ToggleException | RemoveException;
+type Event = SelectWindow | SwitchPage | ToggleException | RemoveException;
 
 function new_system_exceptions_button(): Adw.ActionRow {
     const row = new Adw.ActionRow({
@@ -90,7 +85,7 @@ const MainPage = GObject.registerClass(class MainPage extends Adw.NavigationPage
             start_icon_name: 'select-symbolic',
             title: 'New exception',
         });
-        selectButton.connect('activated', () => callback({ tag: 0 }));
+        selectButton.connect('activated', () => callback({ tag: 'select' }));
         selectGroup.add(selectButton);
 
         this.preferencesGroup = new Adw.PreferencesGroup({
@@ -99,7 +94,7 @@ const MainPage = GObject.registerClass(class MainPage extends Adw.NavigationPage
         preferencesPage.add(this.preferencesGroup);
 
         const system_exceptions_button = new_system_exceptions_button();
-        system_exceptions_button.connect('activated', () => callback({ tag: 1, view: ViewNum.Exceptions }));
+        system_exceptions_button.connect('activated', () => callback({ tag: 'switch-page', page: 'exceptions' }));
         this.preferencesGroup.add(system_exceptions_button);
     }
 
@@ -117,7 +112,7 @@ const MainPage = GObject.registerClass(class MainPage extends Adw.NavigationPage
         });
         button.connect('clicked', () => {
             this.preferencesGroup.remove(row);
-            this.callback({ tag: 3, wmclass, wmtitle });
+            this.callback({ tag: 'remove-exception', wmclass, wmtitle });
         });
         row.add_suffix(button);
     }
@@ -154,7 +149,7 @@ const ExceptionsPage = GObject.registerClass(class ExceptionsPage extends Adw.Na
             active: enabled,
         });
         row.connect('notify::active', () => {
-            this.callback({ tag: 2, wmclass, wmtitle, enable: row.active });
+            this.callback({ tag: 'toggle-exception', wmclass, wmtitle, enable: row.active });
         });
         this.preferencesGroup.add(row);
     }
@@ -204,34 +199,30 @@ class App {
 
     event_handler(event: Event) {
         switch (event.tag) {
-            // SelectWindow
-            case 0:
+            case 'select':
                 println('SELECT');
                 this.application.quit();
                 break;
 
-            // SwitchTo
-            case 1:
-                switch (event.view) {
-                    case ViewNum.MainView:
+            case 'switch-page':
+                switch (event.page) {
+                    case 'main':
                         this.nav.pop();
                         break;
-                    case ViewNum.Exceptions:
+                    case 'exceptions':
                         this.nav.push(this.exceptions_page);
                         break;
                 }
 
                 break;
 
-            // ToggleException
-            case 2:
+            case 'toggle-exception':
                 log(`toggling exception ${event.enable}`);
                 this.config.toggle_system_exception(event.wmclass, event.wmtitle, !event.enable);
                 println('MODIFIED');
                 break;
 
-            // RemoveException
-            case 3:
+            case 'remove-exception':
                 log(`removing exception`);
                 this.config.remove_user_exception(event.wmclass, event.wmtitle);
                 println('MODIFIED');
