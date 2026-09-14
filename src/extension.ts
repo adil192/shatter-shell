@@ -422,7 +422,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         return window ? window.meta.get_compositor_private<Clutter.Actor | null>() : null;
     }
 
-    /// Connects a callback signal to a GObject, and records the signal.
+    /** Connects a callback signal to a GObject, and records the signal. */
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     connect(object: GObject.Object | Misc.signals.EventEmitter, property: string, callback: (...args: any[]) => boolean | void): SignalID {
         const signal = object instanceof GObject.Object
@@ -684,7 +684,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         }
     }
 
-    /// Fetches the window component from the entity associated with the metacity window metadata.
+    /** Fetches the window component from the entity associated with the metacity window metadata. */
     get_window(meta: Meta.Window | null): Window.ShellWindow | null {
         const entity = this.window_entity(meta);
         return entity ? this.windows.get(entity) : null;
@@ -2103,7 +2103,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         }
     }
 
-    /// If the auto-tilable status of a window has changed, detach or attach the window.
+    /** If the auto-tilable status of a window has changed, detach or attach the window. */
     tiling_config_reapply() {
         if (this.auto_tiler) {
             const at = this.auto_tiler;
@@ -2455,7 +2455,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         }
     }
 
-    /// Fetches the window entity which is associated with the metacity window metadata.
+    /** Fetches the window entity which is associated with the metacity window metadata. */
     window_entity(meta: Meta.Window | null): Entity | null {
         if (!meta) return null;
 
@@ -2525,7 +2525,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         return entity;
     }
 
-    /// Returns the tilable window(s) that the mouse pointer is currently hovering above.
+    /** Returns the tilable window(s) that the mouse pointer is currently hovering above. */
     * windows_at_pointer(cursor: Mtk.Rectangle, monitor: number, workspace: number): IterableIterator<Window.ShellWindow> {
         for (const entity of this.monitors.find(m => m[0] == monitor && m[1] == workspace)) {
             const window = this.windows.with(entity, (window) => {

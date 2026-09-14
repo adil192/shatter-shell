@@ -573,7 +573,7 @@ export class ShellWindow {
     }
 }
 
-/// Activates a window, and moves the mouse point.
+/** Activates a window, and moves the mouse point. */
 export function activate(ext: Ext, move_mouse: boolean, win: Meta.Window) {
     try {
         // Return if window was destroyed.

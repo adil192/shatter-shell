@@ -59,7 +59,7 @@ export function dbg<T>(value: T): T {
     return value;
 }
 
-/// Missing from the Clutter API is an Actor children iterator
+/** Missing from the Clutter API is an Actor children iterator */
 export function* get_children(actor: Clutter.Actor): IterableIterator<Clutter.Actor> {
     let nth = 0;
     const children = actor.get_n_children();
@@ -105,7 +105,7 @@ export function orientation_as_str(value: number): string {
     return value == 0 ? 'Orientation::Horizontal' : 'Orientation::Vertical';
 }
 
-/// Useful in the event that you want to reuse an actor in the future
+/** Useful in the event that you want to reuse an actor in the future */
 export function recursive_remove_children(actor: Clutter.Actor) {
     for (const child of get_children(actor)) {
         recursive_remove_children(child);
