@@ -180,11 +180,11 @@ export class ShellWindow {
 
         const result = utils.read_to_string(path);
         let out: string | null;
-        if (result.kind == 1) {
+        if (result.ok) {
             out = result.value.trim();
         } else {
             out = null;
-            log.error(`failed to fetch cmdline: ${result.value.format()}`);
+            log.error(`failed to fetch cmdline: ${result.why.format()}`);
         }
 
         return out;

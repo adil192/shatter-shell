@@ -5,8 +5,8 @@ import * as ecs from './ecs.js';
 import * as lib from './lib.js';
 import * as log from './log.js';
 import * as node from './node.js';
-import * as result from './result.js';
-import * as stack from './stack.js';
+import { Result, Ok, Err } from './result.js';
+import { Stack } from './stack.js';
 import * as geom from './geom.js';
 import * as tiling from './tiling.js';
 
@@ -14,11 +14,8 @@ import type { Entity } from './ecs.js';
 import type { Ext } from './extension.js';
 import type { Forest, MoveBy, MoveByCursor } from './forest.js';
 import type { Fork } from './fork.js';
-import type { Result } from './result.js';
 import type { ShellWindow } from './window.js';
 
-const { Stack } = stack;
-const { Ok, Err, ERR } = result;
 const { NodeKind } = node;
 import Tags from './tags.js';
 
@@ -205,8 +202,8 @@ export class AutoTiler {
     auto_tile(ext: Ext, win: ShellWindow, ignore_focus: boolean = false) {
         const result = this.fetch_mode(ext, win, ignore_focus);
         this.detach_window(ext, win.entity);
-        if (result.kind == ERR) {
-            log.debug(`attach to workspace: ${result.value}`);
+        if (!result.ok) {
+            log.debug(`attach to workspace: ${result.why}`);
             this.attach_to_workspace(ext, win, ext.workspace_id(win));
         } else {
             log.debug(`attaching to window ${win.entity}`);
@@ -536,8 +533,8 @@ export class AutoTiler {
 
     toggle_orientation(ext: Ext, window: ShellWindow) {
         const result = this.toggle_orientation_(ext, window);
-        if (result.kind == ERR) {
-            log.warn(`toggle_orientation: ${result.value}`);
+        if (!result.ok) {
+            log.warn(`toggle_orientation: ${result.why}`);
         }
     }
 

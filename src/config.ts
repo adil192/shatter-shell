@@ -1,5 +1,6 @@
 import GLib from 'gi://GLib';
 import Gio from 'gi://Gio';
+import { Result, Ok, Err } from './result.js';
 
 const CONF_DIR = GLib.get_user_config_dir() + '/shatter-shell';
 export const CONF_FILE = CONF_DIR + '/config.json';
@@ -9,18 +10,6 @@ export interface FloatRule {
     title?: string;
     disabled?: boolean;
 }
-
-interface Ok<T> {
-    ok: true;
-    value: T;
-}
-
-interface Error {
-    ok: false;
-    why: string;
-}
-
-type Result<T> = Ok<T> | Error;
 
 export const DEFAULT_FLOAT_RULES: Array<FloatRule> = [
     { class: 'Authy Desktop' },
@@ -193,21 +182,21 @@ export class Config {
         }
     }
 
-    private static from_config(): Result<Config> {
+    private static from_config(): Result<Config, string> {
         const stream = Config.read();
         if (!stream.ok) return stream;
         const value = Config.from_json(stream.value);
-        return { ok: true, value };
+        return Ok(value);
     }
 
-    private static gio_file(): Result<Gio.File> {
+    private static gio_file(): Result<Gio.File, string> {
         try {
             const conf = Gio.File.new_for_path(CONF_FILE);
 
             if (!conf.query_exists(null)) {
                 const dir = Gio.File.new_for_path(CONF_DIR);
                 if (!dir.query_exists(null) && !dir.make_directory(null)) {
-                    return { ok: false, why: 'failed to create shatter-shell config directory' };
+                    return Err('failed to create shatter-shell config directory');
                 }
 
                 const example = new Config();
@@ -216,35 +205,35 @@ export class Config {
                 conf.create(Gio.FileCreateFlags.NONE, null).write_all(JSON.stringify(example, undefined, 2), null);
             }
 
-            return { ok: true, value: conf };
+            return Ok(conf);
         } catch (why) {
-            return { ok: false, why: `Gio.File I/O error: ${why}` };
+            return Err(`Gio.File I/O error: ${why}`);
         }
     }
 
-    private static read(): Result<string> {
+    private static read(): Result<string, string> {
         try {
             const file = Config.gio_file();
             if (!file.ok) return file;
 
             const [, buffer] = file.value.load_contents(null);
 
-            return { ok: true, value: imports.byteArray.toString(buffer) };
+            return Ok(imports.byteArray.toString(buffer));
         } catch (why) {
-            return { ok: false, why: `failed to read shatter-shell config: ${why}` };
+            return Err(`failed to read shatter-shell config: ${why}`);
         }
     }
 
-    private static write(data: string): Result<Gio.File> {
+    private static write(data: string): Result<Gio.File, string> {
         try {
             const file = Config.gio_file();
             if (!file.ok) return file;
 
             file.value.replace_contents(data, null, false, Gio.FileCreateFlags.NONE, null);
 
-            return { ok: true, value: file.value };
+            return Ok(file.value);
         } catch (why) {
-            return { ok: false, why: `failed to write to config: ${why}` };
+            return Err(`failed to write to config: ${why}`);
         }
     }
 
