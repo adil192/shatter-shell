@@ -11,12 +11,12 @@ export interface FloatRule {
 }
 
 interface Ok<T> {
-    tag: 0;
+    ok: true;
     value: T;
 }
 
 interface Error {
-    tag: 1;
+    ok: false;
     why: string;
 }
 
@@ -117,7 +117,7 @@ export class Config {
     reload() {
         const conf = Config.from_config();
 
-        if (conf.tag === 0) {
+        if (conf.ok) {
             const c = conf.value;
             this.float = c.float;
             this.log_on_focus = c.log_on_focus;
@@ -195,9 +195,9 @@ export class Config {
 
     private static from_config(): Result<Config> {
         const stream = Config.read();
-        if (stream.tag === 1) return stream;
+        if (!stream.ok) return stream;
         const value = Config.from_json(stream.value);
-        return { tag: 0, value };
+        return { ok: true, value };
     }
 
     private static gio_file(): Result<Gio.File> {
@@ -207,7 +207,7 @@ export class Config {
             if (!conf.query_exists(null)) {
                 const dir = Gio.File.new_for_path(CONF_DIR);
                 if (!dir.query_exists(null) && !dir.make_directory(null)) {
-                    return { tag: 1, why: 'failed to create shatter-shell config directory' };
+                    return { ok: false, why: 'failed to create shatter-shell config directory' };
                 }
 
                 const example = new Config();
@@ -216,35 +216,35 @@ export class Config {
                 conf.create(Gio.FileCreateFlags.NONE, null).write_all(JSON.stringify(example, undefined, 2), null);
             }
 
-            return { tag: 0, value: conf };
+            return { ok: true, value: conf };
         } catch (why) {
-            return { tag: 1, why: `Gio.File I/O error: ${why}` };
+            return { ok: false, why: `Gio.File I/O error: ${why}` };
         }
     }
 
     private static read(): Result<string> {
         try {
             const file = Config.gio_file();
-            if (file.tag === 1) return file;
+            if (!file.ok) return file;
 
             const [, buffer] = file.value.load_contents(null);
 
-            return { tag: 0, value: imports.byteArray.toString(buffer) };
+            return { ok: true, value: imports.byteArray.toString(buffer) };
         } catch (why) {
-            return { tag: 1, why: `failed to read shatter-shell config: ${why}` };
+            return { ok: false, why: `failed to read shatter-shell config: ${why}` };
         }
     }
 
     private static write(data: string): Result<Gio.File> {
         try {
             const file = Config.gio_file();
-            if (file.tag === 1) return file;
+            if (!file.ok) return file;
 
             file.value.replace_contents(data, null, false, Gio.FileCreateFlags.NONE, null);
 
-            return { tag: 0, value: file.value };
+            return { ok: true, value: file.value };
         } catch (why) {
-            return { tag: 1, why: `failed to write to config: ${why}` };
+            return { ok: false, why: `failed to write to config: ${why}` };
         }
     }
 
