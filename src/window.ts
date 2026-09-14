@@ -288,7 +288,7 @@ export class ShellWindow {
 
             ext.movements.insert(this.entity, rect instanceof Mtk.Rectangle ? rect : new Mtk.Rectangle(rect));
 
-            ext.register({ tag: 2, window: this, kind: { tag: 1 } });
+            ext.register({ tag: 'window_move', window: this });
             if (on_complete) ext.register_fn(on_complete);
             if (meta.appears_focused) {
                 this.update_border_layout();

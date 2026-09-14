@@ -42,7 +42,7 @@ import Shell from 'gi://Shell';
 import St from 'gi://St';
 import Meta from 'gi://Meta';
 import Mtk from 'gi://Mtk';
-const { GlobalEvent, WindowEvent } = Events;
+const { GlobalEvent, WindowEventType } = Events;
 const { cursor_rect, is_keyboard_op, is_resize_op, is_move_op } = Lib;
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 const {
@@ -271,74 +271,74 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     /** Registers a generic callback to be executed in the event loop. */
     register_fn(callback: () => void, name?: string) {
-        this.register({ tag: 1, callback, name });
+        this.register({ tag: 'callback', callback, name });
     }
 
     /** Executes an event on the system */
     run(event: ExtEvent) {
         switch (event.tag) {
-            /** Callback Event */
-            case 1:
+            case 'callback':
                 event.callback();
                 break;
 
-            /** Window Event */
-            case 2:
+            case 'window_move': {
+                const window = event.window;
+
+                /** Validate that the window's actor still exists. */
+                if (!window.actor_exists()) return;
+
+                const movement = this.movements.remove(window.entity);
+                if (!movement) return;
+
+                const actor = window.meta.get_compositor_private<Clutter.Actor | null>();
+                if (!actor) {
+                    this.auto_tiler?.detach_window(this, window.entity);
+                    return;
+                }
+
+                actor.remove_all_transitions();
+                const { x, y, width, height } = movement;
+
+                window.meta.move_resize_frame(true, x, y, width, height);
+                window.meta.move_frame(true, x, y);
+
+                this.monitors.insert(window.entity, [window.meta.get_monitor(), window.workspace_id()]);
+
+                if (window.activate_after_move) {
+                    window.activate_after_move = false;
+                    window.activate();
+                }
+                break;
+            }
+
+            case 'window_event':
                 const win = event.window;
 
                 /** Validate that the window's actor still exists. */
                 if (!win.actor_exists()) return;
 
-                if (event.kind.tag === 1) {
-                    const { window } = event;
-
-                    const movement = this.movements.remove(window.entity);
-                    if (!movement) return;
-
-                    const actor = window.meta.get_compositor_private<Clutter.Actor | null>();
-                    if (!actor) {
-                        this.auto_tiler?.detach_window(this, window.entity);
-                        return;
-                    }
-
-                    actor.remove_all_transitions();
-                    const { x, y, width, height } = movement;
-
-                    window.meta.move_resize_frame(true, x, y, width, height);
-                    window.meta.move_frame(true, x, y);
-
-                    this.monitors.insert(window.entity, [win.meta.get_monitor(), win.workspace_id()]);
-
-                    if (win.activate_after_move) {
-                        win.activate_after_move = false;
-                        win.activate();
-                    }
-
-                    return;
-                }
-
-                switch (event.kind.event) {
-                    case WindowEvent.Maximize:
+                switch (event.event) {
+                    case WindowEventType.Maximize:
                         this.unset_grab_op();
                         this.on_maximize(win);
                         break;
 
-                    case WindowEvent.Minimize:
+                    case WindowEventType.Minimize:
                         this.unset_grab_op();
                         this.on_minimize(win);
                         break;
 
-                    case WindowEvent.Size:
+                    case WindowEventType.Size:
                         if (this.auto_tiler && !win.is_maximized() && !win.meta.is_fullscreen()) {
                             this.auto_tiler.reflow(this, win.entity);
                         }
                         break;
 
-                    case WindowEvent.Workspace:
+                    case WindowEventType.Workspace:
                         this.on_workspace_changed(win);
                         break;
 
-                    case WindowEvent.Fullscreen:
+                    case WindowEventType.Fullscreen:
                         if (this.auto_tiler) {
                             const attachment = this.auto_tiler.attached.get(win.entity);
                             if (attachment) {
@@ -365,7 +365,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                 break;
 
             /** Window Create Event */
-            case 3:
+            case 'window_create':
                 const actor = event.window.get_compositor_private<Clutter.Actor | null>();
                 if (!actor) return;
 
@@ -373,7 +373,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                 break;
 
             /** Stateless global events */
-            case 4:
+            case 'global':
                 switch (event.event) {
                     case GlobalEvent.GtkShellChanged:
                         this.on_gtk_shell_changed();
@@ -464,7 +464,7 @@ export class Ext extends Ecs.System<ExtEvent> {
             }
 
             const new_s = GLib.timeout_add(GLib.PRIORITY_LOW, 500, () => {
-                this.register(Events.window_event(win, WindowEvent.Size));
+                this.register(Events.window_event(win, WindowEventType.Size));
                 this.size_requests.delete(win.meta);
                 return false;
             });
@@ -473,7 +473,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         };
 
         this.connect_meta(win, 'workspace-changed', () => {
-            this.register(Events.window_event(win, WindowEvent.Workspace));
+            this.register(Events.window_event(win, WindowEventType.Workspace));
         });
 
         this.size_signals.insert(win.entity, [
@@ -482,7 +482,7 @@ export class Ext extends Ecs.System<ExtEvent> {
             this.connect_size_signal(win, 'position-changed', size_event),
 
             this.connect_size_signal(win, 'notify::minimized', () => {
-                this.register(Events.window_event(win, WindowEvent.Minimize));
+                this.register(Events.window_event(win, WindowEventType.Minimize));
             }),
         ]);
     }
@@ -889,13 +889,13 @@ export class Ext extends Ecs.System<ExtEvent> {
         if (this.conf.log_on_focus) {
             let msg
                 = `focused Window(${win.entity}) {\n`
-                    + `  class: "${win.meta.get_wm_class()}",\n`
-                    + `  cmdline: ${win.cmdline()},\n`
-                    + `  monitor: ${win.meta.get_monitor()},\n`
-                    + `  name: ${win.name(this)},\n`
-                    + `  rect: ${fmtRect(win.rect())},\n`
-                    + `  workspace: ${win.workspace_id()},\n`
-                    + `  stack: ${win.stack},\n`;
+                + `  class: "${win.meta.get_wm_class()}",\n`
+                + `  cmdline: ${win.cmdline()},\n`
+                + `  monitor: ${win.meta.get_monitor()},\n`
+                + `  name: ${win.name(this)},\n`
+                + `  rect: ${fmtRect(win.rect())},\n`
+                + `  workspace: ${win.workspace_id()},\n`
+                + `  stack: ${win.stack},\n`;
 
             if (this.auto_tiler) {
                 msg += `  fork: (${this.auto_tiler.attached.get(win.entity)}),\n`;
@@ -1843,9 +1843,9 @@ export class Ext extends Ecs.System<ExtEvent> {
                 if (!win) return;
 
                 if (event === Meta.SizeChange.MAXIMIZE || event === Meta.SizeChange.UNMAXIMIZE) {
-                    this.register(Events.window_event(win, WindowEvent.Maximize));
+                    this.register(Events.window_event(win, WindowEventType.Maximize));
                 } else {
-                    this.register(Events.window_event(win, WindowEvent.Fullscreen));
+                    this.register(Events.window_event(win, WindowEventType.Fullscreen));
                 }
             }
         });
@@ -1973,7 +1973,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         });
 
         this.connect(display, 'window_created', (_, window: Meta.Window) => {
-            this.register({ tag: 3, window });
+            this.register({ tag: 'window_create', window });
         });
 
         this.connect(display, 'grab-op-begin', (_display, win, op) => {
@@ -2035,7 +2035,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
         if (this.init) {
             for (const window of this.tab_list(Meta.TabList.NORMAL, null)) {
-                this.register({ tag: 3, window: window.meta });
+                this.register({ tag: 'window_create', window: window.meta });
             }
 
             this.register_fn(() => (this.init = false));

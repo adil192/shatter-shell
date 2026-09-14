@@ -5,31 +5,36 @@ import * as Window from './window.js';
 
 import type { Ext } from './extension.js';
 
-/** Type representing all possible events handled by the extension's system. */
-export type ExtEvent = GenericCallback | ManagedWindow | CreateWindow | GlobalEventTag;
+/** Events handled by the extension's system. */
+export type ExtEvent = CallbackEvent | WindowMove | CreateWindow | WindowEvent | GlobalEventMessage;
 
-/** Eevnt with generic callback */
-export interface GenericCallback {
-    tag: 1;
+/** Event with generic callback */
+export interface CallbackEvent {
+    tag: 'callback';
     callback: () => void;
     name?: string;
 }
 
-/** Event that handles a registered window */
-export interface ManagedWindow {
-    tag: 2;
+/** Event that moves a registered window */
+export interface WindowMove {
+    tag: 'window_move';
     window: Window.ShellWindow;
-    kind: Movement | Basic;
 }
 
 /** Event that registers a new window */
 export interface CreateWindow {
-    tag: 3;
+    tag: 'window_create';
     window: Meta.Window;
 }
 
-export interface GlobalEventTag {
-    tag: 4;
+export interface WindowEvent {
+    tag: 'window_event';
+    window: Window.ShellWindow;
+    event: WindowEventType;
+}
+
+export interface GlobalEventMessage {
+    tag: 'global';
     event: GlobalEvent;
 }
 
@@ -41,17 +46,8 @@ export enum GlobalEvent {
     OverviewHidden,
 }
 
-export interface Movement {
-    tag: 1;
-}
-
-export interface Basic {
-    tag: 2;
-    event: WindowEvent;
-}
-
 /** The type of event triggered on a window */
-export enum WindowEvent {
+export enum WindowEventType {
     Size,
     Workspace,
     Minimize,
@@ -59,16 +55,15 @@ export enum WindowEvent {
     Fullscreen,
 }
 
-export function global(event: GlobalEvent): GlobalEventTag {
-    return { tag: 4, event };
+export function global(event: GlobalEvent): GlobalEventMessage {
+    return { tag: 'global', event };
 }
 
-export function window_move(ext: Ext, window: Window.ShellWindow, rect: Mtk.Rectangle): ManagedWindow {
+export function window_move(ext: Ext, window: Window.ShellWindow, rect: Mtk.Rectangle): WindowMove {
     ext.movements.insert(window.entity, rect);
-    return { tag: 2, window, kind: { tag: 1 } };
+    return { tag: 'window_move', window };
 }
 
-/** Utility function for creating the an ExtEvent */
-export function window_event(window: Window.ShellWindow, event: WindowEvent): ManagedWindow {
-    return { tag: 2, window, kind: { tag: 2, event } };
+export function window_event(window: Window.ShellWindow, event: WindowEventType): WindowEvent {
+    return { tag: 'window_event', window, event };
 }
