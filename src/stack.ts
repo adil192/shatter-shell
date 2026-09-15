@@ -529,6 +529,10 @@ export class Stack {
                 // Adjust further indices
                 if (this.active_id > idx) this.active_id -= 1;
                 if (this.prev_active_id > idx) this.prev_active_id -= 1;
+                if (this.tabs.length) {
+                    if (this.active_id >= this.tabs.length) this.active_id = this.tabs.length - 1;
+                    if (this.prev_active_id >= this.tabs.length) this.prev_active_id = this.tabs.length - 1;
+                }
 
                 if (was_active && this.prev_active && this.tabs.length) {
                     // Go to prev_active tab if current tab closed
