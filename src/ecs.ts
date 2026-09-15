@@ -145,8 +145,8 @@ export class World {
     private storages: Array<Storage<unknown>> = [];
     /** An array for storing tags associated with an entity */
     private tags_: Array<Set<Tags>> = [];
-    /** A set of free slots to allocate */
-    private free_slots: Set<number> = new Set();
+    /** An array of free slots to allocate */
+    private free_slots: Array<number> = [];
 
     /** The total capacity of the entity array */
     get capacity(): number {
@@ -155,7 +155,7 @@ export class World {
 
     /** The number of unallocated entity slots */
     get free(): number {
-        return this.free_slots.size;
+        return this.free_slots.length;
     }
 
     /** The number of allocated entities */
@@ -175,7 +175,7 @@ export class World {
     /** Iterates across entities in the world */
     * entities(): IterableIterator<Entity> {
         for (const entity of this.entities_.values()) {
-            if (!this.free_slots.has(entity[0])) yield entity;
+            if (!(this.free_slots.indexOf(entity[0]) > -1)) yield entity;
         }
     }
 
@@ -185,12 +185,11 @@ export class World {
      * Find the first available slot, and increment the generation.
      */
     create_entity(): Entity {
-        const [slot] = this.free_slots.size ? this.free_slots : [undefined];
+        const slot = this.free_slots.pop();
 
         let entity: Entity;
-        if (slot !== undefined) {
-            this.free_slots.delete(slot);
-            entity = this.entities_[slot]!;
+        if (slot) {
+            entity = this.entities_[slot];
             entity[1] += 1;
         } else {
             entity = entity_new(this.capacity, 0);
@@ -212,7 +211,7 @@ export class World {
             storage.remove(entity);
         }
 
-        this.free_slots.add(entity[0]);
+        this.free_slots.push(entity[0]);
     }
 
     /** Adds a new tag to the given entity */
