@@ -520,14 +520,22 @@ export class Stack {
             this.prev_active = null;
             this.prev_active_id = 0;
         }
+        const was_active = Ecs.entity_eq(entity, this.active);
 
         let idx = 0;
         for (const c of this.tabs) {
             if (Ecs.entity_eq(c.entity, entity)) {
                 this.remove_tab_component(c, idx);
-                if (this.active_id > idx) {
-                    this.active_id -= 1;
+
+                // Adjust further indices
+                if (this.active_id > idx) this.active_id -= 1;
+                if (this.prev_active_id > idx) this.prev_active_id -= 1;
+
+                if (was_active && this.prev_active && this.tabs.length) {
+                    // Go to prev_active tab if current tab closed
+                    this.activate(this.tabs[this.prev_active_id].entity);
                 }
+
                 return idx;
             }
             idx += 1;
@@ -605,8 +613,12 @@ export class Stack {
             this.window_exec(c, c.entity, (window) => {
                 const actor = window.meta.get_compositor_private<Clutter.Actor | null>();
                 if (!actor) return;
-                if (permitted && this.active_id === idx) {
-                    this.fade_in(actor);
+                if (this.active_id === idx) {
+                    if (permitted) {
+                        this.fade_in(actor);
+                    } else {
+                        actor.opacity = 255;
+                    }
                 } else {
                     this.fade_out(actor);
                 }
