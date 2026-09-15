@@ -239,10 +239,7 @@ export class Stack {
     /** Activates the tab of this entity, and hides other windows. */
     activate(entity: Entity) {
         const permitted = this.permitted_to_show();
-
         if (this.widgets) this.widgets.tabs.visible = permitted;
-
-        this.reset_visibility(permitted);
 
         const win = this.ext.windows.get(entity);
         if (!win) return;
@@ -280,6 +277,8 @@ export class Stack {
 
             id += 1;
         }
+
+        this.reset_visibility(permitted);
     }
 
     private fade_in(actor: Clutter.Actor) {
