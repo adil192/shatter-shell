@@ -191,7 +191,7 @@ class App {
         for (const value of Array.from(this.config.float)) {
             const wmtitle = value.title;
             const wmclass = value.class;
-            if (!value.disabled) this.main_page.add_rule(wmclass, wmtitle);
+            if (!(value.disabled ?? false)) this.main_page.add_rule(wmclass, wmtitle);
         }
 
         win.present();

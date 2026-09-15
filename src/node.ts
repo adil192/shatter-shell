@@ -22,18 +22,18 @@ function node_variant_as_string(value: NodeKind): string {
 
 /** Identifies this node as a fork */
 export interface NodeFork {
-    kind: 1;
+    kind: NodeKind.FORK;
     entity: Entity;
 }
 
 /** Identifies this node as a window */
 export interface NodeWindow {
-    kind: 2;
+    kind: NodeKind.WINDOW;
     entity: Entity;
 }
 
 export interface NodeStack {
-    kind: 3;
+    kind: NodeKind.STACK;
     idx: number;
     entities: Array<Entity>;
     rect: Mtk.Rectangle | null;
@@ -172,13 +172,11 @@ export class Node {
         fmt += `{\n    kind: ${node_variant_as_string(this.inner.kind)},\n    `;
 
         switch (this.inner.kind) {
-            // Fork + Window
-            case 1:
-            case 2:
+            case NodeKind.FORK:
+            case NodeKind.WINDOW:
                 fmt += `entity: (${this.inner.entity})\n  }`;
                 return fmt;
-            // Stack
-            case 3:
+            case NodeKind.STACK:
                 fmt += `entities: ${this.inner.entities}\n  }`;
                 return fmt;
         }
@@ -186,7 +184,7 @@ export class Node {
 
     /** Check if the entity exists as a child of this stack */
     is_in_stack(entity: Entity): boolean {
-        if (this.inner.kind === 3) {
+        if (this.inner.kind === NodeKind.STACK) {
             for (const compare of this.inner.entities) {
                 if (Ecs.entity_eq(entity, compare)) return true;
             }
@@ -197,12 +195,12 @@ export class Node {
 
     /** Asks if this fork is the fork we are looking for */
     is_fork(entity: Entity): boolean {
-        return this.inner.kind === 1 && Ecs.entity_eq(this.inner.entity, entity);
+        return this.inner.kind === NodeKind.FORK && Ecs.entity_eq(this.inner.entity, entity);
     }
 
     /** Asks if this window is the window we are looking for */
     is_window(entity: Entity): boolean {
-        return this.inner.kind === 2 && Ecs.entity_eq(this.inner.entity, entity);
+        return this.inner.kind === NodeKind.WINDOW && Ecs.entity_eq(this.inner.entity, entity);
     }
 
     /** Calculates the future arrangement of windows in this node */
@@ -214,20 +212,17 @@ export class Node {
         record: (win: Entity, parent: Entity, area: Mtk.Rectangle) => void,
     ) {
         switch (this.inner.kind) {
-            // Fork
-            case 1:
+            case NodeKind.FORK:
                 const fork = tiler.forks.get(this.inner.entity);
                 if (fork) {
                     fork.measure(tiler, ext, area, record);
                 }
 
                 break;
-            // Window
-            case 2:
+            case NodeKind.WINDOW:
                 record(this.inner.entity, parent, area.copy());
                 break;
-            // Stack
-            case 3:
+            case NodeKind.STACK:
                 const tab_height = ext.dpi * TAB_HEIGHT_UNSCALED;
 
                 this.inner.rect = area.copy();

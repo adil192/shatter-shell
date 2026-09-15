@@ -392,7 +392,7 @@ export class Stack {
 
         c.signals = [];
 
-        if (c.button_signal) {
+        if (c.button_signal != null) {
             const b = this.buttons.get(c.button);
             if (b) {
                 b.disconnect(c.button_signal);
@@ -493,7 +493,7 @@ export class Stack {
 
     remove_by_pos(idx: number) {
         const c = this.tabs[idx];
-        if (c) this.remove_tab_component(c, idx);
+        this.remove_tab_component(c, idx);
     }
 
     remove_tab_component(c: Tab, idx: number) {
@@ -554,7 +554,7 @@ export class Stack {
         if (!this.widgets) return;
         const tab = this.tabs[this.active_id];
         const actor = window.meta.get_compositor_private<Clutter.Actor | null>();
-        if (tab && actor) {
+        if (actor) {
             this.tab_disconnect(tab);
 
             if (Ecs.entity_eq(window.entity, this.active)) {
@@ -690,7 +690,7 @@ export class Stack {
         if (!widget) return;
 
         // Detach button signal if it's still attached
-        if (tab.button_signal) widget.disconnect(tab.button_signal);
+        if (tab.button_signal != null) widget.disconnect(tab.button_signal);
 
         // Connect tab-clicked signal
         tab.button_signal = widget.connect('clicked', () => {
@@ -712,9 +712,7 @@ export class Stack {
         });
 
         // Detach signals if they're still attached
-        if (tab.signals) {
-            for (const signal of tab.signals) window.meta.disconnect(signal);
-        }
+        for (const signal of tab.signals) window.meta.disconnect(signal);
 
         // Attach new signals
         tab.signals = [

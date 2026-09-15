@@ -36,7 +36,7 @@ export class Storage<T> {
     private store: Array<[number, T] | null> = [];
 
     /** Private method for iterating across allocated slots */
-    * _iter(): IterableIterator<[number, [number, T]]> {
+    * _iter(): Generator<[number, [number, T]], void> {
         let idx = 0;
         for (const slot of this.store) {
             if (slot) yield [idx, slot];
@@ -45,21 +45,21 @@ export class Storage<T> {
     }
 
     /** Iterates across each stored component, and their entities */
-    * iter(): IterableIterator<[Entity, T]> {
+    * iter(): Generator<[Entity, T], void> {
         for (const [idx, [gen, value]] of this._iter()) {
             yield [entity_new(idx, gen), value];
         }
     }
 
     /** Finds values with the matching component */
-    * find(func: (value: T) => boolean): IterableIterator<Entity> {
+    * find(func: (value: T) => boolean) {
         for (const [idx, [gen, value]] of this._iter()) {
             if (func(value)) yield entity_new(idx, gen);
         }
     }
 
     /** Iterates across each stored component */
-    * values(): IterableIterator<T> {
+    * values() {
         for (const [, [, value]] of this._iter()) {
             yield value;
         }
@@ -81,7 +81,7 @@ export class Storage<T> {
     get_or(entity: Entity, init: () => T): T {
         let value = this.get(entity);
 
-        if (!value) {
+        if (value == null) {
             value = init();
             this.insert(entity, value);
         }
@@ -110,7 +110,7 @@ export class Storage<T> {
     /** Removes the component for this entity, if it exists */
     remove(entity: Entity): T | null {
         const comp = this.get(entity);
-        if (comp) {
+        if (comp != null) {
             this.store[entity[0]] = null;
         }
         return comp;
@@ -124,13 +124,13 @@ export class Storage<T> {
      */
     take_with<X>(entity: Entity, func: (component: T) => X): X | null {
         const component = this.remove(entity);
-        return component ? func(component) : null;
+        return component != null ? func(component) : null;
     }
 
     /** Apply a function to the component if it exists */
     with<X>(entity: Entity, func: (component: T) => X): X | null {
         const component = this.get(entity);
-        return component ? func(component) : null;
+        return component != null ? func(component) : null;
     }
 }
 
@@ -173,7 +173,7 @@ export class World {
     }
 
     /** Iterates across entities in the world */
-    * entities(): IterableIterator<Entity> {
+    * entities() {
         for (const entity of this.entities_.values()) {
             if (this.free_slots.indexOf(entity[0]) === -1) yield entity;
         }

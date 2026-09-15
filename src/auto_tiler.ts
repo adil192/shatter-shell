@@ -105,7 +105,7 @@ export class AutoTiler {
             rect.height -= ext.gap_outer * 2;
         }
 
-        if (fork.left.inner.kind === 2) {
+        if (fork.left.inner.kind === NodeKind.WINDOW) {
             const win = ext.windows.get(fork.left.inner.entity);
             if (win) {
                 win.smart_gapped = fork.smart_gapped;
@@ -215,9 +215,9 @@ export class AutoTiler {
     destroy(ext: Ext) {
         for (const [, [fent]] of this.forest.toplevel) {
             for (const node of this.forest.iter(fent)) {
-                if (node.inner.kind === 2) {
+                if (node.inner.kind === NodeKind.WINDOW) {
                     this.forest.on_detach(node.inner.entity);
-                } else if (node.inner.kind === 3) {
+                } else if (node.inner.kind === NodeKind.STACK) {
                     for (const window of node.inner.entities) {
                         this.forest.on_detach(window);
                     }
@@ -264,7 +264,7 @@ export class AutoTiler {
             const fork = this.forest.forks.get(fork_entity);
 
             if (fork) {
-                if (fork.left.inner.kind === 2 && fork.right && fork.right.inner.kind === 2) {
+                if (fork.left.inner.kind === NodeKind.WINDOW && fork.right && fork.right.inner.kind === NodeKind.WINDOW) {
                     if (fork.left.is_window(win)) {
                         const sibling = ext.windows.get(fork.right.inner.entity);
                         if (sibling && sibling.rect().contains_rect(cursor)) {
@@ -304,7 +304,7 @@ export class AutoTiler {
             if (fork) {
                 if (fork.left.is_in_stack(entity)) {
                     return [fork, fork.left, true];
-                } else if (fork.right?.is_in_stack(entity)) {
+                } else if (fork.right && fork.right.is_in_stack(entity)) {
                     return [fork, fork.right, false];
                 }
             }
@@ -378,7 +378,7 @@ export class AutoTiler {
 
         // If it appears to not be attaching to anything, assume we are attaching to its sibling
         if (attach_to === null) {
-            if (fork.left.inner.kind === 2 && fork.right?.inner.kind === 2) {
+            if (fork.left.inner.kind === NodeKind.WINDOW && fork.right?.inner.kind === NodeKind.WINDOW) {
                 const attaching = fork.left.is_window(win.entity) ? fork.right.inner.entity : fork.left.inner.entity;
 
                 attach_to = ext.windows.get(attaching);
@@ -586,12 +586,12 @@ export class AutoTiler {
                     this.forest.reassign_to_parent(fork, node);
                 }
             }
-        } else if (toggled && fork.right?.is_window(win.entity)) {
+        } else if (toggled && fork.right && fork.right.is_window(win.entity)) {
             // Assign right window as stack
             win.stack = this.forest.stacks.insert(new Stack(ext, win.entity, fork.workspace, fork.monitor));
             fork.right = node.Node.stacked(win.entity, win.stack);
             fork.measure(this.forest, ext, fork.area, this.forest.on_record());
-        } else if (fork.right?.is_in_stack(win.entity)) {
+        } else if (fork.right && fork.right.is_in_stack(win.entity)) {
             const node = stack_toggle(fork, fork.right);
             if (node) fork.right = node;
         }
@@ -621,7 +621,7 @@ export class AutoTiler {
 
         if (fork.left.is_window(window.entity)) {
             this.stack_left(ext, fork, window);
-        } else if (fork.right?.is_window(window.entity)) {
+        } else if (fork.right && fork.right.is_window(window.entity)) {
             this.stack_right(ext, fork, window);
         }
     }

@@ -446,7 +446,7 @@ export class Tiler {
 
                 const before = window.rect();
 
-                const grab_op = new GrabOp.GrabOp(this.window as Entity, before);
+                const grab_op = new GrabOp.GrabOp(this.window, before);
 
                 const crect = grab_op.rect.copy();
 
@@ -476,10 +476,8 @@ export class Tiler {
 
     overlay_watch(ext: Ext, window: window.ShellWindow) {
         ext.register_fn(() => {
-            if (window) {
-                ext.set_overlay(window.rect());
-                window.activate(false);
-            }
+            ext.set_overlay(window.rect());
+            window.activate(false);
         });
     }
 
@@ -577,7 +575,7 @@ export class Tiler {
                                 return;
                             }
 
-                            if (fork.left.inner.kind === 3) {
+                            if (fork.left.inner.kind === Node.NodeKind.STACK) {
                                 Node.stack_remove(at.forest, fork.left.inner, focused.entity);
                                 focused.stack = null;
                             } else {
@@ -625,7 +623,7 @@ export class Tiler {
             0,
             0,
             Direction.Left,
-            move_window_or_monitor(ext, ext.focus_selector.left, Meta.DisplayDirection.LEFT),
+            move_window_or_monitor(ext, ext.focus_selector.left.bind(ext.focus_selector), Meta.DisplayDirection.LEFT),
         );
     }
 
@@ -638,7 +636,7 @@ export class Tiler {
             0,
             0,
             Direction.Down,
-            move_window_or_monitor(ext, ext.focus_selector.down, Meta.DisplayDirection.DOWN),
+            move_window_or_monitor(ext, ext.focus_selector.down.bind(ext.focus_selector), Meta.DisplayDirection.DOWN),
         );
     }
 
@@ -651,7 +649,7 @@ export class Tiler {
             0,
             0,
             Direction.Up,
-            move_window_or_monitor(ext, ext.focus_selector.up, Meta.DisplayDirection.UP),
+            move_window_or_monitor(ext, ext.focus_selector.up.bind(ext.focus_selector), Meta.DisplayDirection.UP),
         );
     }
 
@@ -664,7 +662,7 @@ export class Tiler {
             0,
             0,
             Direction.Right,
-            move_window_or_monitor(ext, ext.focus_selector.right, Meta.DisplayDirection.RIGHT),
+            move_window_or_monitor(ext, ext.focus_selector.right.bind(ext.focus_selector), Meta.DisplayDirection.RIGHT),
         );
     }
 
@@ -830,16 +828,14 @@ export class Tiler {
 
     snap(ext: Ext, win: window.ShellWindow) {
         const mon_geom = ext.monitor_work_area(win.meta.get_monitor());
-        if (mon_geom) {
-            const rect = win.rect();
-            const columns = Math.floor(mon_geom.width / ext.column_size);
-            const rows = Math.floor(mon_geom.height / ext.row_size);
-            this.change(rect, monitor_rect(mon_geom, columns, rows), 0, 0, 0, 0);
+        const rect = win.rect();
+        const columns = Math.floor(mon_geom.width / ext.column_size);
+        const rows = Math.floor(mon_geom.height / ext.row_size);
+        this.change(rect, monitor_rect(mon_geom, columns, rows), 0, 0, 0, 0);
 
-            win.move(ext, rect);
+        win.move(ext, rect);
 
-            ext.snapped.insert(win.entity, true);
-        }
+        ext.snapped.insert(win.entity, true);
     }
 }
 
@@ -881,7 +877,7 @@ export function locate_monitor(
 
         const work_area = win.meta.get_work_area_for_monitor(mon);
 
-        if (!work_area || exclude(work_area)) continue;
+        if (exclude(work_area)) continue;
 
         const weight = geom.shortest_side(origin, work_area);
 
@@ -917,7 +913,7 @@ function move_window_or_monitor(
 ): () => window.ShellWindow | number | null {
     return () => {
         let next_window = method.call(ext.focus_selector, ext, null);
-        next_window = next_window?.actor_exists() ? next_window : null;
+        next_window = (next_window && next_window.actor_exists()) ? next_window : null;
 
         // Check if a display exists between the next window and the focused window.
         const focus = ext.focus_window();

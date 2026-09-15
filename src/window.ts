@@ -151,29 +151,27 @@ export class ShellWindow {
         const settings = this.ext.settings;
         const color_value = settings.hint_color_rgba();
 
-        if (this.ext.overlay) {
-            const gdk = new Gdk.RGBA();
-            // TODO Probably move overlay color/opacity to prefs.js in future,
-            // For now mimic the hint color with lower opacity
-            const overlay_alpha = 0.3;
-            const orig_overlay = 'rgba(53, 132, 228, 0.3)';
-            gdk.parse(color_value);
+        const gdk = new Gdk.RGBA();
+        // TODO Probably move overlay color/opacity to prefs.js in future,
+        // For now mimic the hint color with lower opacity
+        const overlay_alpha = 0.3;
+        const orig_overlay = 'rgba(53, 132, 228, 0.3)';
+        gdk.parse(color_value);
 
-            if (utils.is_dark(gdk.to_string())) {
-                // too dark, use the blue overlay
-                gdk.parse(orig_overlay);
-            }
-
-            gdk.alpha = overlay_alpha;
-            this.ext.overlay.set_style(`background: ${gdk.to_string()}`);
+        if (utils.is_dark(gdk.to_string())) {
+            // too dark, use the blue overlay
+            gdk.parse(orig_overlay);
         }
+
+        gdk.alpha = overlay_alpha;
+        this.ext.overlay.set_style(`background: ${gdk.to_string()}`);
 
         this.update_border_style();
     }
 
     cmdline(): string | null {
-        const pid = this.meta.get_pid();
-        if (pid === -1) return null;
+        const pid = this.meta.get_pid() as number;
+        if (pid === 0) return null;
 
         const path = '/proc/' + pid + '/cmdline';
         if (!utils.exists(path)) return null;
@@ -191,7 +189,7 @@ export class ShellWindow {
     }
 
     icon(size: number) {
-        let icon = this.window_app.create_icon_texture(size) as St.Icon;
+        let icon = this.window_app.create_icon_texture(size) as St.Icon | null;
 
         if (!icon) {
             icon = new St.Icon({
@@ -216,7 +214,7 @@ export class ShellWindow {
     }
 
     is_single_max_screen(): boolean {
-        const display = this.meta.get_display();
+        const display = this.meta.get_display() as Meta.Display | null;
 
         if (display) {
             const monitor_count = display.get_n_monitors();
@@ -327,12 +325,7 @@ export class ShellWindow {
 
     workspace_id(): number {
         const workspace = this.meta.get_workspace();
-        if (workspace) {
-            return workspace.index();
-        } else {
-            this.meta.change_workspace_by_index(0, false);
-            return 0;
-        }
+        return workspace.index();
     }
 
     show_border() {
@@ -378,7 +371,7 @@ export class ShellWindow {
     }
 
     same_workspace() {
-        const workspace = this.meta.get_workspace();
+        const workspace = this.meta.get_workspace() as Meta.Workspace | null;
         if (workspace) {
             const workspace_id = workspace.index();
             return workspace_id === global.workspace_manager.get_active_workspace_index();
@@ -420,7 +413,7 @@ export class ShellWindow {
             const count = restacks;
             restacks += 1;
 
-            if (!this.actor_exists && count === 0) return true;
+            if (!this.actor_exists() && count === 0) return true;
 
             if (count === 3) {
                 if (SCHEDULED_RESTACK !== null) GLib.source_remove(SCHEDULED_RESTACK);
@@ -431,7 +424,7 @@ export class ShellWindow {
             const actor = this.meta.get_compositor_private<Clutter.Actor | null>();
             const win_group = global.window_group;
 
-            if (actor && border && win_group) {
+            if (actor && border) {
                 this.update_border_layout();
                 // move the border above the window group first
                 win_group.set_child_above_sibling(border, null);
@@ -474,7 +467,6 @@ export class ShellWindow {
         const above_windows: Clutter.Actor[] = [];
 
         for (const actor of global.get_window_actors()) {
-            if (!actor) continue;
             const window = actor.get_meta_window();
             if (window && window.is_above()) above_windows.push(actor);
         }
@@ -528,11 +520,8 @@ export class ShellWindow {
                 if (workspace === null) return;
 
                 const screen = workspace.get_work_area_for_monitor(this.meta.get_monitor());
-
-                if (screen) {
-                    width = Math.min(width, screen.x + screen.width);
-                    height = Math.min(height, screen.y + screen.height);
-                }
+                width = Math.min(width, screen.x + screen.width);
+                height = Math.min(height, screen.y + screen.height);
 
                 border.set_position(x, y);
                 border.set_size(width, height);
@@ -580,13 +569,12 @@ export function activate(ext: Ext, move_mouse: boolean, win: Meta.Window) {
         if (!win.get_compositor_private<Clutter.Actor | null>()) return;
 
         // Return if window is being destroyed.
-        if (ext.get_window(win)?.destroying) return;
+        if (ext.get_window(win)?.destroying ?? false) return;
 
         // Return if window has override-redirect set.
         if (win.is_override_redirect()) return;
 
         const workspace = win.get_workspace();
-        if (!workspace) return;
 
         win.unminimize();
         workspace.activate_with_focus(win, global.get_current_time());
@@ -610,8 +598,7 @@ function pointer_in_work_area(): boolean {
     const cursor = lib.cursor_rect();
     const indice = global.display.get_current_monitor();
     const mon = global.display.get_workspace_manager().get_active_workspace().get_work_area_for_monitor(indice);
-
-    return mon ? cursor.overlap(mon) : false;
+    return cursor.overlap(mon);
 }
 
 function place_pointer_on(ext: Ext, win: Meta.Window) {

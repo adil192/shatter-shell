@@ -51,8 +51,6 @@ const {
     overview,
     panel,
     setThemeStylesheet,
-    screenShield,
-    sessionMode,
     windowAttentionHandler,
 } = Main;
 import type { Misc } from '@girs/gnome-shell';
@@ -60,6 +58,18 @@ import { ScreenShield } from 'resource:///org/gnome/shell/ui/screenShield.js';
 import Tags from './tags.js';
 import { get_current_path } from './paths.js';
 import { clampRect, fmtRect } from './rectangle.js';
+
+// TODO: Submit these to @girs/gnome-shell
+const screenShield = Main.screenShield as ScreenShield;
+const sessionMode = Main.sessionMode as GObject.Object & { $signals: { updated: () => void }; isLocked: boolean };
+const modalActorFocusStack = Main.modalActorFocusStack as {
+    actor: Clutter.Actor;
+    grab: Clutter.Grab;
+    destroyId: number;
+    prevFocus: Clutter.Actor | null;
+    prevFocusDestroyId: number | undefined;
+    actionMode: Shell.ActionMode;
+}[];
 
 const STYLESHEET_PATHS = ['light', 'dark', 'highcontrast'].map(stylesheet_path);
 const STYLESHEETS = STYLESHEET_PATHS.map(path => Gio.File.new_for_path(path));
@@ -120,7 +130,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     row_size: number = 32;
 
     /** The known display configuration, for tracking monitor removals and changes */
-    displays: [number, Map<number, Display>] = [global.display.get_primary_monitor(), new Map()];
+    displays: [number, Map<number, Display>] = [global.display.get_primary_monitor(), new Map<number, Display>()];
 
     /** The current scaling factor in GNOME Shell */
     dpi: number = St.ThemeContext.get_for_stage(global.stage).scale_factor;
@@ -423,11 +433,28 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     /** Connects a callback signal to a GObject, and records the signal. */
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    connect(object: GObject.Object | Misc.signals.EventEmitter, property: string, callback: (...args: any[]) => boolean | void): SignalID {
-        const signal = object instanceof GObject.Object
-            ? object.connect(property, callback)
-            : object.connect(property, callback);
+    connect<T extends GObject.Object, K extends keyof T['$signals']>(
+        object: T,
+        property: K,
+        callback: GObject.SignalCallback<typeof object, T['$signals'][K]>,
+    ): SignalID {
+        const signal = object.connect(property as string, callback);
+        const entry = this.signals.get(object);
+        if (entry) {
+            entry.push(signal);
+        } else {
+            this.signals.set(object, [signal]);
+        }
+        return signal;
+    }
+
+    /** Connects a callback signal to an EventEmitter, and records the signal. */
+    connect_emitter<T extends Misc.signals.EventEmitter<S>, S extends Misc.signals.SignalMap<S>, Name extends keyof S>(
+        object: T,
+        name: Name,
+        callback: (globalThis: T, ...args: S[Name]) => boolean | void,
+    ): SignalID {
+        const signal = object.connect(name, callback);
         const entry = this.signals.get(object);
         if (entry) {
             entry.push(signal);
@@ -455,7 +482,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     connect_window(win: Window.ShellWindow) {
         const size_event = () => {
-            const old = this.size_requests.get(win.meta);
+            const old = this.size_requests.get(win.meta) ?? 0;
 
             if (old) {
                 try {
@@ -495,17 +522,20 @@ export class Ext extends Ecs.System<ExtEvent> {
             // this_app
             () => {
                 let wmclass = win.meta.get_wm_class();
-                if (wmclass !== null && wmclass.length === 0) {
-                    wmclass = win.name(this);
+                if (wmclass != null) {
+                    if (!wmclass.length) {
+                        wmclass = win.name(this);
+                    }
+                    if (wmclass.length) {
+                        this.conf.add_app_exception(wmclass);
+                    };
                 }
-
-                if (wmclass) this.conf.add_app_exception(wmclass);
                 this.exception_dialog();
             },
             // current-window
             () => {
                 const wmclass = win.meta.get_wm_class();
-                if (wmclass) this.conf.add_window_exception(wmclass, win.title());
+                if (wmclass !== null) this.conf.add_window_exception(wmclass, win.title());
                 this.exception_dialog();
             },
             // Reload the tiling config on dialog close
@@ -543,7 +573,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                 try {
                     const [bytes] = stdout!.read_line_finish(res);
                     if (bytes) {
-                        if (event_handler((imports.byteArray.toString(bytes) as string).trim())) {
+                        if (event_handler((imports.byteArray.toString(bytes)).trim())) {
                             ipc.stdout.read_line_async(0, ipc.cancellable, generator);
                         }
                     }
@@ -643,13 +673,12 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     focus_window(): Window.ShellWindow | null {
-        return this.get_window(display.get_focus_window());
+        const meta = display.get_focus_window() as Meta.Window | null;
+        return this.get_window(meta);
     }
 
     stack_select(select: (id: number, stack: stack.Stack) => Entity | null, focus_shift: () => void) {
         const switched = this.stack_switch((stack) => {
-            if (!stack) return false;
-
             const stack_con = this.auto_tiler?.forest.stacks.get(stack.idx);
             if (stack_con) {
                 const id = stack_con.active_id;
@@ -669,7 +698,7 @@ export class Ext extends Ecs.System<ExtEvent> {
             return false;
         });
 
-        if (!switched) {
+        if (!(switched ?? false)) {
             focus_shift();
         }
     }
@@ -698,6 +727,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     injections_add() {
+        // eslint-disable-next-line @typescript-eslint/unbound-method
         const screen_unlock_fn = ScreenShield.prototype['deactivate'];
         this.inject(ScreenShield.prototype, 'deactivate', (animate: boolean) => {
             screen_unlock_fn.apply(screenShield, [animate]);
@@ -707,6 +737,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     injections_remove() {
         for (const { object, method, func } of this.injections.splice(0)) {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
             object[method] = func;
         }
     }
@@ -802,8 +833,10 @@ export class Ext extends Ecs.System<ExtEvent> {
             const entity = this.auto_tiler.attached.get(win);
             if (entity) {
                 const fork = this.auto_tiler.forest.forks.get(entity);
-                if (fork?.right?.is_window(win)) {
-                    const entity = fork.right.inner.kind === 3 ? fork.right.inner.entities[0] : fork.right.inner.entity;
+                if (fork?.right && fork.right.is_window(win)) {
+                    const entity = fork.right.inner.kind === node.NodeKind.STACK
+                        ? fork.right.inner.entities[0]
+                        : fork.right.inner.entity;
 
                     this.windows.with(entity, sibling => sibling.activate());
                 }
@@ -879,7 +912,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                     if (prev.is_maximized()) {
                         prev.meta.unmaximize();
                     }
-                } else if (prev.stack) {
+                } else if (prev.stack != null) {
                     prev.meta.unmaximize();
                     this.auto_tiler.forest.stacks.get(prev.stack)?.restack();
                 }
@@ -1061,7 +1094,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         this.moved_by_mouse = true;
         this.size_signals_unblock(win);
 
-        if (win.meta && win.meta.minimized) {
+        if (win.meta.minimized) {
             this.on_minimize(win);
             return;
         }
@@ -1072,12 +1105,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
         const grab_op = this.grab_op;
 
-        if (!win) {
-            log.error('an entity was dropped, but there is no window');
-            return;
-        }
-
-        if (this.auto_tiler && op === undefined) {
+        if (this.auto_tiler && op == undefined) {
             const mon = this.monitors.get(win.entity);
             if (mon) {
                 const rect = win.meta.get_work_area_for_monitor(mon[0]);
@@ -1129,7 +1157,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                         // changing the window. Do not turn that into a tree resize.
                         if (movement === Movement.NONE) return;
 
-                        if (win.stack) {
+                        if (win.stack != null) {
                             const tab_dimension = this.dpi * stack.TAB_HEIGHT_UNSCALED;
                             crect.height += tab_dimension;
                             crect.y -= tab_dimension;
@@ -1201,39 +1229,37 @@ export class Ext extends Ecs.System<ExtEvent> {
         const prev_area = win.meta.get_work_area_for_monitor(prev_monitor);
         const next_area = win.meta.get_work_area_for_monitor(next_monitor);
 
-        if (prev_area && next_area) {
-            // get the current window rect
-            const rect = win.rect();
+        // get the current window rect
+        const rect = win.rect();
 
-            const h_ratio = next_area.height / prev_area.height;
-            rect.height = rect.height * h_ratio;
-            const w_ratio = next_area.width / prev_area.width;
-            rect.width = rect.width * w_ratio;
+        const h_ratio = next_area.height / prev_area.height;
+        rect.height = rect.height * h_ratio;
+        const w_ratio = next_area.width / prev_area.width;
+        rect.width = rect.width * w_ratio;
 
-            if (next_area.x < prev_area.x) {
-                rect.x = ((next_area.x + rect.x - prev_area.x) / prev_area.width) * next_area.width;
-            } else if (next_area.x > prev_area.x) {
-                rect.x = (rect.x / prev_area.width) * next_area.width + next_area.x;
+        if (next_area.x < prev_area.x) {
+            rect.x = ((next_area.x + rect.x - prev_area.x) / prev_area.width) * next_area.width;
+        } else if (next_area.x > prev_area.x) {
+            rect.x = (rect.x / prev_area.width) * next_area.width + next_area.x;
+        }
+
+        if (next_area.y < prev_area.y) {
+            rect.y = ((next_area.y + rect.y - prev_area.y) / prev_area.height) * next_area.height;
+        } else if (next_area.y > prev_area.y) {
+            rect.y = (rect.y / prev_area.height) * next_area.height + next_area.y;
+        }
+
+        if (this.auto_tiler) {
+            if (this.is_floating(win)) {
+                win.meta.unmaximize();
             }
 
-            if (next_area.y < prev_area.y) {
-                rect.y = ((next_area.y + rect.y - prev_area.y) / prev_area.height) * next_area.height;
-            } else if (next_area.y > prev_area.y) {
-                rect.y = (rect.y / prev_area.height) * next_area.height + next_area.y;
-            }
-
-            if (this.auto_tiler) {
-                if (this.is_floating(win)) {
-                    win.meta.unmaximize();
-                }
-
-                this.register(Events.window_move(this, win, rect));
-            } else {
-                win.move(this, rect, () => { });
-                // if the resulting dimensions of rect == next
-                if (rect.width == next_area.width && rect.height == next_area.height) {
-                    win.meta.maximize();
-                }
+            this.register(Events.window_move(this, win, rect));
+        } else {
+            win.move(this, rect, () => { });
+            // if the resulting dimensions of rect == next
+            if (rect.width == next_area.width && rect.height == next_area.height) {
+                win.meta.maximize();
             }
         }
     }
@@ -1266,7 +1292,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         /** Move a window between workspaces */
         const workspace_move = (direction: Meta.MotionDirection) => {
             const ws = win.meta.get_workspace();
-            let neighbor: Meta.Workspace | null = ws.get_neighbor(direction);
+            let neighbor = ws.get_neighbor(direction);
 
             const last_window = (): boolean => {
                 const last = wom.get_n_workspaces() - 2 === ws.index() && ws.n_windows === 1;
@@ -1332,7 +1358,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                 win.activate_after_move = true;
             };
 
-            if (neighbor && neighbor.index() !== ws.index()) {
+            if (neighbor.index() !== ws.index()) {
                 move_to_neighbor(neighbor);
             } else if (direction === Meta.MotionDirection.DOWN && !last_window()) {
                 if (this.settings.dynamic_workspaces()) {
@@ -1352,10 +1378,9 @@ export class Ext extends Ecs.System<ExtEvent> {
                         true,
                     );
 
-                    neighbor = wom.get_workspace_by_index(0);
-
-                    if (!neighbor) return;
-
+                    const new_neighbor = wom.get_workspace_by_index(0);
+                    if (!new_neighbor) return;
+                    neighbor = new_neighbor;
                     move_to_neighbor(neighbor);
                 } else {
                     return;
@@ -1402,14 +1427,14 @@ export class Ext extends Ecs.System<ExtEvent> {
 
                 /** Display an overlay indicating where the window will be placed if dropped */
 
-                if (overview.visible || !win || is_keyboard_op(op) || is_resize_op(op)) return;
+                if (overview.visible || is_keyboard_op(op) || is_resize_op(op)) return;
 
                 const workspace = this.active_workspace();
 
                 this.drag_signal = GLib.timeout_add(GLib.PRIORITY_LOW, 200, () => {
                     this.overlay.visible = false;
 
-                    if (!win || !this.auto_tiler || !this.grab_op || this.grab_op.entity !== entity) {
+                    if (!this.auto_tiler || !this.grab_op || this.grab_op.entity !== entity) {
                         this.drag_signal = null;
                         return false;
                     }
@@ -1430,7 +1455,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                     const windowless = this.auto_tiler.largest_on_workspace(this, monitor, workspace) === null;
 
                     if (attach_to === null) {
-                        if (fork.left.inner.kind === 2 && fork.right?.inner.kind === 2) {
+                        if (fork.left.inner.kind === node.NodeKind.WINDOW && fork.right?.inner.kind === node.NodeKind.WINDOW) {
                             const attaching = fork.left.is_window(entity)
                                 ? fork.right.inner.entity
                                 : fork.left.inner.entity;
@@ -1525,11 +1550,9 @@ export class Ext extends Ecs.System<ExtEvent> {
             if (actor) global.window_group.set_child_above_sibling(actor, null);
 
             this.on_monitor_changed(win, (_cfrom, cto, workspace) => {
-                if (win) {
-                    win.ignore_detach = true;
-                    this.monitors.insert(win.entity, [cto, workspace]);
-                    this.auto_tiler?.detach_window(this, win.entity);
-                }
+                win.ignore_detach = true;
+                this.monitors.insert(win.entity, [cto, workspace]);
+                this.auto_tiler?.detach_window(this, win.entity);
             });
         } else {
             // Retile on unmaximize after waiting for other events to complete, such as animations
@@ -1651,7 +1674,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         if (win) {
             const entity = win.entity;
             actor.connect('destroy', () => {
-                if (win && win.border) {
+                if (win.border) {
                     win.border.destroy();
                     win.border = null;
                 }
@@ -1725,12 +1748,12 @@ export class Ext extends Ecs.System<ExtEvent> {
                     if (fork) {
                         fork.workspace = value;
                         for (const child of this.auto_tiler.forest.iter(entity)) {
-                            if (child.inner.kind === 1) {
+                            if (child.inner.kind === node.NodeKind.FORK) {
                                 fork = this.auto_tiler.forest.forks.get(child.inner.entity);
                                 if (fork) fork.workspace = value;
-                            } else if (child.inner.kind === 2) {
+                            } else if (child.inner.kind === node.NodeKind.WINDOW) {
                                 window_move(this, child.inner.entity, value);
-                            } else if (child.inner.kind === 3) {
+                            } else if (child.inner.kind === node.NodeKind.STACK) {
                                 const stack = this.auto_tiler.forest.stacks.get(child.inner.idx);
                                 if (stack) {
                                     stack.workspace = value;
@@ -1836,7 +1859,7 @@ export class Ext extends Ecs.System<ExtEvent> {
             this.update_display_configuration(true);
         });
 
-        this.size_changed_signal = this.connect(wim, 'size-change', (_, actor, event, _before, _after) => {
+        this.size_changed_signal = this.connect(wim, 'size-change', (_, actor, event) => {
             if (this.auto_tiler) {
                 const win = this.get_window(actor.get_meta_window());
                 if (!win) return;
@@ -1849,7 +1872,7 @@ export class Ext extends Ecs.System<ExtEvent> {
             }
         });
 
-        this.connect(this.settings.ext, 'changed', (_s, key: string) => {
+        this.connect(this.settings.ext, 'changed', (_s, key) => {
             switch (key) {
                 case 'active-hint':
                     if (indicator) indicator.toggle_active.setToggleState(this.settings.active_hint());
@@ -1874,6 +1897,7 @@ export class Ext extends Ecs.System<ExtEvent> {
             });
         }
 
+        // @ts-expect-error Typescript doesn't know LayoutManager supports 'monitors-changed' signal
         this.connect(layoutManager, 'monitors-changed', () => {
             this.register(Events.global(GlobalEvent.MonitorsChanged));
         });
@@ -1888,11 +1912,13 @@ export class Ext extends Ecs.System<ExtEvent> {
             }
         });
 
-        this.connect(overview, 'showing', () => {
+        // @ts-expect-error Typescript doesn't know the overview's signals
+        this.connect_emitter(overview, 'showing', () => {
             this.register(Events.global(GlobalEvent.OverviewShown));
         });
 
-        this.connect(overview, 'hiding', () => {
+        // @ts-expect-error Typescript does't know the overview's signals
+        this.connect_emitter(overview, 'hiding', () => {
             const window = this.focus_window();
             if (window) {
                 this.on_focused(window);
@@ -1907,10 +1933,9 @@ export class Ext extends Ecs.System<ExtEvent> {
             this.connect(display, 'notify::focus-window', () => {
                 // Disallow refocus if a modal window is active
                 if (Main.modalCount !== 0) {
-                    const { actor } = Main.modalActorFocusStack[0];
-                    if (actor.style_class !== 'switcher-popup') {
-                        return;
-                    }
+                    const { actor } = modalActorFocusStack[0];
+                    if (!('style_class' in actor)) return;
+                    if (actor.style_class !== 'switcher-popup') return;
                 }
 
                 const refocus_tiled_window = () => {
@@ -1936,7 +1961,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                 // Delay in case the focused window was not focused yet.
                 // Note: Fixes Intellij IDE windows.
                 this.register_fn(() => {
-                    const meta_window = global.display.get_focus_window();
+                    const meta_window = global.display.get_focus_window() as Meta.Window | null;
 
                     if (meta_window) {
                         const shell_window = this.get_window(meta_window);
@@ -1971,7 +1996,7 @@ export class Ext extends Ecs.System<ExtEvent> {
             return false;
         });
 
-        this.connect(display, 'window_created', (_, window: Meta.Window) => {
+        this.connect(display, 'window-created', (_, window) => {
             this.register({ tag: 'window_create', window });
         });
 
@@ -1983,15 +2008,18 @@ export class Ext extends Ecs.System<ExtEvent> {
             this.register_fn(() => this.on_grab_end(win, op));
         });
 
-        this.connect(overview, 'window-drag-begin', (_, win) => {
+        // @ts-expect-error Typescript doesn't know the overview's signals
+        this.connect_emitter(overview, 'window-drag-begin', (_, win) => {
             this.on_grab_start(win, 1);
         });
 
-        this.connect(overview, 'window-drag-end', (_, win) => {
+        // @ts-expect-error Typescript doesn't know the overview's signals
+        this.connect_emitter(overview, 'window-drag-end', (_, win) => {
             this.register_fn(() => this.on_grab_end(win));
         });
 
-        this.connect(overview, 'window-drag-cancelled', () => {
+        // @ts-expect-error Typescript doesn't know the overview's signals
+        this.connect_emitter(overview, 'window-drag-cancelled', () => {
             this.unset_grab_op();
         });
 
@@ -2094,7 +2122,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         return matched;
     }
 
-    * tiled_windows(): IterableIterator<Entity> {
+    * tiled_windows() {
         for (const entity of this.entities()) {
             if (this.contains_tag(entity, Tags.Tiled)) {
                 yield entity;
@@ -2230,9 +2258,6 @@ export class Ext extends Ecs.System<ExtEvent> {
         const primary_display_ready = (ext: Ext): boolean => {
             const area = global.display.get_monitor_geometry(primary_display);
             const work_area = ext.monitor_work_area(primary_display);
-
-            if (!area || !work_area) return false;
-
             return !(area.width === work_area.width && area.height === work_area.height);
         };
 
@@ -2243,9 +2268,6 @@ export class Ext extends Ecs.System<ExtEvent> {
 
             for (let i = 0; i < monitors; i += 1) {
                 const display = global.display.get_monitor_geometry(i);
-
-                if (!display) return false;
-
                 if (display.width < 1 || display.height < 1) return false;
             }
 
@@ -2289,7 +2311,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         const migrations: Array<Migration> = [];
 
         const apply_migrations = (assigned_monitors: Set<number>) => {
-            if (!migrations) return;
+            if (!migrations.length) return;
 
             new exec.OnceExecutor<Migration, Migration[]>(migrations).start(
                 500,
@@ -2318,7 +2340,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
         function mark_for_reassignment(ext: Ext, fork: Ecs.Entity) {
             for (const win of forest.iter(fork, node.NodeKind.WINDOW)) {
-                if (win.inner.kind === 2) {
+                if (win.inner.kind === node.NodeKind.WINDOW) {
                     const entity = win.inner.entity;
                     const window = ext.windows.get(entity);
                     if (window) window.reassignment = true;
@@ -2341,7 +2363,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         }
 
         // Fetch a new list of monitors
-        const updated = new Map();
+        const updated = new Map<number, Display>();
 
         for (const mon of layoutManager.monitors) {
             const area = new Mtk.Rectangle({ x: mon.x, y: mon.y, width: mon.width, height: mon.height });
@@ -2467,7 +2489,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         }
 
         // Locate the window entity with the matching ID
-        let entity = this.ids.find(comp => comp == id).next().value;
+        let entity = this.ids.find(comp => comp == id).next().value ?? undefined;
 
         // If not found, create a new entity with a ShellWindow component.
         if (!entity) {
@@ -2485,7 +2507,9 @@ export class Ext extends Ecs.System<ExtEvent> {
 
             // Only permit normal, dialog, and modal dialogs
             const window_type = meta.get_window_type();
-            if (window_type !== 0 && window_type !== 3 && window_type !== 4) {
+            if (window_type !== Meta.WindowType.NORMAL
+                && window_type !== Meta.WindowType.DIALOG
+                && window_type !== Meta.WindowType.MODAL_DIALOG) {
                 return null;
             }
 
@@ -2501,7 +2525,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
             const grab_focus = () => {
                 this.schedule_idle(() => {
-                    this.windows.with(entity, (window) => {
+                    this.windows.with(entity!, (window) => {
                         window.meta.raise();
                         window.meta.unminimize();
                         window.activate(false);
@@ -2525,7 +2549,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     /** Returns the tilable window(s) that the mouse pointer is currently hovering above. */
-    * windows_at_pointer(cursor: Mtk.Rectangle, monitor: number, workspace: number): IterableIterator<Window.ShellWindow> {
+    * windows_at_pointer(cursor: Mtk.Rectangle, monitor: number, workspace: number) {
         for (const entity of this.monitors.find(m => m[0] == monitor && m[1] == workspace)) {
             const window = this.windows.with(entity, (window) => {
                 return window.is_tilable(this) && window.rect().contains_rect(cursor) ? window : null;
@@ -2562,7 +2586,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         const wm_class = window.meta.get_wm_class();
         const wm_title = window.meta.get_title();
 
-        if (wm_class && wm_title) {
+        if (wm_class != null && wm_class && wm_title) {
             shall_float = this.conf.window_shall_float(wm_class, wm_title);
         }
 
@@ -2681,7 +2705,7 @@ function load_theme(style: Style): string | null {
     try {
         const theme_context = St.ThemeContext.get_for_stage(global.stage);
 
-        const existing_theme: St.Theme | null = theme_context.get_theme();
+        const existing_theme = theme_context.get_theme() as St.Theme | null;
 
         const shatter_stylesheet_path = STYLESHEET_PATHS[shatter_stylesheet];
 
@@ -2707,16 +2731,16 @@ function load_theme(style: Style): string | null {
 
         return shatter_stylesheet_path;
     } catch (e) {
-        log.error('failed to load stylesheet: ' + e);
+        log.error(`failed to load stylesheet: ${e}`);
         return null;
     }
 }
 
-function* iter_workspaces(manager: Meta.WorkspaceManager): IterableIterator<[number, Meta.Workspace]> {
+function* iter_workspaces(manager: Meta.WorkspaceManager) {
     let idx = 0;
     let ws = manager.get_workspace_by_index(idx);
     while (ws !== null) {
-        yield [idx, ws];
+        yield [idx, ws] as const;
         idx += 1;
         ws = manager.get_workspace_by_index(idx);
     }

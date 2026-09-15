@@ -244,13 +244,13 @@ export class Forest extends Ecs.World {
 
             return fork.is_horizontal()
                 ? [
-                        new Mtk.Rectangle({ y, height, width: width / 2, x: x }),
-                        new Mtk.Rectangle({ y, height, width: width / 2, x: x + width / 2 }),
-                    ]
+                    new Mtk.Rectangle({ y, height, width: width / 2, x: x }),
+                    new Mtk.Rectangle({ y, height, width: width / 2, x: x + width / 2 }),
+                ]
                 : [
-                        new Mtk.Rectangle({ x, width, height: height / 2, y: y }),
-                        new Mtk.Rectangle({ x, width, height: height / 2, y: y + height / 2 }),
-                    ];
+                    new Mtk.Rectangle({ x, width, height: height / 2, y: y }),
+                    new Mtk.Rectangle({ x, width, height: height / 2, y: y + height / 2 }),
+                ];
         }
 
         /** Create a fork and place this new fork on the left branch */
@@ -374,7 +374,7 @@ export class Forest extends Ecs.World {
         const fork = this.forks.remove(entity);
         if (fork && fork.is_toplevel) {
             const id = this.string_reps.get(entity);
-            if (id) this.toplevel.delete(id);
+            if (id != null) this.toplevel.delete(id);
         }
 
         super.delete_entity(entity);
@@ -399,8 +399,8 @@ export class Forest extends Ecs.World {
             } else if (fork.right) {
                 reflow_fork = [fork_entity, fork];
                 switch (fork.right.inner.kind) {
-                    case 1:
-                        this.reassign_children_to_parent(fork_entity, (fork.right.inner as Node.NodeFork).entity, fork);
+                    case Node.NodeKind.FORK:
+                        this.reassign_children_to_parent(fork_entity, fork.right.inner.entity, fork);
                         break;
                     default:
                         const detached = fork.right;
@@ -438,7 +438,7 @@ export class Forest extends Ecs.World {
                     reflow_fork = [fork_entity, fork];
 
                     switch (fork.left.inner.kind) {
-                        case 1:
+                        case Node.NodeKind.FORK:
                             this.reassign_children_to_parent(fork_entity, fork.left.inner.entity, fork);
                             break;
                         default:
@@ -544,13 +544,14 @@ export class Forest extends Ecs.World {
     }
 
     /** Walks the tree starting at a given fork entity, and filtering by node kind. */
-    * iter(entity: Entity, kind: Node.NodeKind | null = null): IterableIterator<Node.Node> {
+    * iter(entity: Entity, kind: Node.NodeKind | null = null) {
         let fork = this.forks.get(entity);
-        const forks = new Array(2);
+        const forks = new Array<Fork.Fork>(2);
 
         while (fork) {
-            if (fork.left.inner.kind === 1) {
-                forks.push(this.forks.get(fork.left.inner.entity));
+            if (fork.left.inner.kind === Node.NodeKind.FORK) {
+                const child = this.forks.get(fork.left.inner.entity);
+                if (child != null) forks.push(child);
             }
 
             if (kind === null || fork.left.inner.kind === kind) {
@@ -558,8 +559,9 @@ export class Forest extends Ecs.World {
             }
 
             if (fork.right) {
-                if (fork.right.inner.kind === 1) {
-                    forks.push(this.forks.get(fork.right.inner.entity));
+                if (fork.right.inner.kind === Node.NodeKind.FORK) {
+                    const child = this.forks.get(fork.right.inner.entity);
+                    if (child != null) forks.push(child);
                 }
 
                 if (kind === null || fork.right.inner.kind == kind) {
@@ -567,7 +569,7 @@ export class Forest extends Ecs.World {
                 }
             }
 
-            fork = forks.pop();
+            fork = forks.pop()!;
         }
     }
 
@@ -590,10 +592,10 @@ export class Forest extends Ecs.World {
 
         for (const node of this.iter(entity)) {
             switch (node.inner.kind) {
-                case 2:
+                case Node.NodeKind.WINDOW:
                     window_compare(node.inner.entity);
                     break;
-                case 3:
+                case Node.NodeKind.STACK:
                     window_compare(node.inner.entities[0]);
             }
         }
@@ -605,6 +607,7 @@ export class Forest extends Ecs.World {
     resize(ext: Ext, fork_e: Entity, fork_c: Fork.Fork, win_e: Entity, movement: movement.Movement, crect: Mtk.Rectangle) {
         const is_left = fork_c.left.is_window(win_e) || fork_c.left.is_in_stack(win_e);
 
+        // eslint-disable-next-line @typescript-eslint/unbound-method
         ((movement & Movement.SHRINK) != 0 ? this.shrink_sibling : this.grow_sibling).call(
             this,
             ext,
@@ -663,13 +666,13 @@ export class Forest extends Ecs.World {
                 const inner = reassign.inner;
 
                 switch (inner.kind) {
-                    case 1:
+                    case Node.NodeKind.FORK:
                         this.parents.insert(inner.entity, p);
                         break;
-                    case 2:
+                    case Node.NodeKind.WINDOW:
                         this.on_attach(p, inner.entity);
                         break;
-                    case 3:
+                    case Node.NodeKind.STACK:
                         for (const entity of inner.entities) this.on_attach(p, entity);
                 }
             }
@@ -686,13 +689,13 @@ export class Forest extends Ecs.World {
      */
     private reassign_sibling(sibling: Node.Node, parent: Entity) {
         switch (sibling.inner.kind) {
-            case 1:
+            case Node.NodeKind.FORK:
                 this.parents.insert(sibling.inner.entity, parent);
                 break;
-            case 2:
+            case Node.NodeKind.WINDOW:
                 this.on_attach(parent, sibling.inner.entity);
                 break;
-            case 3:
+            case Node.NodeKind.STACK:
                 for (const entity of sibling.inner.entities) {
                     this.on_attach(parent, entity);
                 }
@@ -832,36 +835,33 @@ export class Forest extends Ecs.World {
         crect: Mtk.Rectangle,
     ) {
         const resize_fork = () => this.resize_fork_(ext, fork_e, crect, movement, true);
-
-        if (fork_c.area) {
-            if (fork_c.is_horizontal()) {
-                if ((movement & (DOWN | UP)) != 0) {
-                    resize_fork();
-                } else if (is_left) {
-                    if ((movement & LEFT) != 0) {
-                        this.readjust_fork_ratio_by_left(ext, crect.width, fork_c);
-                    } else {
-                        resize_fork();
-                    }
-                } else if ((movement & LEFT) != 0) {
-                    resize_fork();
+        if (fork_c.is_horizontal()) {
+            if ((movement & (DOWN | UP)) != 0) {
+                resize_fork();
+            } else if (is_left) {
+                if ((movement & LEFT) != 0) {
+                    this.readjust_fork_ratio_by_left(ext, crect.width, fork_c);
                 } else {
-                    this.readjust_fork_ratio_by_right(ext, crect.width, fork_c, fork_c.area.width);
+                    resize_fork();
                 }
+            } else if ((movement & LEFT) != 0) {
+                resize_fork();
             } else {
-                if ((movement & (LEFT | RIGHT)) != 0) {
-                    resize_fork();
-                } else if (is_left) {
-                    if ((movement & UP) != 0) {
-                        this.readjust_fork_ratio_by_left(ext, crect.height, fork_c);
-                    } else {
-                        resize_fork();
-                    }
-                } else if ((movement & UP) != 0) {
-                    resize_fork();
+                this.readjust_fork_ratio_by_right(ext, crect.width, fork_c, fork_c.area.width);
+            }
+        } else {
+            if ((movement & (LEFT | RIGHT)) != 0) {
+                resize_fork();
+            } else if (is_left) {
+                if ((movement & UP) != 0) {
+                    this.readjust_fork_ratio_by_left(ext, crect.height, fork_c);
                 } else {
-                    this.readjust_fork_ratio_by_right(ext, crect.height, fork_c, fork_c.area.height);
+                    resize_fork();
                 }
+            } else if ((movement & UP) != 0) {
+                resize_fork();
+            } else {
+                this.readjust_fork_ratio_by_right(ext, crect.height, fork_c, fork_c.area.height);
             }
         }
     }
@@ -886,15 +886,15 @@ export class Forest extends Ecs.World {
 
     private display_branch(ext: Ext, branch: Node.Node, scope: number): string {
         switch (branch.inner.kind) {
-            case 1:
+            case Node.NodeKind.FORK:
                 const fork = this.forks.get(branch.inner.entity);
                 return fork ? this.display_fork(ext, branch.inner.entity, fork, scope + 1) : 'Missing Fork';
-            case 2:
+            case Node.NodeKind.WINDOW:
                 const window = ext.windows.get(branch.inner.entity);
                 const area = window ? fmtRect(window.rect()) : 'unknown area';
                 const parent = ext.auto_tiler?.attached.get(branch.inner.entity);
                 return `Window(${branch.inner.entity}) (${area}; parent: ${parent})`;
-            case 3:
+            case Node.NodeKind.STACK:
                 let fmt = 'Stack(';
 
                 for (const entity of branch.inner.entities) {
@@ -907,14 +907,14 @@ export class Forest extends Ecs.World {
     }
 
     display_fork(ext: Ext, entity: Entity, fork: Fork.Fork, scope: number): string {
-        let fmt = `Fork(${entity}) [${fork.area ? fmtRect(fork.area) : 'unknown'}]: {\n`;
+        let fmt = `Fork(${entity}) [${fmtRect(fork.area)}]: {\n`;
 
         fmt += ' '.repeat((1 + scope) * 2) + `workspace: (${fork.workspace}),\n`;
-        fmt += ' '.repeat((1 + scope) * 2) + 'left: ' + this.display_branch(ext, fork.left, scope) + ',\n';
-        fmt += ' '.repeat((1 + scope) * 2) + 'parent: ' + this.parents.get(fork.entity) + ',\n';
+        fmt += ' '.repeat((1 + scope) * 2) + `left: ${this.display_branch(ext, fork.left, scope)},\n`;
+        fmt += ' '.repeat((1 + scope) * 2) + `parent: ${this.parents.get(fork.entity)},\n`;
 
         if (fork.right) {
-            fmt += ' '.repeat((1 + scope) * 2) + 'right: ' + this.display_branch(ext, fork.right, scope) + ',\n';
+            fmt += ' '.repeat((1 + scope) * 2) + `right: ${this.display_branch(ext, fork.right, scope)},\n`;
         }
 
         fmt += ' '.repeat(scope * 2) + '}';

@@ -96,7 +96,7 @@ function settings_button(menu: PopupMenu) {
         const path = GLib.find_program_in_path('shatter-shell-shortcuts');
         const [_success, _pid] = GLib.spawn_async(
             null,
-            path
+            path != null
                 ? [path]
                 : ['xdg-open', 'https://support.system76.com/articles/pop-keyboard-shortcuts/'],
             null,
@@ -147,7 +147,7 @@ function shortcuts(menu: PopupMenu) {
         const path = GLib.find_program_in_path('shatter-shell-shortcuts');
         const [_success, _pid] = GLib.spawn_async(
             null,
-            path
+            path != null
                 ? [path]
                 : ['xdg-open', 'https://support.system76.com/articles/pop-keyboard-shortcuts/'],
             null,
@@ -197,10 +197,11 @@ function number_entry(
     valueOrOptions: number | { value: number; min: number; max: number },
     callback: (a: number) => void,
 ) {
-    let value = valueOrOptions,
+    let value: number,
         min: number,
         max: number;
-    if (typeof valueOrOptions !== 'number') ({ value, min, max } = valueOrOptions);
+    if (typeof valueOrOptions === 'number') value = valueOrOptions;
+    else ({ value, min, max } = valueOrOptions);
 
     const entry = new St.Entry({
         text: String(value),

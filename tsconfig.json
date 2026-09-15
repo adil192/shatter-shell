@@ -16,6 +16,6 @@
         "module": "NodeNext",
     },
     "include": [
-        "src/*.ts"
+        "src/*.ts",
     ]
 }

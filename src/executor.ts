@@ -7,7 +7,7 @@ export interface Executor<T> {
 
 /** Glib-based event executor */
 export class GLibExecutor<T> implements Executor<T> {
-    #event_loop: SignalID | null = null;
+    #event_loop: SignalID = 0;
     #events: Array<T> = [];
 
     /** Creates an idle_add signal that exists only for as long as there are events to process.
@@ -23,10 +23,10 @@ export class GLibExecutor<T> implements Executor<T> {
 
         this.#event_loop = GLib.idle_add(GLib.PRIORITY_DEFAULT, () => {
             const event = this.#events.pop();
-            if (event) system.run(event);
+            if (event !== undefined) system.run(event);
 
             if (this.#events.length === 0) {
-                this.#event_loop = null;
+                this.#event_loop = 0;
                 return false;
             }
 
@@ -35,7 +35,7 @@ export class GLibExecutor<T> implements Executor<T> {
     }
 }
 
-export class OnceExecutor<X, T extends Iterable<X>> {
+export class OnceExecutor<X, T extends Iterable<X, void>> {
     #iterable: T;
     #signal: SignalID | null = null;
 
@@ -49,9 +49,9 @@ export class OnceExecutor<X, T extends Iterable<X>> {
         const iterator = this.#iterable[Symbol.iterator]();
 
         this.#signal = GLib.timeout_add(GLib.PRIORITY_DEFAULT, delay, () => {
-            const next: X = iterator.next().value;
+            const next: X | undefined = iterator.next().value ?? undefined;
 
-            if (typeof next === 'undefined') {
+            if (next == undefined) {
                 if (then)
                     GLib.timeout_add(GLib.PRIORITY_DEFAULT, delay, () => {
                         then();

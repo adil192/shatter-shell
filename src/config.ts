@@ -74,7 +74,7 @@ export class Config {
     /** Add a floating exception which matches by wm_class */
     add_app_exception(wmclass: string) {
         for (const r of this.float) {
-            if (r.class === wmclass && r.title === undefined) return;
+            if (r.class === wmclass && r.title == undefined) return;
         }
 
         this.float.push({ class: wmclass });
@@ -93,11 +93,11 @@ export class Config {
 
     window_shall_float(wclass: string, title: string): boolean {
         for (const rule of this.float.concat(DEFAULT_FLOAT_RULES)) {
-            if (rule.class && !getRegExp(rule.class).test(wclass)) continue;
+            if (rule.class !== undefined && !getRegExp(rule.class).test(wclass)) continue;
 
-            if (rule.title && !getRegExp(rule.title).test(title)) continue;
+            if (rule.title !== undefined && !getRegExp(rule.title).test(title)) continue;
 
-            return !rule.disabled;
+            return !(rule.disabled ?? false);
         }
 
         return false;
@@ -117,7 +117,7 @@ export class Config {
 
     rule_disabled(rule: FloatRule): boolean {
         for (const value of this.float.values()) {
-            if (value.disabled && rule.class === value.class && value.title === rule.title) {
+            if ((value.disabled ?? false) && rule.class === value.class && value.title === rule.title) {
                 return true;
             }
         }
@@ -176,7 +176,7 @@ export class Config {
 
     static from_json(json: string): Config {
         try {
-            return JSON.parse(json);
+            return JSON.parse(json) as Config;
         } catch (_) {
             return new Config();
         }
@@ -244,6 +244,7 @@ export class Config {
 
 function set_to_json(_key: string, value: unknown) {
     if (typeof value === 'object' && value instanceof Set) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return [...value];
     }
     return value;

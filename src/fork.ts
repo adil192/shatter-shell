@@ -9,6 +9,7 @@ import * as Ecs from './ecs.js';
 import * as Lib from './lib.js';
 import * as node from './node.js';
 import { ShellWindow } from './window.js';
+const { NodeKind } = node;
 
 const XPOS = 'x' as const;
 const YPOS = 'y' as const;
@@ -93,13 +94,13 @@ export class Fork {
     find_branch(entity: Entity): Node | null {
         const locate = (branch: Node): Node | null => {
             switch (branch.inner.kind) {
-                case 2:
+                case NodeKind.WINDOW:
                     if (Ecs.entity_eq(branch.inner.entity, entity)) {
                         return branch;
                     }
 
                     break;
-                case 3:
+                case NodeKind.STACK:
                     for (const e of branch.inner.entities) {
                         if (Ecs.entity_eq(e, entity)) {
                             return branch;
@@ -132,11 +133,11 @@ export class Fork {
         const check_right = () => {
             if (this.right) {
                 const inner = this.right.inner;
-                if (inner.kind === 2) {
+                if (inner.kind === NodeKind.WINDOW) {
                     closure = () => {
                         inner.entity = b.entity;
                     };
-                } else if (inner.kind === 3) {
+                } else if (inner.kind === NodeKind.STACK) {
                     const idx = node.stack_find(inner, a.entity);
                     if (idx === null) {
                         closure = null;
@@ -152,10 +153,10 @@ export class Fork {
         };
 
         switch (this.left.inner.kind) {
-            case 1:
+            case NodeKind.FORK:
                 check_right();
                 break;
-            case 2:
+            case NodeKind.WINDOW:
                 const inner = this.left.inner;
                 if (Ecs.entity_eq(inner.entity, a.entity)) {
                     closure = () => {
@@ -166,8 +167,8 @@ export class Fork {
                 }
 
                 break;
-            case 3:
-                const inner_s = this.left.inner as node.NodeStack;
+            case NodeKind.STACK:
+                const inner_s = this.left.inner;
                 const idx = node.stack_find(inner_s, a.entity);
                 if (idx !== null) {
                     const id = idx;
@@ -228,7 +229,7 @@ export class Fork {
             ratio = this.length_left / this.depth();
         }
 
-        if (ratio) {
+        if (ratio != null) {
             this.length_left = Math.round(ratio * this.length());
             if (manually_moved) this.prev_ratio = ratio;
         } else if (manually_moved) {
@@ -278,14 +279,14 @@ export class Fork {
 
             for (const child of forest.iter(this.entity)) {
                 switch (child.inner.kind) {
-                    case 1:
+                    case NodeKind.FORK:
                         const cfork = forest.forks.get(child.inner.entity);
                         if (!cfork) continue;
                         cfork.workspace = workspace;
                         cfork.monitor = monitor;
                         cfork.on_primary_display = primary;
                         break;
-                    case 2:
+                    case NodeKind.WINDOW:
                         const window = ext.windows.get(child.inner.entity);
                         if (window) {
                             ext.size_signals_block(window);
@@ -296,7 +297,7 @@ export class Fork {
                             blocked.push(window);
                         }
                         break;
-                    case 3:
+                    case NodeKind.STACK:
                         for (const entity of child.inner.entities) {
                             const stack = ext.auto_tiler.forest.stacks.get(child.inner.idx);
                             if (stack) {

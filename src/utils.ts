@@ -140,7 +140,7 @@ export function map_eq<K, V>(map1: Map<K, V>, map2: Map<K, V>) {
 
     for (const [key, val] of map1) {
         cmp = map2.get(key);
-        if (cmp !== val || (cmp === undefined && !map2.has(key))) {
+        if (cmp !== val || (cmp == undefined && !map2.has(key))) {
             return false;
         }
     }

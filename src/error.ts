@@ -7,13 +7,13 @@ export class Error {
         this.reason = reason;
     }
 
-    context(why: string): Error {
+    context(why: string) {
         const error = new Error(why);
         error.cause = this;
         return error;
     }
 
-    * chain(): IterableIterator<Error> {
+    * chain() {
         // eslint-disable-next-line @typescript-eslint/no-this-alias
         let current: Error | null = this;
 
@@ -23,10 +23,10 @@ export class Error {
         }
     }
 
-    format(): string {
+    format() {
         const causes = this.chain();
 
-        let buffer: string = causes.next().value.reason;
+        let buffer = causes.next().value!.reason;
 
         for (const error of causes) {
             buffer += `\n    caused by: ` + error.reason;

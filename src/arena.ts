@@ -35,9 +35,9 @@ export class Arena<T> {
         return v;
     }
 
-    * values(): IterableIterator<T> {
+    * values() {
         for (const v of this.slots) {
-            if (v !== null) yield v;
+            if (v != null) yield v;
         }
     }
 }

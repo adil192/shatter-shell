@@ -9,15 +9,21 @@ export default defineConfig([
     {
         ignores: ['target/**', '_build/**'],
     },
-    stylistic.configs.customize({
-        indent: 4,
-        semi: true,
-        arrowParens: false,
-        braceStyle: '1tbs',
-        severity: 'warn',
-    }),
     {
-        extends: [js.configs.recommended, tseslint.configs.recommended],
+        extends: [stylistic.configs.customize({
+            indent: 4,
+            semi: true,
+            arrowParens: false,
+            braceStyle: '1tbs',
+            severity: 'warn',
+        })],
+        rules: {
+            '@stylistic/indent': 'off',
+            '@stylistic/indent-binary-ops': 'off',
+        },
+    },
+    {
+        extends: [js.configs.recommended, tseslint.configs.recommendedTypeChecked],
         rules: {
             'no-case-declarations': 'off',
             '@typescript-eslint/no-namespace': 'off',
@@ -33,6 +39,17 @@ export default defineConfig([
             'prefer-const': ['warn', {
                 destructuring: 'all',
             }],
+            '@typescript-eslint/restrict-template-expressions': 'off',
+            '@typescript-eslint/prefer-promise-reject-errors': 'off',
+            '@typescript-eslint/strict-boolean-expressions': 'error',
         },
+        languageOptions: {
+            parserOptions: {
+                projectService: true,
+            },
+        },
+        ignores: [
+            'eslint.config.mjs',
+        ],
     },
 ]);
