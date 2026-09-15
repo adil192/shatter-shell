@@ -489,7 +489,7 @@ export class ShellWindow {
                 : this.border_size;
 
             const stack_number = this.stack;
-            let dimensions = null;
+            let dimensions: [number, number, number, number] | null = null;
 
             if (stack_number !== null) {
                 const stack = this.ext.auto_tiler?.forest.stacks.get(stack_number);

@@ -47,7 +47,7 @@ function stack_detach(node: NodeStack, stack: Stack, idx: number) {
 export function stack_find(node: NodeStack, entity: Entity): null | number {
     let idx = 0;
     while (idx < node.entities.length) {
-        if (Ecs.entity_eq(entity, node.entities[idx])) {
+        if (Ecs.entity_eq(entity, node.entities[idx]!)) {
             return idx;
         }
         idx += 1;
@@ -131,8 +131,8 @@ export function stack_remove(forest: Forest, node: NodeStack, entity: Entity): n
 
 function stack_swap(node: NodeStack, from: number, to: number) {
     const tmp = node.entities[from];
-    node.entities[from] = node.entities[to];
-    node.entities[to] = tmp;
+    node.entities[from] = node.entities[to]!;
+    node.entities[to] = tmp!;
 }
 
 export type NodeADT = NodeFork | NodeWindow | NodeStack;

@@ -71,14 +71,21 @@ const modalActorFocusStack = Main.modalActorFocusStack as {
     actionMode: Shell.ActionMode;
 }[];
 
-const STYLESHEET_PATHS = ['light', 'dark', 'highcontrast'].map(stylesheet_path);
-const STYLESHEETS = STYLESHEET_PATHS.map(path => Gio.File.new_for_path(path));
-
 enum Style {
-    Light,
-    Dark,
-    HighContrast,
+    Light = 'light',
+    Dark = 'dark',
+    HighContrast = 'highcontrast',
 }
+const STYLESHEET_PATHS = {
+    light: stylesheet_path('light'),
+    dark: stylesheet_path('dark'),
+    highcontrast: stylesheet_path('highcontrast'),
+} as const;
+const STYLESHEETS = {
+    light: Gio.File.new_for_path(STYLESHEET_PATHS.light),
+    dark: Gio.File.new_for_path(STYLESHEET_PATHS.dark),
+    highcontrast: Gio.File.new_for_path(STYLESHEET_PATHS.highcontrast),
+} as const;
 
 interface Display {
     area: Mtk.Rectangle;
@@ -652,14 +659,14 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     focus_left() {
         this.stack_select(
-            (id, stack) => (id === 0 ? null : stack.tabs[id - 1].entity),
+            (id, stack) => (id === 0 ? null : stack.tabs[id - 1]?.entity),
             () => this.activate_window(this.focus_selector.left(this, null)),
         );
     }
 
     focus_right() {
         this.stack_select(
-            (id, stack) => (stack.tabs.length > id + 1 ? stack.tabs[id + 1].entity : null),
+            (id, stack) => (stack.tabs.length > id + 1 ? stack.tabs[id + 1]?.entity : null),
             () => this.activate_window(this.focus_selector.right(this, null)),
         );
     }
@@ -677,7 +684,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         return this.get_window(meta);
     }
 
-    stack_select(select: (id: number, stack: stack.Stack) => Entity | null, focus_shift: () => void) {
+    stack_select(select: (id: number, stack: stack.Stack) => Entity | null | undefined, focus_shift: () => void) {
         const switched = this.stack_switch((stack) => {
             const stack_con = this.auto_tiler?.forest.stacks.get(stack.idx);
             if (stack_con) {
@@ -835,7 +842,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                 const fork = this.auto_tiler.forest.forks.get(entity);
                 if (fork?.right && fork.right.is_window(win)) {
                     const entity = fork.right.inner.kind === node.NodeKind.STACK
-                        ? fork.right.inner.entities[0]
+                        ? fork.right.inner.entities[0]!
                         : fork.right.inner.entity;
 
                     this.windows.with(entity, sibling => sibling.activate());
@@ -1932,8 +1939,8 @@ export class Ext extends Ecs.System<ExtEvent> {
 
             this.connect(display, 'notify::focus-window', () => {
                 // Disallow refocus if a modal window is active
-                if (Main.modalCount !== 0) {
-                    const { actor } = modalActorFocusStack[0];
+                if (Main.modalCount !== 0 && modalActorFocusStack.length) {
+                    const { actor } = modalActorFocusStack[0]!;
                     if (!('style_class' in actor)) return;
                     if (actor.style_class !== 'switcher-popup') return;
                 }
@@ -2701,25 +2708,24 @@ function stylesheet_path(name: string) {
 
 // Supplements the loaded theme with the extension's theme.
 function load_theme(style: Style): string | null {
-    const shatter_stylesheet = Number(style);
     try {
         const theme_context = St.ThemeContext.get_for_stage(global.stage);
 
         const existing_theme = theme_context.get_theme() as St.Theme | null;
 
-        const shatter_stylesheet_path = STYLESHEET_PATHS[shatter_stylesheet];
+        const shatter_stylesheet_path = STYLESHEET_PATHS[style];
 
         if (existing_theme) {
             /* Must unload stylesheets, or else the previously loaded
              * stylesheets will persist when loadTheme() is called
              * (found in source code of imports.ui.main).
              */
-            for (const s of STYLESHEETS) {
-                existing_theme.unload_stylesheet(s);
+            for (const s of Object.values(Style)) {
+                existing_theme.unload_stylesheet(STYLESHEETS[s]);
             }
 
             // Merge theme update with shatter shell styling
-            existing_theme.load_stylesheet(STYLESHEETS[shatter_stylesheet]);
+            existing_theme.load_stylesheet(STYLESHEETS[style]);
 
             // Perform theme update
             theme_context.set_theme(existing_theme);

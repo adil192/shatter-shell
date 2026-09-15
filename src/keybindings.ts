@@ -61,14 +61,14 @@ export class Keybindings {
         };
     }
 
-    enable(keybindings: Record<string, () => void>) {
+    enable(keybindings: Record<string, Meta.KeyHandlerFunc>) {
         for (const name in keybindings) {
             wm.addKeybinding(
                 name,
                 this.ext.settings.ext,
                 Meta.KeyBindingFlags.NONE,
                 Shell.ActionMode.NORMAL,
-                keybindings[name],
+                keybindings[name]!,
             );
         }
 

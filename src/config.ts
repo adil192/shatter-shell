@@ -251,6 +251,6 @@ function set_to_json(_key: string, value: unknown) {
 }
 
 function swap_remove<T>(array: Array<T>, index: number): T | undefined {
-    array[index] = array[array.length - 1];
+    array[index] = array[array.length - 1]!;
     return array.pop();
 }

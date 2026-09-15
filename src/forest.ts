@@ -596,7 +596,7 @@ export class Forest extends Ecs.World {
                     window_compare(node.inner.entity);
                     break;
                 case Node.NodeKind.STACK:
-                    window_compare(node.inner.entities[0]);
+                    window_compare(node.inner.entities[0]!);
             }
         }
 

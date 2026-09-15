@@ -48,8 +48,7 @@ export function is_dark(color: string): boolean {
     if (color.indexOf('rgb') >= 0) {
         // starts with parsed value from Gdk.RGBA
         color = color.replace('rgba', 'rgb').replace('rgb(', '').replace(')', ''); // make it 255, 255, 255, 1
-        // log.debug(`util color: ${color}`);
-        const colors = color.split(',');
+        const colors = color.split(',') as [string, string, string];
         r = parseInt(colors[0].trim());
         g = parseInt(colors[1].trim());
         b = parseInt(colors[2].trim());
@@ -60,13 +59,13 @@ export function is_dark(color: string): boolean {
         b = parseInt(color_val.substring(4, 6), 16); // hexToB
     }
 
-    const uicolors = [r / 255, g / 255, b / 255];
+    const uicolors = [r / 255, g / 255, b / 255] as const;
     const c = uicolors.map((col) => {
         if (col <= 0.03928) {
             return col / 12.92;
         }
         return Math.pow((col + 0.055) / 1.055, 2.4);
-    });
+    }) as [number, number, number];
     const L = 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
     return L <= 0.179;
 }

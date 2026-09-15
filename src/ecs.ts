@@ -169,7 +169,7 @@ export class World {
      * Tags are essentially a dense set of small components.
      */
     tags(entity: Entity): Set<Tags> {
-        return this.tags_[entity[0]];
+        return this.tags_[entity[0]]!;
     }
 
     /** Iterates across entities in the world */
@@ -189,7 +189,7 @@ export class World {
 
         let entity: Entity;
         if (slot !== undefined) {
-            entity = this.entities_[slot];
+            entity = this.entities_[slot]!;
             entity[1] += 1;
         } else {
             entity = entity_new(this.capacity, 0);
@@ -250,7 +250,7 @@ export class World {
 }
 
 function swap_remove<T>(array: Array<T>, index: number): T | undefined {
-    array[index] = array[array.length - 1];
+    array[index] = array[array.length - 1]!;
     return array.pop();
 }
 

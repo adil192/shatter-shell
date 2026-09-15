@@ -225,6 +225,7 @@ export class Stack {
         }
 
         const c = this.tabs[this.active_id];
+        if (!c) return null;
 
         this.activate(c.entity);
         return c.entity;
@@ -493,7 +494,7 @@ export class Stack {
 
     remove_by_pos(idx: number) {
         const c = this.tabs[idx];
-        this.remove_tab_component(c, idx);
+        if (c) this.remove_tab_component(c, idx);
     }
 
     remove_tab_component(c: Tab, idx: number) {
@@ -554,7 +555,7 @@ export class Stack {
         if (!this.widgets) return;
         const tab = this.tabs[this.active_id];
         const actor = window.meta.get_compositor_private<Clutter.Actor | null>();
-        if (actor) {
+        if (tab && actor) {
             this.tab_disconnect(tab);
 
             if (Ecs.entity_eq(window.entity, this.active)) {

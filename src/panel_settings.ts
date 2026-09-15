@@ -173,8 +173,8 @@ function shortcuts(menu: PopupMenu) {
     layout_manager.attach(create_label(_('Shortcuts')), 0, 0, 2, 1);
 
     [
-        [_('Navigate Windows'), _('Super + Arrow Keys')],
-        [_('Toggle Tiling'), _('Super + Y')],
+        [_('Navigate Windows'), _('Super + Arrow Keys')] as const,
+        [_('Toggle Tiling'), _('Super + Y')] as const,
     ].forEach((section, idx) => {
         const key = create_label(section[0]);
         key.get_clutter_text().set_margin_left(12);

@@ -16,7 +16,7 @@ export enum Orientation {
     VERTICAL = 1,
 }
 
-export function nth_rev<T>(array: Array<T>, nth: number): T | null {
+export function nth_rev<T>(array: Array<T>, nth: number): T | undefined {
     return array[array.length - nth - 1];
 }
 
