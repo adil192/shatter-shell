@@ -532,7 +532,10 @@ export class Stack {
 
                 if (was_active && this.prev_active && this.tabs.length) {
                     // Go to prev_active tab if current tab closed
-                    this.activate(this.tabs[this.prev_active_id].entity);
+                    this.activate(this.prev_active);
+                    // Don't hold a reference to this removed tab
+                    this.prev_active = null;
+                    this.prev_active_id = 0;
                 }
 
                 return idx;
