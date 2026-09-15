@@ -51,7 +51,6 @@ const {
     overview,
     panel,
     setThemeStylesheet,
-    windowAttentionHandler,
 } = Main;
 import type { Misc } from '@girs/gnome-shell';
 import { ScreenShield } from 'resource:///org/gnome/shell/ui/screenShield.js';
@@ -2635,8 +2634,6 @@ export default class ShatterShellExtension extends Extension {
         ext.injections_add();
         ext.signals_attach();
 
-        disable_window_attention_handler();
-
         layoutManager.addChrome(ext.overlay);
 
         if (!indicator) {
@@ -2680,25 +2677,6 @@ export default class ShatterShellExtension extends Extension {
             indicator.destroy();
             indicator = null;
         }
-
-        enable_window_attention_handler();
-    }
-}
-
-const handler = windowAttentionHandler;
-
-function enable_window_attention_handler() {
-    if (handler && !handler._windowDemandsAttentionId) {
-        handler._windowDemandsAttentionId = global.display.connect('window-demands-attention', (display, window) => {
-            handler._onWindowDemandsAttention(display, window);
-        });
-    }
-}
-
-function disable_window_attention_handler() {
-    if (handler && handler._windowDemandsAttentionId) {
-        global.display.disconnect(handler._windowDemandsAttentionId);
-        handler._windowDemandsAttentionId = null;
     }
 }
 
