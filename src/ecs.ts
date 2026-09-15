@@ -175,7 +175,7 @@ export class World {
     /** Iterates across entities in the world */
     * entities(): IterableIterator<Entity> {
         for (const entity of this.entities_.values()) {
-            if (!(this.free_slots.indexOf(entity[0]) > -1)) yield entity;
+            if (this.free_slots.indexOf(entity[0]) === -1) yield entity;
         }
     }
 
@@ -188,7 +188,7 @@ export class World {
         const slot = this.free_slots.pop();
 
         let entity: Entity;
-        if (slot) {
+        if (slot !== undefined) {
             entity = this.entities_[slot];
             entity[1] += 1;
         } else {
