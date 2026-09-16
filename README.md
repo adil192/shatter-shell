@@ -36,15 +36,16 @@ If you want to uninstall the extension, you may invoke `make uninstall`, and the
 
 ### Packaging status
 
-My fork is not packaged for general use.
-You must build from source with `make local-install` to use it.
+#### Fedora and derivatives
 
-#### Unstable package
+Shatter Shell is included in the [Terra](https://terrapkg.com/) community repo.
 
-The only existing package currently resides in my personal testing COPR repository, which I don't recommend you use.
-Nontheless, if you don't care about breaking your system, run this to install:
 ```bash
-sudo dnf copr enable adil192/backports
+# Add the Terra repo if you haven't already
+sudo dnf install --nogpgcheck --repofrompath 'terra,https://repos.fyralabs.com/terra$releasever' terra-release
+# Uninstall Pop Shell if you have it
+sudo dnf remove gnome-shell-extension-pop-shell
+# Install Shatter Shell
 sudo dnf install gnome-shell-extension-shatter-shell
 ```
 
