@@ -16,7 +16,7 @@ INSTALLNAME = $(UUID)
 PROJECTS = color_dialog floating_exceptions
 SOURCES = src/*.ts src/color_dialog/src/*.ts src/floating_exceptions/src/*.ts *.scss icons/*.svg schemas/*.gschema.xml metadata.json README.md
 
-.PHONY: all clean install zip-file
+.PHONY: all clean install zip-file lint
 
 all: compile
 
@@ -74,5 +74,9 @@ update-repository:
 zip-file: $(UUID)_$(VERSION_NAME).zip
 $(UUID)_$(VERSION_NAME).zip: compile
 	cd _build && zip -qr "../$(UUID)_$(VERSION_NAME).zip" .
+
+lint: .eslintcache
+.eslintcache: node_modules/.package-lock.json $(SOURCES)
+	npx eslint --cache $(shell echo $$CUSTOM_ESLINT_ARGS)
 
 .NOTPARALLEL: debug local-install

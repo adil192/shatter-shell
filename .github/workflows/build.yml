@@ -38,4 +38,4 @@ jobs:
           archive: false
 
       - name: Run lints
-        run: npx eslint --cache --cache-strategy content
+        run: CUSTOM_ESLINT_ARGS="--cache-strategy content" make lint

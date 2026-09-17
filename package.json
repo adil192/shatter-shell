@@ -4,9 +4,6 @@
     "type": "module",
     "private": true,
     "sideEffects": false,
-    "scripts": {
-        "lint": "eslint --cache"
-    },
     "devDependencies": {
         "@eslint/js": "^10.0.1",
         "@girs/adw-1": "^4.9.0",
