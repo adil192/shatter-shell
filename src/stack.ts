@@ -204,7 +204,7 @@ export class Stack {
         this.watch_signals(tab, window);
         this.widgets.tabs.add_child(button);
 
-        const actor = window.meta.get_compositor_private<Clutter.Actor | null>();
+        const actor = window.meta.get_compositor_private<Meta.WindowActor | null>();
         if (actor) {
             actor.remove_all_transitions();
             if (active) {
@@ -257,7 +257,7 @@ export class Stack {
             let tab_active: TabActive;
 
             this.window_exec(tab, tab.entity, (window) => {
-                const actor = window.meta.get_compositor_private<Clutter.Actor | null>();
+                const actor = window.meta.get_compositor_private<Meta.WindowActor | null>();
 
                 if (Ecs.entity_eq(entity, tab.entity)) {
                     this.active_id = id;
@@ -282,7 +282,7 @@ export class Stack {
         this.reset_visibility(permitted);
     }
 
-    private fade_in(actor: Clutter.Actor) {
+    private fade_in(actor: Meta.WindowActor) {
         if (actor.visible && actor.opacity >= 255) return;
         actor.remove_all_transitions();
         if (actor.opacity > 250) actor.opacity = 0;
@@ -294,7 +294,7 @@ export class Stack {
         });
     }
 
-    private fade_out(actor: Clutter.Actor) {
+    private fade_out(actor: Meta.WindowActor) {
         if (!actor.visible) return;
         actor.remove_all_transitions();
         actor.ease({
@@ -386,7 +386,7 @@ export class Stack {
         if (window) {
             for (const s of c.signals) window.meta.disconnect(s);
             if (this.workspace === this.ext.active_workspace()) {
-                const actor = window.meta.get_compositor_private<Clutter.Actor | null>();
+                const actor = window.meta.get_compositor_private<Meta.WindowActor | null>();
                 if (actor) this.fade_in(actor);
             }
         }
@@ -425,7 +425,7 @@ export class Stack {
             if (this.workspace === this.ext.active_workspace()) {
                 const win = this.ext.windows.get(c.entity);
                 if (win) {
-                    const actor = win.meta.get_compositor_private<Clutter.Actor | null>();
+                    const actor = win.meta.get_compositor_private<Meta.WindowActor | null>();
                     if (actor) this.fade_in(actor);
                     win.stack = null;
                 }
@@ -450,7 +450,7 @@ export class Stack {
             if (Ecs.entity_eq(this.ext.grab_op.entity, this.active)) {
                 if (this.widgets) {
                     const parent = this.widgets.tabs.get_parent();
-                    const actor = this.active_meta()?.get_compositor_private<Clutter.Actor | null>();
+                    const actor = this.active_meta()?.get_compositor_private<Meta.WindowActor | null>();
                     if (actor && parent) {
                         parent.set_child_below_sibling(this.widgets.tabs, actor);
                     }
@@ -554,7 +554,7 @@ export class Stack {
     replace(window: ShellWindow) {
         if (!this.widgets) return;
         const tab = this.tabs[this.active_id];
-        const actor = window.meta.get_compositor_private<Clutter.Actor | null>();
+        const actor = window.meta.get_compositor_private<Meta.WindowActor | null>();
         if (tab && actor) {
             this.tab_disconnect(tab);
 
@@ -578,7 +578,7 @@ export class Stack {
         const window = this.ext.windows.get(this.active);
         if (!window) return;
 
-        const actor = window.meta.get_compositor_private<Clutter.Actor | null>();
+        const actor = window.meta.get_compositor_private<Meta.WindowActor | null>();
         if (!actor) {
             this.active_disconnect();
             return;
@@ -618,7 +618,7 @@ export class Stack {
 
         for (const c of this.tabs) {
             this.window_exec(c, c.entity, (window) => {
-                const actor = window.meta.get_compositor_private<Clutter.Actor | null>();
+                const actor = window.meta.get_compositor_private<Meta.WindowActor | null>();
                 if (!actor) return;
                 if (this.active_id === idx) {
                     if (permitted) {
@@ -697,7 +697,7 @@ export class Stack {
         tab.button_signal = widget.connect('clicked', () => {
             this.activate(entity);
             this.window_exec(tab, entity, (window) => {
-                const actor = window.meta.get_compositor_private<Clutter.Actor | null>();
+                const actor = window.meta.get_compositor_private<Meta.WindowActor | null>();
                 if (!actor) return;
 
                 this.fade_in(actor);

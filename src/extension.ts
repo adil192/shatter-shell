@@ -306,7 +306,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                 const movement = this.movements.remove(window.entity);
                 if (!movement) return;
 
-                const actor = window.meta.get_compositor_private<Clutter.Actor | null>();
+                const actor = window.meta.get_compositor_private<Meta.WindowActor | null>();
                 if (!actor) {
                     this.auto_tiler?.detach_window(this, window.entity);
                     return;
@@ -382,7 +382,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
             /** Window Create Event */
             case 'window_create':
-                const actor = event.window.get_compositor_private<Clutter.Actor | null>();
+                const actor = event.window.get_compositor_private<Meta.WindowActor | null>();
                 if (!actor) return;
 
                 this.on_window_create(event.window, actor);
@@ -433,9 +433,9 @@ export class Ext extends Ecs.System<ExtEvent> {
         return wom.get_active_workspace_index();
     }
 
-    actor_of(entity: Entity): null | Clutter.Actor {
+    actor_of(entity: Entity): null | Meta.WindowActor {
         const window = this.windows.get(entity);
-        return window ? window.meta.get_compositor_private<Clutter.Actor | null>() : null;
+        return window ? window.meta.get_compositor_private<Meta.WindowActor | null>() : null;
     }
 
     /** Connects a callback signal to a GObject, and records the signal. */
@@ -1552,7 +1552,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     on_maximize(win: Window.ShellWindow) {
         if (win.is_maximized()) {
             // Raise maximized to top so stacks won't appear over them.
-            const actor = win.meta.get_compositor_private<Clutter.Actor | null>();
+            const actor = win.meta.get_compositor_private<Meta.WindowActor | null>();
             if (actor) global.window_group.set_child_above_sibling(actor, null);
 
             this.on_monitor_changed(win, (_cfrom, cto, workspace) => {
@@ -1675,7 +1675,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         }
     }
 
-    on_window_create(window: Meta.Window, actor: Clutter.Actor) {
+    on_window_create(window: Meta.Window, actor: Meta.WindowActor) {
         const win = this.get_window(window);
         if (win) {
             const entity = win.entity;
@@ -2201,7 +2201,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
         for (const window of this.windows.values()) {
             if (window.is_tilable(this)) {
-                const actor = window.meta.get_compositor_private<Clutter.Actor | null>();
+                const actor = window.meta.get_compositor_private<Meta.WindowActor | null>();
                 if (actor) {
                     if (!window.meta.minimized) {
                         tiler.auto_tile(this, window, true);
@@ -2499,7 +2499,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
         // If not found, create a new entity with a ShellWindow component.
         if (!entity) {
-            const actor = meta.get_compositor_private<Clutter.Actor | null>();
+            const actor = meta.get_compositor_private<Meta.WindowActor | null>();
             if (!actor) return null;
 
             let window_app: Shell.App;

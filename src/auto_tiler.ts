@@ -1,4 +1,4 @@
-import Clutter from 'gi://Clutter';
+import Meta from 'gi://Meta';
 import Mtk from 'gi://Mtk';
 
 import * as ecs from './ecs.js';
@@ -86,8 +86,8 @@ export class AutoTiler {
         a_win.stack = b_stack;
         b_win.stack = a_stack;
 
-        a_win.meta.get_compositor_private<Clutter.Actor | null>()?.show();
-        b_win.meta.get_compositor_private<Clutter.Actor | null>()?.show();
+        a_win.meta.get_compositor_private<Meta.WindowActor | null>()?.show();
+        b_win.meta.get_compositor_private<Meta.WindowActor | null>()?.show();
 
         this.tile(ext, a_fork, a_fork.area);
         this.tile(ext, b_fork, b_fork.area);
