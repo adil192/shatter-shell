@@ -11,16 +11,24 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - name: Setup npm cache
+      - name: Setup cache
         uses: actions/cache@v6
         with:
-          path: ~/.npm
-          key: ${{ runner.os }}-npm-${{ hashFiles('**/package.json') }}
+          path: |
+            ~/.npm
+            target
+            schemas/gschemas.compiled
+            .eslintcache
+            *.tsbuildinfo
+          key: ${{ runner.os }}-shatter-${{ hashFiles('metadata.json') }}-${{ hashFiles('**/package.json') }}
           restore-keys: |
-            ${{ runner.os }}-npm-
+            ${{ runner.os }}-shatter-${{ hashFiles('metadata.json') }}-
+
+      - name: Get dependencies
+        run: npm ci
 
       - name: Build
-        run: make zip-file
+        run: make zip-file --assume-old=node_modules/.package-lock.json
 
       - name: Upload artifact
         uses: actions/upload-artifact@v7
@@ -30,4 +38,4 @@ jobs:
           archive: false
 
       - name: Run lints
-        run: npm run lint
+        run: npx eslint --cache --cache-strategy content
