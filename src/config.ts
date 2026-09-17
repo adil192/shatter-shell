@@ -29,7 +29,7 @@ export const DEFAULT_FLOAT_RULES: Array<FloatRule> = [
     { class: 'Conky' },
     { title: 'Discord Updater' },
     { class: 'Enpass', title: 'Enpass Assistant' },
-    { class: 'Floating Window Exceptions' },
+    { class: 'pop-shell-exceptions' },
     { class: 'Gjs', title: 'Settings' },
     { class: 'Gnome-initial-setup' },
     { class: 'Gnome-terminal', title: 'Preferences – General' },
