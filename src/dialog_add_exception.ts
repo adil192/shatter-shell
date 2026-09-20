@@ -1,4 +1,3 @@
-import * as Lib from './lib.js';
 import St from 'gi://St';
 import Clutter from 'gi://Clutter';
 
@@ -24,7 +23,8 @@ export class AddExceptionDialog {
         l.add_child(title);
         l.add_child(desc);
 
-        this.dialog.contentLayout.width = Math.max(Lib.current_monitor().width / 4, 640);
+        const mon_geom = global.display.get_monitor_geometry(global.display.get_current_monitor());
+        this.dialog.contentLayout.width = Math.max(mon_geom.width / 4, 640);
 
         this.dialog.addButton({
             label: 'Cancel',
