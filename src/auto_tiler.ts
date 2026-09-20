@@ -1,3 +1,4 @@
+import Clutter from 'gi://Clutter';
 import Meta from 'gi://Meta';
 import Mtk from 'gi://Mtk';
 
@@ -416,7 +417,7 @@ export class AutoTiler {
         const matching_stack = win.stack !== null && win.stack === attach_to.stack;
         const { Left, Up, Right, Down } = tiling.Direction;
 
-        const swap = (o: lib.Orientation, d: tiling.Direction) => {
+        const swap = (o: Clutter.Orientation, d: tiling.Direction) => {
             fork.set_orientation(o);
             const is_left = fork.left.is_window(win.entity);
             const swap = (is_left && (d == Right || d == Down)) || (!is_left && (d == Left || d == Up));
@@ -430,7 +431,7 @@ export class AutoTiler {
 
         if (placement) {
             const direction
-                = placement.orientation === lib.Orientation.HORIZONTAL
+                = placement.orientation === Clutter.Orientation.HORIZONTAL
                     ? placement.swap
                         ? Left
                         : Right
@@ -740,11 +741,11 @@ export class AutoTiler {
  */
 export function cursor_placement(ext: Ext, area: Mtk.Rectangle, cursor: Mtk.Rectangle): null | MoveByCursor {
     const { LEFT, RIGHT, TOP, BOTTOM } = geom.Side;
-    const { HORIZONTAL, VERTICAL } = lib.Orientation;
+    const { HORIZONTAL, VERTICAL } = Clutter.Orientation;
 
     const [, side] = geom.nearest_side(ext, [cursor.x, cursor.y], area);
 
-    const res: null | [lib.Orientation, boolean]
+    const res: null | [Clutter.Orientation, boolean]
         = side === LEFT
             ? [HORIZONTAL, true]
             : side === RIGHT

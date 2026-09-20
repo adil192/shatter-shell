@@ -1512,7 +1512,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                     const half_height = area.height / 2;
 
                     const new_area: [number, number, number, number]
-                        = orientation === Lib.Orientation.HORIZONTAL
+                        = orientation === Clutter.Orientation.HORIZONTAL
                             ? swap
                                 ? [area.x, area.y, half_width, area.height]
                                 : [area.x + half_width, area.y, half_width, area.height]

@@ -11,11 +11,6 @@ export interface SizeHint {
     base: [number, number];
 }
 
-export enum Orientation {
-    HORIZONTAL = 0,
-    VERTICAL = 1,
-}
-
 export function nth_rev<T>(array: Array<T>, nth: number): T | undefined {
     return array[array.length - nth - 1];
 }

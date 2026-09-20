@@ -14,6 +14,7 @@ import { AutoTiler } from './auto_tiler.js';
 import { Fork } from './fork.js';
 import Tags from './tags.js';
 
+import Clutter from 'gi://Clutter';
 import Meta from 'gi://Meta';
 import Mtk from 'gi://Mtk';
 import St from 'gi://St';
@@ -263,9 +264,9 @@ export class Tiler {
             fork.set_area(rect);
         }
 
-        let orientation: Lib.Orientation, reverse: boolean;
+        let orientation: Clutter.Orientation, reverse: boolean;
 
-        const { HORIZONTAL, VERTICAL } = Lib.Orientation;
+        const { HORIZONTAL, VERTICAL } = Clutter.Orientation;
 
         switch (direction) {
             case Direction.Left:
@@ -354,7 +355,7 @@ export class Tiler {
         const forest = ext.auto_tiler.forest;
         const fentity = focused.entity;
 
-        const detach = (orient: Lib.Orientation, reverse: boolean) => {
+        const detach = (orientation: Clutter.Orientation, reverse: boolean) => {
             if (!ext.auto_tiler) return;
             focused.stack = null;
 
@@ -377,7 +378,7 @@ export class Tiler {
             }
 
             const modifier = new_fork ?? fork;
-            modifier.set_orientation(orient);
+            modifier.set_orientation(orientation);
             forest.on_attach(modifier.entity, fentity);
             ext.auto_tiler.tile(ext, fork, fork.area);
             this.overlay_watch(ext, focused);
@@ -387,9 +388,9 @@ export class Tiler {
             case Direction.Left:
                 if (force_detach) {
                     Node.stack_remove(forest, inner, fentity);
-                    detach(Lib.Orientation.HORIZONTAL, false);
+                    detach(Clutter.Orientation.HORIZONTAL, false);
                 } else if (!Node.stack_move_left(ext, forest, inner, fentity)) {
-                    detach(Lib.Orientation.HORIZONTAL, false);
+                    detach(Clutter.Orientation.HORIZONTAL, false);
                 }
 
                 ext.auto_tiler.update_stack(ext, inner);
@@ -398,9 +399,9 @@ export class Tiler {
             case Direction.Right:
                 if (force_detach) {
                     Node.stack_remove(forest, inner, fentity);
-                    detach(Lib.Orientation.HORIZONTAL, true);
+                    detach(Clutter.Orientation.HORIZONTAL, true);
                 } else if (!Node.stack_move_right(ext, forest, inner, fentity)) {
-                    detach(Lib.Orientation.HORIZONTAL, true);
+                    detach(Clutter.Orientation.HORIZONTAL, true);
                 }
 
                 ext.auto_tiler.update_stack(ext, inner);
@@ -408,12 +409,12 @@ export class Tiler {
 
             case Direction.Up:
                 Node.stack_remove(forest, inner, fentity);
-                detach(Lib.Orientation.VERTICAL, false);
+                detach(Clutter.Orientation.VERTICAL, false);
                 break;
 
             case Direction.Down:
                 Node.stack_remove(forest, inner, fentity);
-                detach(Lib.Orientation.VERTICAL, true);
+                detach(Clutter.Orientation.VERTICAL, true);
                 break;
         }
     }

@@ -1,9 +1,9 @@
+import Clutter from 'gi://Clutter';
 import Meta from 'gi://Meta';
 import Mtk from 'gi://Mtk';
 
 import * as arena from './arena.js';
 import * as Ecs from './ecs.js';
-import * as Lib from './lib.js';
 import * as log from './log.js';
 import * as movement from './movement.js';
 import * as Node from './node.js';
@@ -22,7 +22,7 @@ const { Movement } = movement;
 const { DOWN, UP, LEFT, RIGHT } = Movement;
 
 export interface MoveByCursor {
-    orientation: Lib.Orientation;
+    orientation: Clutter.Orientation;
     swap: boolean;
 }
 
@@ -351,8 +351,8 @@ export class Forest extends Ecs.World {
         monitor: MonitorID,
     ): [Entity, Fork.Fork] {
         const entity = this.create_entity();
-        const orient = area.width > area.height ? Lib.Orientation.HORIZONTAL : Lib.Orientation.VERTICAL;
-        const fork = new Fork.Fork(entity, left, right, area, workspace, monitor, orient);
+        const orientation = area.width > area.height ? Clutter.Orientation.HORIZONTAL : Clutter.Orientation.VERTICAL;
+        const fork = new Fork.Fork(entity, left, right, area, workspace, monitor, orientation);
         this.forks.insert(entity, fork);
         return [entity, fork];
     }

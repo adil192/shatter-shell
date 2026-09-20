@@ -1,3 +1,4 @@
+import Clutter from 'gi://Clutter';
 import Mtk from 'gi://Mtk';
 
 import type { Forest } from './forest.js';
@@ -6,7 +7,6 @@ import type { Ext } from './extension.js';
 import type { Node } from './node.js';
 
 import * as Ecs from './ecs.js';
-import * as Lib from './lib.js';
 import * as node from './node.js';
 import { ShellWindow } from './window.js';
 const { NodeKind } = node;
@@ -26,13 +26,13 @@ export class Fork {
     area: Mtk.Rectangle;
     entity: Entity;
     on_primary_display: boolean;
-    workspace: number;
+    workspace: WorkspaceID;
     length_left: number;
     prev_length_left: number;
     prev_ratio: number = 0.5;
-    monitor: number;
+    monitor: MonitorID;
     minimum_ratio: number = 0.1;
-    orientation: Lib.Orientation = Lib.Orientation.HORIZONTAL;
+    orientation;
 
     orientation_changed: boolean = false;
     is_toplevel: boolean = false;
@@ -49,17 +49,19 @@ export class Fork {
         area: Mtk.Rectangle,
         workspace: WorkspaceID,
         monitor: MonitorID,
-        orient: Lib.Orientation,
+        orientation = Clutter.Orientation.HORIZONTAL,
     ) {
         this.on_primary_display = global.display.get_primary_monitor() === monitor;
         this.area = area;
         this.left = left;
         this.right = right;
         this.workspace = workspace;
-        this.length_left = orient === Lib.Orientation.HORIZONTAL ? this.area.width / 2 : this.area.height / 2;
+        this.length_left = orientation === Clutter.Orientation.HORIZONTAL
+            ? this.area.width / 2
+            : this.area.height / 2;
         this.prev_length_left = this.length_left;
         this.entity = entity;
-        this.orientation = orient;
+        this.orientation = orientation;
         this.monitor = monitor;
     }
 
@@ -119,7 +121,7 @@ export class Fork {
 
     /** If this fork has a horizontal orientation */
     is_horizontal(): boolean {
-        return Lib.Orientation.HORIZONTAL == this.orientation;
+        return this.orientation == Clutter.Orientation.HORIZONTAL;
     }
 
     length(): number {
@@ -334,11 +336,11 @@ export class Fork {
 
     rebalance_orientation() {
         this.set_orientation(
-            this.area.height > this.area.width ? Lib.Orientation.VERTICAL : Lib.Orientation.HORIZONTAL,
+            this.area.height > this.area.width ? Clutter.Orientation.VERTICAL : Clutter.Orientation.HORIZONTAL,
         );
     }
 
-    set_orientation(o: Lib.Orientation) {
+    set_orientation(o: Clutter.Orientation) {
         if (o !== this.orientation) {
             this.orientation = o;
             this.orientation_changed = true;
@@ -356,8 +358,9 @@ export class Fork {
 
     /** Toggles the orientation of this fork */
     toggle_orientation() {
-        this.orientation
-            = Lib.Orientation.HORIZONTAL === this.orientation ? Lib.Orientation.VERTICAL : Lib.Orientation.HORIZONTAL;
+        this.orientation = this.orientation === Clutter.Orientation.HORIZONTAL
+            ? Clutter.Orientation.VERTICAL
+            : Clutter.Orientation.HORIZONTAL;
 
         this.orientation_changed = true;
         if (this.n_toggled === 1) {
