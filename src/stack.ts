@@ -701,7 +701,7 @@ export class Stack {
                 if (!actor) return;
 
                 this.fade_in(actor);
-                window.request_activate(false);
+                this.ext.register_fn(() => window.request_activate(false));
 
                 this.reposition();
 
