@@ -55,7 +55,7 @@ interface Request {
  */
 export class Forest extends Ecs.World {
     /** Maintains a list of top-level forks. */
-    toplevel: Map<string, [Entity, [number, number]]> = new Map();
+    toplevel: Map<string, [Entity, MonitorWorkspaceID]> = new Map();
 
     /** Stores window positions that have been requested. */
     requested: Map<Entity, Request> = new Map();
@@ -358,7 +358,7 @@ export class Forest extends Ecs.World {
     }
 
     /** Create a new top level fork */
-    create_toplevel(window: Entity, area: Mtk.Rectangle, id: [MonitorID, WorkspaceID]): [Entity, Fork.Fork] {
+    create_toplevel(window: Entity, area: Mtk.Rectangle, id: MonitorWorkspaceID): [Entity, Fork.Fork] {
         const [entity, fork] = this.create_fork(Node.Node.window(window), null, area, id[1], id[0]);
 
         this.string_reps.with(entity, (sid) => {
@@ -488,7 +488,7 @@ export class Forest extends Ecs.World {
     }
 
     /** Finds the top level fork associated with the given entity. */
-    find_toplevel([src_mon, src_work]: [number, number]): Entity | null {
+    find_toplevel([src_mon, src_work]: MonitorWorkspaceID): Entity | null {
         for (const [entity, fork] of this.forks.iter()) {
             if (!fork.is_toplevel) continue;
             const { monitor, workspace } = fork;

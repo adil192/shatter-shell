@@ -118,7 +118,7 @@ export class AutoTiler {
     }
 
     /** Attaches `win` to an optionally-given monitor */
-    attach_to_monitor(ext: Ext, win: ShellWindow, workspace_id: [number, number], smart_gaps: boolean) {
+    attach_to_monitor(ext: Ext, win: ShellWindow, workspace_id: MonitorWorkspaceID, smart_gaps: boolean) {
         const rect = ext.monitor_work_area(workspace_id[0]);
 
         if (!smart_gaps) {
@@ -173,7 +173,7 @@ export class AutoTiler {
     }
 
     /** Tile a window onto a workspace */
-    attach_to_workspace(ext: Ext, win: ShellWindow, id: [number, number]) {
+    attach_to_workspace(ext: Ext, win: ShellWindow, id: MonitorWorkspaceID) {
         if (ext.should_ignore_workspace(id[0])) {
             id = [id[0], 0];
         }
@@ -324,7 +324,7 @@ export class AutoTiler {
     }
 
     largest_on_workspace(ext: Ext, monitor: number, workspace: number): null | ShellWindow {
-        const workspace_id: [number, number] = [monitor, workspace];
+        const workspace_id: MonitorWorkspaceID = [monitor, workspace];
         const toplevel = this.forest.find_toplevel(workspace_id);
         if (toplevel) {
             return this.forest.largest_window_on(ext, toplevel);

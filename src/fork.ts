@@ -203,7 +203,7 @@ export class Fork {
     }
 
     /** Defines this fork as a top level fork, and records it in the forest */
-    set_toplevel(tiler: Forest, entity: Entity, string: string, id: [number, number]): Fork {
+    set_toplevel(tiler: Forest, entity: Entity, string: string, id: MonitorWorkspaceID): Fork {
         this.is_toplevel = true;
         tiler.toplevel.set(string, [entity, id]);
         return this;

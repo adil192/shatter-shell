@@ -198,7 +198,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     ids: Ecs.Storage<number> = this.register_storage();
 
     /** Store for keeping track of which monitor + workspace a window is on */
-    monitors: Ecs.Storage<[number, number]> = this.register_storage();
+    monitors: Ecs.Storage<MonitorWorkspaceID> = this.register_storage();
 
     /** Stores movements that have been queued */
     movements: Ecs.Storage<Mtk.Rectangle> = this.register_storage();
@@ -259,11 +259,11 @@ export class Ext extends Ecs.System<ExtEvent> {
         this.dbus.FocusLeft = () => this.focus_left();
         this.dbus.FocusRight = () => this.focus_right();
 
-        this.dbus.WindowFocus = (window: [number, number]) => {
-            const target_window = this.windows.get(window);
-            if (target_window) {
-                target_window.request_activate();
-                this.on_focused(target_window);
+        this.dbus.WindowFocus = (entity: Entity) => {
+            const window = this.windows.get(entity);
+            if (window) {
+                window.request_activate();
+                this.on_focused(window);
             }
         };
 
@@ -278,8 +278,11 @@ export class Ext extends Ecs.System<ExtEvent> {
             return wins;
         };
 
-        this.dbus.WindowQuit = (win: [number, number]) => {
-            this.windows.get(win)?.meta.delete(global.get_current_time());
+        this.dbus.WindowQuit = (entity: Entity) => {
+            const window = this.windows.get(entity);
+            if (window) {
+                window.meta.delete(global.get_current_time());
+            }
         };
     }
 
@@ -2573,8 +2576,8 @@ export class Ext extends Ecs.System<ExtEvent> {
         return wom.get_workspace_by_index(id);
     }
 
-    workspace_id(window: Window.ShellWindow | null = null): [number, number] {
-        const id: [number, number] = window
+    workspace_id(window: Window.ShellWindow | null = null): MonitorWorkspaceID {
+        const id: MonitorWorkspaceID = window
             ? [window.meta.get_monitor(), window.workspace_id()]
             : [this.active_monitor(), this.active_workspace()];
 

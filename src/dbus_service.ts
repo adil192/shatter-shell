@@ -1,4 +1,5 @@
 import Gio from 'gi://Gio';
+import type { Entity } from './ecs.js';
 
 const IFACE: string = `<node>
   <interface name="com.adilhanney.ShatterShell">
@@ -29,9 +30,9 @@ export class Service {
     FocusRight: () => void = () => { };
     FocusUp: () => void = () => { };
     FocusDown: () => void = () => { };
-    WindowFocus: (window: [number, number]) => void = () => { };
-    WindowList: () => Array<[[number, number], string, string, string]> = () => [];
-    WindowQuit: (window: [number, number]) => void = () => { };
+    WindowFocus: (entity: Entity) => void = () => { };
+    WindowList: () => Array<[Entity, string, string, string]> = () => [];
+    WindowQuit: (entity: Entity) => void = () => { };
 
     constructor() {
         this.dbus = Gio.DBusExportedObject.wrapJSObject(IFACE, this);

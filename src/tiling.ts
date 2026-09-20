@@ -870,7 +870,7 @@ export function locate_monitor(
         exclude = (rect: Mtk.Rectangle) => rect.x < ref.x;
     }
 
-    let next: [number, number, Mtk.Rectangle] | null = null;
+    let next: [MonitorID, number, Mtk.Rectangle] | null = null;
 
     for (let mon = 0; mon < n_monitors; mon += 1) {
         if (mon === from) continue;
