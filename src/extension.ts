@@ -262,7 +262,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         this.dbus.WindowFocus = (window: [number, number]) => {
             const target_window = this.windows.get(window);
             if (target_window) {
-                target_window.activate();
+                target_window.request_activate();
                 this.on_focused(target_window);
             }
         };
@@ -322,7 +322,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
                 if (window.activate_after_move) {
                     window.activate_after_move = false;
-                    window.activate();
+                    window.request_activate();
                 }
                 break;
             }
@@ -416,7 +416,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     activate_window(window: Window.ShellWindow | null) {
         if (window) {
-            window.activate();
+            window.request_activate();
         }
     }
 
@@ -694,7 +694,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                         stack_con.activate(next);
                         const window = this.windows.get(next);
                         if (window) {
-                            window.activate();
+                            window.request_activate();
                             return true;
                         }
                     }
@@ -773,7 +773,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
             const activate_window = (window: Window.ShellWindow) => {
                 this.on_focused(window);
-                window.activate(true);
+                window.request_activate(true);
                 this.prev_focused = [null, window.entity];
             };
 
@@ -844,7 +844,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                         ? fork.right.inner.entities[0]!
                         : fork.right.inner.entity;
 
-                    this.windows.with(entity, sibling => sibling.activate());
+                    this.windows.with(entity, sibling => sibling.request_activate());
                 }
             }
         }
@@ -862,7 +862,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                     if (prev_window.stack !== stack) {
                         stack_object.auto_activate();
                         this.prev_focused = [null, stack_object.active];
-                        this.windows.get(stack_object.active)?.activate();
+                        this.windows.get(stack_object.active)?.request_activate();
                     }
                 }
             }
@@ -1958,7 +1958,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                     }
 
                     if (window && window.same_monitor() && window.same_workspace() && !window.meta.minimized) {
-                        window.activate(false);
+                        window.request_activate(false);
                     } else {
                         this.hide_all_borders();
                     }
@@ -2534,7 +2534,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                     this.windows.with(entity!, (window) => {
                         window.meta.raise();
                         window.meta.unminimize();
-                        window.activate(false);
+                        window.request_activate(false);
                     });
 
                     return false;

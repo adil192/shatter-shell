@@ -65,7 +65,7 @@ export class Tiler {
         const window = ext.focus_window();
         if (window && ext.auto_tiler) {
             ext.auto_tiler.toggle_orientation(ext, window);
-            ext.register_fn(() => window.activate(true));
+            ext.register_fn(() => window.request_activate(true));
         }
     }
 
@@ -206,7 +206,7 @@ export class Tiler {
         if (!win) return;
 
         const place_pointer = () => {
-            ext.register_fn(() => win.activate(true));
+            ext.register_fn(() => win.request_activate(true));
         };
 
         if (ext.auto_tiler && win.is_tilable(ext)) {
@@ -477,7 +477,7 @@ export class Tiler {
     overlay_watch(ext: Ext, window: window.ShellWindow) {
         ext.register_fn(() => {
             ext.set_overlay(window.rect());
-            window.activate(false);
+            window.request_activate(false);
         });
     }
 
@@ -792,7 +792,7 @@ export class Tiler {
                             });
                         }
 
-                        ext.register_fn(() => meta.activate(true));
+                        ext.register_fn(() => meta.request_activate(true));
                     }
                 }
 

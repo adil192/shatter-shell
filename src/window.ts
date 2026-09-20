@@ -88,8 +88,30 @@ export class ShellWindow {
         if (this.meta.get_compositor_private<Meta.WindowActor | null>()?.get_stage()) this.on_style_changed();
     }
 
-    activate(move_mouse: boolean = true): void {
-        activate(this.ext, move_mouse, this.meta);
+    /** Activates a window, and moves the mouse pointer. */
+    request_activate(move_mouse: boolean = true): void {
+        try {
+            // Quit if window is destroying/destroyed.
+            if (!this.actor_exists()) return;
+
+            // Quit if window has override-redirect set.
+            if (this.meta.is_override_redirect()) return;
+
+            this.meta.unminimize();
+            this.meta.get_workspace().activate_with_focus(this.meta, global.get_current_time());
+            this.meta.raise();
+
+            move_mouse = move_mouse
+                && Main.modalCount === 0
+                && this.ext.settings.mouse_cursor_follows_active_window()
+                && !pointer_already_on_window(this.meta)
+                && pointer_in_work_area();
+            if (move_mouse) {
+                place_pointer_on(this.ext, this.meta);
+            }
+        } catch (error) {
+            log.error(`failed to activate window: ${error}`);
+        }
     }
 
     actor_exists(): boolean {
@@ -558,38 +580,6 @@ export class ShellWindow {
 
     private workspace_changed() {
         this.restack(RESTACK_STATE.WORKSPACE_CHANGED);
-    }
-}
-
-/** Activates a window, and moves the mouse point. */
-export function activate(ext: Ext, move_mouse: boolean, win: Meta.Window) {
-    try {
-        // Return if window was destroyed.
-        if (!win.get_compositor_private<Meta.WindowActor | null>()) return;
-
-        // Return if window is being destroyed.
-        if (ext.get_window(win)?.destroying ?? false) return;
-
-        // Return if window has override-redirect set.
-        if (win.is_override_redirect()) return;
-
-        const workspace = win.get_workspace();
-
-        win.unminimize();
-        workspace.activate_with_focus(win, global.get_current_time());
-        win.raise();
-
-        const pointer_placement_permitted = move_mouse
-            && Main.modalCount === 0
-            && ext.settings.mouse_cursor_follows_active_window()
-            && !pointer_already_on_window(win)
-            && pointer_in_work_area();
-
-        if (pointer_placement_permitted) {
-            place_pointer_on(ext, win);
-        }
-    } catch (error) {
-        log.error(`failed to activate window: ${error}`);
     }
 }
 

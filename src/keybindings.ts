@@ -29,7 +29,7 @@ export class Keybindings {
                 const win = ext.focus_window();
                 if (win && ext.auto_tiler) {
                     ext.auto_tiler.toggle_orientation(ext, win);
-                    ext.register_fn(() => win.activate(true));
+                    ext.register_fn(() => win.request_activate(true));
                 }
             },
 
