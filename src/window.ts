@@ -97,9 +97,8 @@ export class ShellWindow {
             // Quit if window has override-redirect set.
             if (this.meta.is_override_redirect()) return;
 
-            this.meta.unminimize();
-            this.meta.get_workspace().activate_with_focus(this.meta, global.get_current_time());
-            this.meta.raise();
+            const workspace = this.meta.get_workspace();
+            workspace.activate_with_focus(this.meta, global.get_current_time());
 
             move_mouse = move_mouse
                 && Main.modalCount === 0
