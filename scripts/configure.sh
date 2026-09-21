@@ -115,10 +115,9 @@ set_keybindings
 # Make sure user extensions are enabled
 dconf write /org/gnome/shell/disable-user-extensions false
 
-# Use a window placement behavior which works better for tiling
-
-if gnome-extensions list | grep native-window; then
-    gnome-extensions enable "$(gnome-extensions list | grep native-window)"
+# Use a window placement behavior which works better for tiling (https://extensions.gnome.org/extension/18/native-window-placement/)
+if gnome-extensions list | grep native-window-placement@gnome-shell-extensions.gcampax.github.com; then
+    gnome-extensions enable native-window-placement@gnome-shell-extensions.gcampax.github.com
 fi
 
 # Workspaces spanning displays works better with Shatter Shell
