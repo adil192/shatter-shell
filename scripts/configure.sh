@@ -81,8 +81,8 @@ set_keybindings() {
     dconf write ${KEYS_MUTTER}/toggle-tiled-left "@as []"
     dconf write ${KEYS_MUTTER}/toggle-tiled-right "@as []"
 
-    # Toggle maximization state
-    dconf write ${KEYS_GNOME_WM}/toggle-maximized "['<Super>m']"
+    # Toggle maximization state: changed from <Alt>F10
+    dconf write ${KEYS_GNOME_WM}/toggle-maximized "['<Super>m', '<Alt>F10']"
     # Lock screen
     dconf write ${KEYS_MEDIA}/screensaver "['<Super>Escape']"
     # Home folder
