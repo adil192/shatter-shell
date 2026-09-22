@@ -65,8 +65,8 @@ set_keybindings() {
     dconf write ${KEYS_MEDIA}/www "['<Super>b']"
     # Launch terminal
     dconf write ${KEYS_MEDIA}/terminal "['<Super>t']"
-    # Rotate Video Lock
-    dconf write ${KEYS_MEDIA}/rotate-video-lock-static "@as []"
+    # Toggle automatic screen orientation: disable <Super>o, retain XF86RotationLockToggle
+    dconf write ${KEYS_MEDIA}/rotate-video-lock-static "@as ['XF86RotationLockToggle']"
 
     # Close window: changed from <Alt>F4
     dconf write ${KEYS_GNOME_WM}/close "['<Super>q', '<Alt>F4']"
