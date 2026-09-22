@@ -20,7 +20,7 @@ SOURCES = src/*.ts src/*/*.ts *.scss icons/*.svg schemas/*.gschema.xml metadata.
 all: compile
 
 clean:
-	rm -rf _build target .eslintcache tsconfig.tsbuildinfo $(UUID)_*.zip
+	rm -rf _build schemas/gschemas.compiled target .eslintcache tsconfig.tsbuildinfo $(UUID)_*.zip
 
 # Configure local settings on system
 configure:

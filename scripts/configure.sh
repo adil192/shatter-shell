@@ -58,8 +58,8 @@ set_keybindings() {
 }
 
 if ! command -v gnome-extensions >/dev/null; then
-    echo 'You must install gnome-extensions to configure or enable via this script' \
-        '(`gnome-shell` on Debian systems, `gnome-extensions` on openSUSE systems.)'
+    # shellcheck disable=SC2016
+    echo 'You must install gnome-extensions to configure or enable via this script (`gnome-shell` on Debian systems, `gnome-extensions` on openSUSE systems.)'
     exit 1
 fi
 

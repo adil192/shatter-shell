@@ -69,7 +69,6 @@ export class Indicator {
 
         bm.addMenuItem(menu_separator(''));
         bm.addMenuItem(shortcuts(bm));
-        bm.addMenuItem(settings_button(bm));
         bm.addMenuItem(menu_separator(''));
 
         bm.addMenuItem(this.toggle_active);
@@ -88,28 +87,6 @@ export class Indicator {
 
 function menu_separator(text: string) {
     return new PopupSeparatorMenuItem(text);
-}
-
-function settings_button(menu: PopupMenu) {
-    const item = new PopupMenuItem(_('View All'));
-    item.connect('activate', () => {
-        const path = GLib.find_program_in_path('shatter-shell-shortcuts');
-        const [_success, _pid] = GLib.spawn_async(
-            null,
-            path != null
-                ? [path]
-                : ['xdg-open', 'https://support.system76.com/articles/pop-keyboard-shortcuts/'],
-            null,
-            GLib.SpawnFlags.SEARCH_PATH,
-            null,
-        );
-
-        menu.close();
-    });
-
-    item.label.get_clutter_text().set_margin_left(12);
-
-    return item;
 }
 
 function floating_window_exceptions(ext: Ext, menu: PopupMenu) {
@@ -144,46 +121,33 @@ function shortcuts(menu: PopupMenu) {
     const item = new PopupBaseMenuItem();
     item.add_child(widget);
     item.connect('activate', () => {
-        const path = GLib.find_program_in_path('shatter-shell-shortcuts');
-        const [_success, _pid] = GLib.spawn_async(
-            null,
-            path != null
-                ? [path]
-                : ['xdg-open', 'https://support.system76.com/articles/pop-keyboard-shortcuts/'],
-            null,
-            GLib.SpawnFlags.SEARCH_PATH,
-            null,
-        );
-
+        openShortcutsDialog();
         menu.close();
     });
 
-    function create_label(text: string) {
-        return new St.Label({ text });
-    }
-
-    function create_shortcut_label(text: string) {
-        const label = create_label(text);
-        label.set_x_align(Clutter.ActorAlign.END);
-        return label;
-    }
-
     layout_manager.set_row_spacing(12);
     layout_manager.set_column_spacing(30);
-    layout_manager.attach(create_label(_('Shortcuts')), 0, 0, 2, 1);
+    layout_manager.attach(St.Label.new(_('Shortcuts')), 0, 0, 2, 1);
 
-    [
-        [_('Navigate Windows'), _('Super + Arrow Keys')] as const,
-        [_('Toggle Tiling'), _('Super + Y')] as const,
-    ].forEach((section, idx) => {
-        const key = create_label(section[0]);
+    const importantShortcuts = [
+        [_('Toggle tiling'), _('Super Y')],
+        [_('Navigate windows'), _('Super ↑↓←→')],
+    ] as const;
+
+    importantShortcuts.forEach((shortcut, idx) => {
+        const key = St.Label.new(shortcut[0]);
         key.get_clutter_text().set_margin_left(12);
 
-        const val = create_shortcut_label(section[1]);
+        const val = St.Label.new(shortcut[1]);
+        val.set_x_align(Clutter.ActorAlign.END);
 
         layout_manager.attach(key, 0, idx + 1, 1, 1);
         layout_manager.attach(val, 1, idx + 1, 1, 1);
     });
+
+    const viewAll = St.Label.new(_('View all...'));
+    viewAll.get_clutter_text().set_margin_left(12);
+    layout_manager.attach(viewAll, 0, importantShortcuts.length + 1, 2, 1);
 
     return item;
 }
@@ -327,7 +291,7 @@ function color_selector(ext: Ext, menu: PopupMenu) {
     color_selector_item.add_child(color_button);
     color_button.connect('button-press-event', () => {
         const path = get_current_path() + '/color_dialog/main.js';
-        const resp = GLib.spawn_command_line_async(`gjs --module ${path}`);
+        const resp = GLib.spawn_command_line_async(`gjs --module "${path}"`);
         if (!resp) {
             return null;
         }
@@ -340,4 +304,9 @@ function color_selector(ext: Ext, menu: PopupMenu) {
     });
 
     return color_selector_item;
+}
+
+function openShortcutsDialog() {
+    const path = get_current_path() + '/shortcuts_dialog/main.js';
+    return GLib.spawn_command_line_async(`gjs --module "${path}"`);
 }

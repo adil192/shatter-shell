@@ -3,7 +3,6 @@ import * as Forest from './forest.js';
 import * as Ecs from './ecs.js';
 import * as Events from './events.js';
 import * as Focus from './focus.js';
-import * as Geom from './geom.js';
 import * as GrabOp from './grab_op.js';
 import * as Keybindings from './keybindings.js';
 import * as Lib from './lib.js';
@@ -59,7 +58,6 @@ import { get_current_path } from './paths.js';
 import { clampRect, fmtRect } from './rectangle.js';
 const { monitorID, workspaceID } = Lib;
 
-// TODO: Submit these to @girs/gnome-shell
 const screenShield = Main.screenShield as ScreenShield;
 const sessionMode = Main.sessionMode as GObject.Object & { $signals: { updated: () => void }; isLocked: boolean };
 const modalActorFocusStack = Main.modalActorFocusStack as {
