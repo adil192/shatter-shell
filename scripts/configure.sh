@@ -48,8 +48,8 @@ set_keybindings() {
     dconf write ${KEYS_GNOME_WM}/switch-to-workspace-right "@as ['<Primary><Super>Right','<Primary><Super>${right}']"
     # Maximize window: disable <Super>Up
     dconf write ${KEYS_GNOME_WM}/maximize "@as []"
-    # Restore window: disable <Super>Down
-    dconf write ${KEYS_GNOME_WM}/unmaximize "@as []"
+    # Restore window: disable <Super>Down, retain <Alt>F5
+    dconf write ${KEYS_GNOME_WM}/unmaximize "@as ['<Alt>F5']"
     # Move to monitor up: disable <Super><Shift>Up
     dconf write ${KEYS_GNOME_WM}/move-to-monitor-up "@as []"
     # Move to monitor down: disable <Super><Shift>Down
