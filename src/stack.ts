@@ -7,6 +7,7 @@ import * as Ecs from './ecs.js';
 import type * as Settings from './settings.js';
 
 const Arena = a.Arena;
+import Atk from 'gi://Atk';
 import Clutter from 'gi://Clutter';
 import GObject from 'gi://GObject';
 import Meta from 'gi://Meta';
@@ -36,6 +37,7 @@ function stack_widgets_new(): StackWidgets {
     const tabs = new St.BoxLayout({
         style_class: 'shatter-shell-stack',
         x_expand: true,
+        accessible_role: Atk.Role.PAGE_TAB_LIST,
     });
 
     tabs.get_layout_manager()?.set_homogeneous(true);
@@ -103,6 +105,7 @@ const TabButton = GObject.registerClass(
                 y_align: Clutter.ActorAlign.CENTER,
                 toggle_mode: true,
                 child: container,
+                accessible_role: Atk.Role.PAGE_TAB,
             });
         }
 
