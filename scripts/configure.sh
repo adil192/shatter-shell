@@ -63,8 +63,6 @@ set_keybindings() {
     dconf write ${KEYS_MEDIA}/email "['<Super>e']"
     # Launch web browser
     dconf write ${KEYS_MEDIA}/www "['<Super>b']"
-    # Launch terminal
-    dconf write ${KEYS_MEDIA}/terminal "['<Super>t']"
     # Toggle automatic screen orientation: disable <Super>o, retain XF86RotationLockToggle
     dconf write ${KEYS_MEDIA}/rotate-video-lock-static "@as ['XF86RotationLockToggle']"
 
