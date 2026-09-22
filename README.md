@@ -10,44 +10,59 @@ Therefore, we see an opportunity here to advance the usability of the GNOME desk
 
 ## Fork notice
 
-This is a fork of the original [pop-os/shell](https://github.com/pop-os/shell) repo.
+This is a fork of the original [pop-os/shell](https://github.com/pop-os/shell) repo,
+which is no longer being developed<sup>[source](https://github.com/pop-os/shell/issues/1829#issuecomment-5511896163)</sup>.
 
-I'm working on this just for fun: there isn't too much interesting here from a user perspective.
-
-For a summary of this fork's changes, see [Releases](https://github.com/adil192/shatter-shell/releases).
+Find a summary of this fork's main improvements in the [2.0.0 release](https://github.com/adil192/shatter-shell/releases/tag/2.0.0) and incremental improvements in the [other releases](https://github.com/adil192/shatter-shell/releases).
 
 ## Installation
 
-Use the branch corresponding to your GNOME Shell version (`git checkout branch_name`):
-
-- **GNOME 3.36 through 41:** Use the `master_focal` branch.
-- **GNOME 42 through 44:** Use the `master_jammy` branch.
-- **GNOME 45:** Use the `master_mantic` branch.
-- **GNOME 46 through 49:** Use the `master_noble` branch.
-- **GNOME 50+:** Use the `master_resolute` branch.
-
-GNU Make and Node.js are also required to build the project.
-
-Proper functionality of the shell requires modifying GNOME's default keyboard shortcuts. For a local installation, run `make local-install`.
-
-If you want to uninstall the extension, you may invoke `make uninstall`, and then open the "Keyboard Shortcuts" panel in GNOME Settings to select the "Reset All.." button in the header bar.
-
-> Note that if you are packaging for your Linux distribution, many features in Shatter Shell will not work out of the box because they require changes to GNOME's default keyboard shortcuts. A local install is necessary if you aren't packaging your GNOME session with these default keyboard shortcuts unset or changed.
-
-### Packaging status
-
-#### Fedora and derivatives
+### Install on Fedora (and derivatives)
 
 Shatter Shell is included in the [Terra](https://terrapkg.com/) community repo.
+Run the following to install:
 
 ```bash
 # Add the Terra repo if you haven't already
 sudo dnf install --nogpgcheck --repofrompath 'terra,https://repos.fyralabs.com/terra$releasever' terra-release
+
 # Uninstall Pop Shell if you have it
 sudo dnf remove gnome-shell-extension-pop-shell
+
 # Install Shatter Shell
 sudo dnf install gnome-shell-extension-shatter-shell
 ```
+
+After logging out and back in,
+enable the extension in [Extension Manager](https://flathub.org/en/apps/com.mattjakeman.ExtensionManager).
+Alternatively, run `gnome-extensions enable shatter-shell@adilhanney.com` in a terminal.
+
+### Build from source
+
+Run the following to build Shatter Shell from source:
+
+```bash
+# Install the dependencies, e.g. for Fedora:
+sudo dnf install make npm
+
+# Clone the source code
+git clone https://github.com/adil192/shatter-shell.git
+cd shatter-shell
+
+# Build and install
+make local-install
+```
+
+After logging out and back in,
+enable the extension in [Extension Manager](https://flathub.org/en/apps/com.mattjakeman.ExtensionManager).
+Alternatively, run `gnome-extensions enable shatter-shell@adilhanney.com` in a terminal.
+
+Feel free to delete the source code after installing.
+
+Additional notes:
+- If you are planning on developing Shatter Shell, see [Developing](#Developing) below.
+- If you want to uninstall the extension, run `make uninstall`. Then open the "Keyboard Shortcuts" page in GNOME Settings and click the "Reset All..." button.
+- If you are packaging for your Linux distribution, many features in Shatter Shell will not work out of the box because they require changes to GNOME's default keyboard shortcuts. You may wish to package some gschema overrides to work around this.
 
 ---
 
@@ -132,14 +147,13 @@ Disabled by default, this mode manages windows using a tree-based tiling window 
 - `Super` + `G`
   - Toggles a window between floating and tiling.
 
-## Developers
-
-Due to the risky nature of plain JavaScript, this GNOME Shell extension is written in [TypeScript](https://www.typescriptlang.org/). In addition to supplying static type-checking and self-documenting classes and interfaces, it allows us to write modern JavaScript syntax whilst supporting the generation of code for older targets.
+## Developing
 
 Please install the following as dependencies when developing:
 
-- [`Node.js`](https://nodejs.org/en/) LTS+ (v22+)
-- [`sass`](https://sass-lang.com/install/)
+- `make`
+- [`Node.js`](https://nodejs.org/en/)
+- [`dart-sass`](https://sass-lang.com/install/) (optional, for faster builds)
 - `mutter-devkit` (optional, for testing)
 
 To test your changes while working on the shell, run `make debug` to start a nested GNOME session. See the documentation at https://gjs.guide/extensions/development/debugging.html.
