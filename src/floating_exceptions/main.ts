@@ -7,13 +7,11 @@ import GObject from 'gi://GObject';
 import Adw from 'gi://Adw';
 import Gtk from 'gi://Gtk';
 
-/** The directory that this script is executed from. */
-const SCRIPT_DIR = GLib.path_get_dirname(new Error().stack!.split(':')[0].slice(1));
-
 /** Add our directory so we can import modules from it. */
+const SCRIPT_DIR = GLib.path_get_dirname(new Error().stack!.split(':')[0]!.slice(1));
 imports.searchPath.push(SCRIPT_DIR);
 
-import * as config from './config.js';
+import * as config from '../config.js';
 
 const WM_CLASS_ID = 'org.gnome.shell.extensions.shatter-shell.exceptions';
 

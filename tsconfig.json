@@ -17,6 +17,6 @@
         "noUncheckedIndexedAccess": true,
     },
     "include": [
-        "src/*.ts",
+        "src/**/*.ts",
     ]
 }

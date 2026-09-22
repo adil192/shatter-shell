@@ -3,9 +3,9 @@ set -e
 
 use_tsc() {
     if command -v tsc >/dev/null 2>&1; then
-        tsc "$@"
+        tsc
     else
-        npx tsc "$@"
+        npx tsc
     fi
 }
 use_sass() {
@@ -19,9 +19,6 @@ use_sass() {
 
 echo Compiling into target/...
 glib-compile-schemas schemas &
-for proj in ${PROJECTS}; do
-    use_tsc --p src/"${proj}"
-done
 use_tsc
 use_sass --no-source-map \
     light.scss:target/light.css \

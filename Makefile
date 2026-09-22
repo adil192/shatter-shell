@@ -13,8 +13,7 @@ INSTALLBASE = $(DESTDIR)/usr/share/gnome-shell/extensions
 endif
 INSTALLNAME = $(UUID)
 
-PROJECTS = color_dialog floating_exceptions
-SOURCES = src/*.ts src/color_dialog/src/*.ts src/floating_exceptions/src/*.ts *.scss icons/*.svg schemas/*.gschema.xml metadata.json README.md
+SOURCES = src/*.ts src/*/*.ts *.scss icons/*.svg schemas/*.gschema.xml metadata.json README.md
 
 .PHONY: all clean install zip-file lint
 
@@ -29,7 +28,7 @@ configure:
 
 compile: _build/extension.js
 _build/extension.js: node_modules/.package-lock.json $(SOURCES) scripts/transpile.sh
-	env PROJECTS="$(PROJECTS)" ./scripts/transpile.sh
+	./scripts/transpile.sh
 
 debug: compile install configure enable nested
 
