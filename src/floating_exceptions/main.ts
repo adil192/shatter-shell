@@ -80,7 +80,7 @@ const MainPage = GObject.registerClass(class MainPage extends Adw.NavigationPage
         preferencesPage.add(selectGroup);
 
         const selectButton = new Adw.ButtonRow({
-            start_icon_name: 'select-symbolic',
+            start_icon_name: 'list-add-symbolic',
             title: 'New exception',
         });
         selectButton.connect('activated', () => callback({ tag: 'select' }));
