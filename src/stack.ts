@@ -141,8 +141,9 @@ export class Stack {
 
     widgets: null | StackWidgets = null;
 
+    /** The currently active tab */
     active: Entity;
-
+    /** The currently active tab's index */
     active_id: number = 0;
 
     prev_active: null | Entity = null;
@@ -150,9 +151,9 @@ export class Stack {
 
     tabs: Array<Tab> = [];
 
-    monitor: number;
+    monitor: MonitorID;
 
-    workspace: number;
+    workspace: WorkspaceID;
 
     buttons: a.Arena<TabButton> = new Arena();
 
@@ -169,7 +170,7 @@ export class Stack {
 
     private tabs_destroy: SignalID;
 
-    constructor(ext: Ext, active: Entity, workspace: number, monitor: number) {
+    constructor(ext: Ext, active: Entity, workspace: WorkspaceID, monitor: MonitorID) {
         this.ext = ext;
         this.active = active;
         this.monitor = monitor;

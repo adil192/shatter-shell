@@ -20,6 +20,7 @@ import Mtk from 'gi://Mtk';
 import St from 'gi://St';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import { applyRect, clampRect, diffRect } from './rectangle.js';
+const { monitorID } = Lib;
 const { ShellWindow } = window;
 
 export enum Direction {
@@ -200,7 +201,7 @@ export class Tiler {
         w: number,
         h: number,
         direction: Direction,
-        focus: () => window.ShellWindow | number | null,
+        focus: () => window.ShellWindow | MonitorID | null,
     ) {
         if (!window) return;
         const win = ext.windows.get(window);
@@ -538,7 +539,7 @@ export class Tiler {
     move_auto(
         ext: Ext,
         focused: window.ShellWindow,
-        move_to: window.ShellWindow | number,
+        move_to: window.ShellWindow | MonitorID,
         stack_from_left: boolean = true,
     ) {
         let watching: null | window.ShellWindow = null;
@@ -552,7 +553,7 @@ export class Tiler {
                     const [stack_fork, branch] = stack_info;
                     const stack = branch.inner as NodeStack;
 
-                    const placement = { auto: 0 };
+                    const placement = { auto: 0 } as const;
 
                     focused.ignore_detach = true;
                     at.detach_window(ext, focused.entity);
@@ -828,7 +829,7 @@ export class Tiler {
     }
 
     snap(ext: Ext, win: window.ShellWindow) {
-        const mon_geom = ext.monitor_work_area(win.meta.get_monitor());
+        const mon_geom = ext.monitor_work_area(win.monitor_id());
         const rect = win.rect();
         const columns = Math.floor(mon_geom.width / ext.column_size);
         const rows = Math.floor(mon_geom.height / ext.row_size);
@@ -843,10 +844,10 @@ export class Tiler {
 export function locate_monitor(
     win: window.ShellWindow,
     direction: Meta.DisplayDirection,
-): [number, Mtk.Rectangle] | null {
+): [MonitorID, Mtk.Rectangle] | null {
     if (!win.actor_exists()) return null;
 
-    const from = win.meta.get_monitor();
+    const from = win.monitor_id();
     const ref = win.meta.get_work_area_for_monitor(from);
     const n_monitors = global.display.get_n_monitors();
 
@@ -883,7 +884,7 @@ export function locate_monitor(
         const weight = geom.shortest_side(origin, work_area);
 
         if (next === null || next[1] > weight) {
-            next = [mon, weight, work_area];
+            next = [monitorID(mon), weight, work_area];
         }
     }
 
@@ -911,7 +912,7 @@ function move_window_or_monitor(
     ext: Ext,
     method: (ext: Ext, window: window.ShellWindow | null) => window.ShellWindow | null,
     direction: Meta.DisplayDirection,
-): () => window.ShellWindow | number | null {
+): () => window.ShellWindow | MonitorID | null {
     return () => {
         let next_window = method.call(ext.focus_selector, ext, null);
         next_window = (next_window && next_window.actor_exists()) ? next_window : null;
@@ -924,7 +925,7 @@ function move_window_or_monitor(
             if (!next_window) return next_monitor ? next_monitor[0] : null;
 
             // If no monitor found, or next window is on the same display, pick the window.
-            if (!next_monitor || focus.meta.get_monitor() == next_window.meta.get_monitor()) return next_window;
+            if (!next_monitor || focus.monitor_id() == next_window.monitor_id()) return next_window;
 
             // If the next window is not contained within the next display, return the display.
             return next_monitor[1].contains_rect(next_window.rect())

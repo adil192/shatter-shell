@@ -5,6 +5,7 @@ import * as utils from './utils.js';
 import type { Entity } from './ecs.js';
 import type { Ext } from './extension.js';
 import * as focus from './focus.js';
+const { monitorID, workspaceID } = lib;
 
 import Gdk from 'gi://Gdk';
 import Meta from 'gi://Meta';
@@ -39,7 +40,7 @@ export class ShellWindow {
     meta: Meta.Window;
     ext: Ext;
     stack: number | null = null;
-    known_workspace: number;
+    known_workspace: WorkspaceID;
     grab: boolean = false;
     activate_after_move: boolean = false;
     ignore_detach: boolean = false;
@@ -343,9 +344,14 @@ export class ShellWindow {
         return title ? title : this.name(this.ext);
     }
 
-    workspace_id(): number {
-        const workspace = this.meta.get_workspace();
-        return workspace.index();
+    workspace_id(): WorkspaceID {
+        const id = this.meta.get_workspace().index();
+        return workspaceID(id);
+    }
+
+    monitor_id(): MonitorID {
+        const id = this.meta.get_monitor();
+        return monitorID(id);
     }
 
     show_border() {
@@ -400,7 +406,7 @@ export class ShellWindow {
     }
 
     same_monitor() {
-        return this.meta.get_monitor() === global.display.get_current_monitor();
+        return this.monitor_id() === global.display.get_current_monitor();
     }
 
     /**
@@ -539,7 +545,7 @@ export class ShellWindow {
 
                 if (workspace === null) return;
 
-                const screen = workspace.get_work_area_for_monitor(this.meta.get_monitor());
+                const screen = workspace.get_work_area_for_monitor(this.monitor_id());
                 width = Math.min(width, screen.x + screen.width);
                 height = Math.min(height, screen.y + screen.height);
 

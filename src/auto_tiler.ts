@@ -18,6 +18,7 @@ import type { Fork } from './fork.js';
 import type { ShellWindow } from './window.js';
 
 const { NodeKind } = node;
+const { workspaceID } = lib;
 import Tags from './tags.js';
 
 export class AutoTiler {
@@ -94,7 +95,7 @@ export class AutoTiler {
         this.tile(ext, b_fork, b_fork.area);
     }
 
-    update_toplevel(ext: Ext, fork: Fork, monitor: number, smart_gaps: boolean) {
+    update_toplevel(ext: Ext, fork: Fork, monitor: MonitorID, smart_gaps: boolean) {
         const rect = ext.monitor_work_area(monitor);
 
         fork.smart_gapped = smart_gaps && fork.right === null;
@@ -176,7 +177,7 @@ export class AutoTiler {
     /** Tile a window onto a workspace */
     attach_to_workspace(ext: Ext, win: ShellWindow, id: MonitorWorkspaceID) {
         if (ext.should_ignore_workspace(id[0])) {
-            id = [id[0], 0];
+            id = [id[0], workspaceID(0)];
         }
 
         const toplevel = this.forest.find_toplevel(id);
@@ -324,7 +325,7 @@ export class AutoTiler {
         return fork;
     }
 
-    largest_on_workspace(ext: Ext, monitor: number, workspace: number): null | ShellWindow {
+    largest_on_workspace(ext: Ext, monitor: MonitorID, workspace: WorkspaceID): null | ShellWindow {
         const workspace_id: MonitorWorkspaceID = [monitor, workspace];
         const toplevel = this.forest.find_toplevel(workspace_id);
         if (toplevel) {
@@ -694,7 +695,7 @@ export class AutoTiler {
             return Err('focused window is not attached');
         }
 
-        return onto.meta.get_monitor() == win.meta.get_monitor() && onto.workspace_id() == win.workspace_id()
+        return onto.monitor_id() == win.monitor_id() && onto.workspace_id() == win.workspace_id()
             ? Ok(onto)
             : Err('window is not on the same monitor or workspace');
     }

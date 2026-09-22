@@ -31,7 +31,7 @@ export interface MoveByKeyboard {
 }
 
 export interface MoveByAuto {
-    auto: number;
+    auto: 0;
 }
 
 export type MoveBy = MoveByCursor | MoveByKeyboard | MoveByAuto;
@@ -95,7 +95,7 @@ export class Forest extends Ecs.World {
     }
 
     /** Place all windows into their calculated positions. */
-    arrange(ext: Ext, _workspace: number, _ignore_reset: boolean = false) {
+    arrange(ext: Ext, _workspace: WorkspaceID, _ignore_reset: boolean = false) {
         for (const [entity, r] of this.requested) {
             const window = ext.windows.get(entity);
             if (!window) continue;

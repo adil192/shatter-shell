@@ -267,7 +267,7 @@ export class Fork {
         }
     }
 
-    migrate(ext: Ext, forest: Forest, area: Mtk.Rectangle, monitor: number, workspace: number) {
+    migrate(ext: Ext, forest: Forest, area: Mtk.Rectangle, monitor: MonitorID, workspace: WorkspaceID) {
         if (ext.auto_tiler && this.is_toplevel) {
             const primary = global.display.get_primary_monitor() === monitor;
 

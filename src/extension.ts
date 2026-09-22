@@ -57,6 +57,7 @@ import { ScreenShield } from 'resource:///org/gnome/shell/ui/screenShield.js';
 import Tags from './tags.js';
 import { get_current_path } from './paths.js';
 import { clampRect, fmtRect } from './rectangle.js';
+const { monitorID, workspaceID } = Lib;
 
 // TODO: Submit these to @girs/gnome-shell
 const screenShield = Main.screenShield as ScreenShield;
@@ -136,7 +137,10 @@ export class Ext extends Ecs.System<ExtEvent> {
     row_size: number = 32;
 
     /** The known display configuration, for tracking monitor removals and changes */
-    displays: [number, Map<number, Display>] = [global.display.get_primary_monitor(), new Map<number, Display>()];
+    displays: [primaryMonitor: MonitorID, monitors: Map<MonitorID, Display>] = [
+        monitorID(global.display.get_primary_monitor()),
+        new Map<MonitorID, Display>(),
+    ];
 
     /** The current scaling factor in GNOME Shell */
     dpi: number = St.ThemeContext.get_for_stage(global.stage).scale_factor;
@@ -190,7 +194,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     private size_requests: Map<GObject.Object, SignalID> = new Map();
 
     /** Stores windows that were focused on a workspace */
-    private workspace_active: Map<number, null | Entity> = new Map();
+    private workspace_active: Map<WorkspaceID, null | Entity> = new Map();
 
     // Entity-component associations
 
@@ -321,7 +325,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                 window.meta.move_resize_frame(true, x, y, width, height);
                 window.meta.move_frame(true, x, y);
 
-                this.monitors.insert(window.entity, [window.meta.get_monitor(), window.workspace_id()]);
+                this.monitors.insert(window.entity, [window.monitor_id(), window.workspace_id()]);
 
                 if (window.activate_after_move) {
                     window.activate_after_move = false;
@@ -423,8 +427,8 @@ export class Ext extends Ecs.System<ExtEvent> {
         }
     }
 
-    active_monitor(): number {
-        return display.get_current_monitor();
+    active_monitor(): MonitorID {
+        return monitorID(display.get_current_monitor());
     }
 
     active_window_list(): Array<Window.ShellWindow> {
@@ -432,8 +436,9 @@ export class Ext extends Ecs.System<ExtEvent> {
         return this.tab_list(Meta.TabList.NORMAL_ALL, workspace);
     }
 
-    active_workspace(): number {
-        return wom.get_active_workspace_index();
+    active_workspace(): WorkspaceID {
+        const id = wom.get_active_workspace_index();
+        return workspaceID(id);
     }
 
     actor_of(entity: Entity): null | Meta.WindowActor {
@@ -608,7 +613,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         this.overlay.visible = false;
     }
 
-    find_monitor_to_retach(width: number, height: number): [number, Display] {
+    find_monitor_to_retach(width: number, height: number): [MonitorID, Display] {
         if (!this.settings.workspaces_only_on_primary()) {
             for (const [index, display] of this.displays[1]) {
                 if (display.area.width == width && display.area.height == height) {
@@ -617,23 +622,22 @@ export class Ext extends Ecs.System<ExtEvent> {
             }
         }
 
-        const primary = display.get_primary_monitor();
-        return [primary, this.displays[1].get(primary) as Display];
+        const primary = monitorID(display.get_primary_monitor());
+        return [primary, this.displays[1].get(primary)!];
     }
 
-    find_unused_workspace(monitor: number): [number, Meta.Workspace | null] {
-        if (!this.auto_tiler) return [0, wom.get_workspace_by_index(0)];
+    find_unused_workspace(monitor: MonitorID): [WorkspaceID, Meta.Workspace | null] {
+        if (!this.auto_tiler) return [workspaceID(0), wom.get_workspace_by_index(0)];
 
         let id = 0;
 
         const tiled_windows = new Array<Window.ShellWindow>();
+        for (const [entity] of this.auto_tiler.attached.iter()) {
+            if (!this.auto_tiler.attached.contains(entity)) continue;
 
-        for (const [window] of this.auto_tiler.attached.iter()) {
-            if (!this.auto_tiler.attached.contains(window)) continue;
+            const win = this.windows.get(entity);
 
-            const win = this.windows.get(window);
-
-            if (win && !win.reassignment && win.meta.get_monitor() === monitor) tiled_windows.push(win);
+            if (win && !win.reassignment && win.monitor_id() === monitor) tiled_windows.push(win);
         }
 
         cancel: while (true) {
@@ -647,16 +651,15 @@ export class Ext extends Ecs.System<ExtEvent> {
             break;
         }
 
-        let new_work;
-
-        if (id + 1 === wom.get_n_workspaces()) {
-            id += 1;
+        let new_work: Meta.Workspace | null;
+        if (id + 1 >= wom.get_n_workspaces()) {
+            id = wom.get_n_workspaces();
             new_work = wom.append_new_workspace(true, global.get_current_time());
         } else {
             new_work = wom.get_workspace_by_index(id);
         }
 
-        return [id, new_work];
+        return [workspaceID(id), new_work];
     }
 
     focus_left() {
@@ -761,11 +764,11 @@ export class Ext extends Ecs.System<ExtEvent> {
         this.row_size = this.settings.row_size() * this.dpi;
     }
 
-    monitor_work_area(monitor: number): Mtk.Rectangle {
+    monitor_work_area(monitor: MonitorID): Mtk.Rectangle {
         return wom.get_active_workspace().get_work_area_for_monitor(monitor);
     }
 
-    monitor_area(monitor: number): Mtk.Rectangle {
+    monitor_area(monitor: MonitorID): Mtk.Rectangle {
         return global.display.get_monitor_geometry(monitor);
     }
 
@@ -876,10 +879,6 @@ export class Ext extends Ecs.System<ExtEvent> {
         this.delete_entity(win);
     }
 
-    on_display_move(_from_id: number, _to_id: number) {
-        if (!this.auto_tiler) return;
-    }
-
     /** Triggered when a window has been focused */
     on_focused(win: Window.ShellWindow) {
         this.workspace_active.set(this.active_workspace(), win.entity);
@@ -932,7 +931,7 @@ export class Ext extends Ecs.System<ExtEvent> {
             let msg = `focused Window(${win.entity}) {\n`
                 + `  class: "${win.meta.get_wm_class()}",\n`
                 + `  cmdline: ${win.cmdline()},\n`
-                + `  monitor: ${win.meta.get_monitor()},\n`
+                + `  monitor: ${win.monitor_id()},\n`
                 + `  name: ${win.name(this)},\n`
                 + `  rect: ${fmtRect(win.rect())},\n`
                 + `  workspace: ${win.workspace_id()},\n`
@@ -1029,12 +1028,12 @@ export class Ext extends Ecs.System<ExtEvent> {
                 return;
             }
 
-            const mon = win.meta.get_monitor();
-            const work = win.meta.get_workspace().index();
+            const mon = win.monitor_id();
+            const work = win.workspace_id();
 
             for (const [, compare] of this.windows.iter()) {
                 const is_same_space
-                    = compare.meta.get_monitor() === mon && compare.meta.get_workspace().index() === work;
+                    = compare.monitor_id() === mon && compare.workspace_id() === work;
 
                 if (
                     is_same_space
@@ -1137,11 +1136,11 @@ export class Ext extends Ecs.System<ExtEvent> {
             const crect = win.rect();
             const rect = grab_op.rect;
             if (is_move_op(op!)) {
-                const cmon = win.meta.get_monitor();
+                const cmon = win.monitor_id();
                 const prev_mon = this.monitors.get(win.entity);
                 const mon_drop = prev_mon ? prev_mon[0] !== cmon : false;
 
-                this.monitors.insert(win.entity, [win.meta.get_monitor(), win.workspace_id()]);
+                this.monitors.insert(win.entity, [win.monitor_id(), win.workspace_id()]);
 
                 if (rect.x != crect.x || rect.y != crect.y) {
                     if (rect.contains_rect(cursor_rect())) {
@@ -1234,7 +1233,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         return true;
     }
 
-    workspace_window_move(win: Window.ShellWindow, prev_monitor: number, next_monitor: number) {
+    workspace_window_move(win: Window.ShellWindow, prev_monitor: MonitorID, next_monitor: MonitorID) {
         const prev_area = win.meta.get_work_area_for_monitor(prev_monitor);
         const next_area = win.meta.get_work_area_for_monitor(next_monitor);
 
@@ -1277,7 +1276,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         const win = this.focus_window();
         if (!win) return;
 
-        const prev_monitor = win.meta.get_monitor();
+        const prev_monitor = win.monitor_id();
         const next_monitor = Tiling.locate_monitor(win, direction);
 
         if (next_monitor !== null) {
@@ -1309,19 +1308,19 @@ export class Ext extends Ecs.System<ExtEvent> {
             };
 
             /** Places window onto the nearest window of a given workspace */
-            const place_on_nearest_window = (auto_tiler: auto_tiler.AutoTiler, ws: Meta.Workspace, monitor: number) => {
+            const place_on_nearest_window = (auto_tiler: auto_tiler.AutoTiler, ws: Meta.Workspace, monitor: MonitorID) => {
                 const src = win.meta.get_frame_rect();
 
                 auto_tiler.detach_window(this, win.entity);
 
-                const index = ws.index();
+                const index = workspaceID(ws.index());
                 const coord: [number, number] = [src.x, src.y];
 
                 let nearest_window = null;
                 let nearest_distance = null;
 
                 for (const [entity, window] of this.windows.iter()) {
-                    const other_monitor = window.meta.get_monitor();
+                    const other_monitor = window.monitor_id();
                     const other_index = window.meta.get_workspace().index();
                     if (
                         !this.contains_tag(entity, Tags.Floating)
@@ -1347,7 +1346,7 @@ export class Ext extends Ecs.System<ExtEvent> {
             };
 
             const move_to_neighbor = (neighbor: Meta.Workspace) => {
-                const monitor = win.meta.get_monitor();
+                const monitor = win.monitor_id();
                 if (this.auto_tiler && win.is_tilable(this)) {
                     win.ignore_detach = true;
 
@@ -1362,7 +1361,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                     this.workspace_window_move(win, monitor, monitor);
                 }
 
-                this.workspace_active.set(neighbor.index(), win.entity);
+                this.workspace_active.set(workspaceID(neighbor.index()), win.entity);
 
                 win.activate_after_move = true;
             };
@@ -1383,7 +1382,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                     // Move everything one workspace down
                     this.on_workspace_modify(
                         () => true,
-                        current => current + 1,
+                        current => workspaceID(current + 1),
                         true,
                     );
 
@@ -1645,9 +1644,9 @@ export class Ext extends Ecs.System<ExtEvent> {
     /** Handles the event of a window moving from one monitor to another. */
     on_monitor_changed(
         win: Window.ShellWindow,
-        func: (exp_mon: null | number, act_mon: number, act_work: number) => void,
+        func: (exp_mon: MonitorID | null, act_mon: MonitorID, act_work: WorkspaceID) => void,
     ) {
-        const actual_monitor = win.meta.get_monitor();
+        const actual_monitor = win.monitor_id();
         const actual_workspace = win.workspace_id();
         const monitor = this.monitors.get(win.entity);
 
@@ -1725,7 +1724,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         }
     }
 
-    on_workspace_index_changed(prev: number, next: number) {
+    on_workspace_index_changed(prev: WorkspaceID, next: WorkspaceID) {
         this.on_workspace_modify(
             current => current == prev,
             _ => next,
@@ -1733,8 +1732,8 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     on_workspace_modify(
-        condition: (current: number) => boolean,
-        modify: (current: number) => number,
+        condition: (current: WorkspaceID) => boolean,
+        modify: (current: WorkspaceID) => WorkspaceID,
         change_workspace: boolean = false,
     ) {
         function window_move(ext: Ext, entity: Entity, ws: WorkspaceID) {
@@ -1805,7 +1804,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     on_workspace_removed(number: number) {
         this.on_workspace_modify(
             current => current > number,
-            prev => prev - 1,
+            prev => workspaceID(prev - 1),
         );
     }
 
@@ -1853,11 +1852,11 @@ export class Ext extends Ecs.System<ExtEvent> {
         const workspace_manager = wom;
 
         for (const [, ws] of iter_workspaces(workspace_manager)) {
-            let index = ws.index();
+            let index = workspaceID(ws.index());
 
             this.connect(ws, 'notify::workspace-index', () => {
                 if (ws !== null) {
-                    const new_index = ws.index();
+                    const new_index = workspaceID(ws.index());
                     this.on_workspace_index_changed(index, new_index);
                     index = new_index;
                 }
@@ -2114,11 +2113,11 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     /** Switch to a workspace by its index */
-    switch_to_workspace(id: number) {
+    switch_to_workspace(id: WorkspaceID) {
         this.workspace_by_id(id)?.activate(global.get_current_time());
     }
 
-    tab_list(tablist: number, workspace: Meta.Workspace | null): Array<Window.ShellWindow> {
+    tab_list(tablist: Meta.TabList, workspace: Meta.Workspace | null): Array<Window.ShellWindow> {
         const windows = display.get_tab_list(tablist, workspace);
 
         const matched = [];
@@ -2228,7 +2227,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         }
     }
 
-    should_ignore_workspace(monitor: number): boolean {
+    should_ignore_workspace(monitor: MonitorID): boolean {
         return this.settings.workspaces_only_on_primary() && monitor !== global.display.get_primary_monitor();
     }
 
@@ -2261,7 +2260,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         // Ignore the update if there are no monitors to assign to
         if (layoutManager.monitors.length === 0) return;
 
-        const primary_display = global.display.get_primary_monitor();
+        const primary_display = monitorID(global.display.get_primary_monitor());
 
         const primary_display_ready = (ext: Ext): boolean => {
             const area = global.display.get_monitor_geometry(primary_display);
@@ -2314,24 +2313,24 @@ export class Ext extends Ecs.System<ExtEvent> {
             }
         };
 
-        type Migration = [Fork, number, Mtk.Rectangle, boolean];
+        type Migration = [Fork, MonitorID, Mtk.Rectangle, boolean];
 
         const migrations: Array<Migration> = [];
 
-        const apply_migrations = (assigned_monitors: Set<number>) => {
+        const apply_migrations = (assigned_monitors: Set<MonitorID>) => {
             if (!migrations.length) return;
 
             new exec.OnceExecutor<Migration, Migration[]>(migrations).start(
                 500,
                 ([fork, new_monitor, workspace, find_workspace]) => {
-                    let new_workspace;
+                    let new_workspace: WorkspaceID;
 
                     if (find_workspace) {
                         if (assigned_monitors.has(new_monitor)) {
                             [new_workspace] = this.find_unused_workspace(new_monitor);
                         } else {
                             assigned_monitors.add(new_monitor);
-                            new_workspace = 0;
+                            new_workspace = workspaceID(0);
                         }
                     } else {
                         new_workspace = fork.workspace;
@@ -2358,26 +2357,26 @@ export class Ext extends Ecs.System<ExtEvent> {
 
         const [old_primary, old_displays] = this.displays;
 
-        const changes = new Map<number, number>();
+        const changes = new Map<MonitorID, MonitorID>();
 
         // Records which display's windows were moved to what new display's ID
         for (const [entity, w] of this.windows.iter()) {
             if (!w.actor_exists()) continue;
 
             this.monitors.with(entity, ([mon]) => {
-                const assignment = mon === old_primary ? primary_display : w.meta.get_monitor();
+                const assignment = mon === old_primary ? primary_display : w.monitor_id();
                 changes.set(mon, assignment);
             });
         }
 
         // Fetch a new list of monitors
-        const updated = new Map<number, Display>();
+        const updated = new Map<MonitorID, Display>();
 
         for (const mon of layoutManager.monitors) {
             const area = new Mtk.Rectangle({ x: mon.x, y: mon.y, width: mon.width, height: mon.height });
-            const ws = this.monitor_work_area(mon.index);
+            const ws = this.monitor_work_area(monitorID(mon.index));
 
-            updated.set(mon.index, { area, ws });
+            updated.set(monitorID(mon.index), { area, ws });
         }
 
         const forest = this.auto_tiler.forest;
@@ -2409,7 +2408,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                 if (!this.auto_tiler) return;
 
                 const toplevels = [];
-                const assigned_monitors = new Set<number>();
+                const assigned_monitors = new Set<MonitorID>();
 
                 for (const [old_mon, new_mon] of changes) {
                     if (old_mon === new_mon) assigned_monitors.add(new_mon);
@@ -2419,7 +2418,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                     if (f.is_toplevel) {
                         toplevels.push(f);
 
-                        let migration: null | [Fork, number, Mtk.Rectangle, boolean] = null;
+                        let migration: Migration | null = null;
 
                         const displays = this.displays[1];
 
@@ -2430,7 +2429,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
                             if (f.monitor === old_monitor) {
                                 f.monitor = new_monitor;
-                                f.workspace = 0;
+                                f.workspace = workspaceID(0);
                                 migration = [f, new_monitor, display.ws, true];
                             }
                         }
@@ -2489,7 +2488,6 @@ export class Ext extends Ecs.System<ExtEvent> {
         if (!meta) return null;
 
         let id: number;
-
         try {
             id = meta.get_stable_sequence();
         } catch (_) {
@@ -2529,7 +2527,7 @@ export class Ext extends Ecs.System<ExtEvent> {
             const win = new Window.ShellWindow(entity, meta, window_app, this);
 
             this.windows.insert(entity, win);
-            this.monitors.insert(entity, [win.meta.get_monitor(), win.workspace_id()]);
+            this.monitors.insert(entity, [win.monitor_id(), win.workspace_id()]);
 
             const grab_focus = () => {
                 this.schedule_idle(() => {
@@ -2555,7 +2553,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     /** Returns the tilable window(s) that the mouse pointer is currently hovering above. */
-    * windows_at_pointer(cursor: Mtk.Rectangle, monitor: number, workspace: number) {
+    * windows_at_pointer(cursor: Mtk.Rectangle, monitor: MonitorID, workspace: WorkspaceID) {
         for (const entity of this.monitors.find(m => m[0] == monitor && m[1] == workspace)) {
             const window = this.windows.with(entity, (window) => {
                 return window.is_tilable(this) && window.rect().contains_rect(cursor) ? window : null;
@@ -2565,24 +2563,24 @@ export class Ext extends Ecs.System<ExtEvent> {
         }
     }
 
-    cursor_status(): [Mtk.Rectangle, number] {
+    cursor_status(): [Mtk.Rectangle, MonitorID] {
         const cursor = cursor_rect();
-        const monitor = display.get_monitor_index_for_rect(cursor);
+        const monitor = monitorID(display.get_monitor_index_for_rect(cursor));
         return [cursor, monitor];
     }
 
     /** Fetch a workspace by its index */
-    workspace_by_id(id: number): Meta.Workspace | null {
+    workspace_by_id(id: WorkspaceID): Meta.Workspace | null {
         return wom.get_workspace_by_index(id);
     }
 
     workspace_id(window: Window.ShellWindow | null = null): MonitorWorkspaceID {
         const id: MonitorWorkspaceID = window
-            ? [window.meta.get_monitor(), window.workspace_id()]
+            ? [window.monitor_id(), window.workspace_id()]
             : [this.active_monitor(), this.active_workspace()];
 
-        id[0] = Math.max(0, id[0]);
-        id[1] = Math.max(0, id[1]);
+        if (id[0] < 0) id[0] = monitorID(0);
+        if (id[1] < 0) id[1] = workspaceID(0);
 
         return id;
     }
