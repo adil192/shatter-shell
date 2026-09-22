@@ -24,11 +24,6 @@ set_keybindings() {
         return 0
     fi
 
-    left="h"
-    down="j"
-    up="k"
-    right="l"
-
     KEYS_GNOME_WM=/org/gnome/desktop/wm/keybindings
     KEYS_GNOME_SHELL=/org/gnome/shell/keybindings
     KEYS_MUTTER=/org/gnome/mutter/keybindings
@@ -38,44 +33,21 @@ set_keybindings() {
     # Disable incompatible shortcuts
     # Restore the keyboard shortcuts: disable <Super>Escape
     dconf write ${KEYS_MUTTER_WAYLAND_RESTORE} "@as []"
-    # Hide window: disable <Super>h
-    dconf write ${KEYS_GNOME_WM}/minimize "@as ['<Super>comma']"
     # Toggle message tray: disable <Super>m, retain <Super>v
     dconf write ${KEYS_GNOME_SHELL}/toggle-message-tray "@as ['<Super>v']"
-    # Switch to workspace left: disable <Super>Left
-    dconf write ${KEYS_GNOME_WM}/switch-to-workspace-left "@as ['<Primary><Super>Left','<Primary><Super>${left}']"
-    # Switch to workspace right: disable <Super>Right
-    dconf write ${KEYS_GNOME_WM}/switch-to-workspace-right "@as ['<Primary><Super>Right','<Primary><Super>${right}']"
     # Maximize window: disable <Super>Up
     dconf write ${KEYS_GNOME_WM}/maximize "@as []"
     # Restore window: disable <Super>Down, retain <Alt>F5
     dconf write ${KEYS_GNOME_WM}/unmaximize "@as ['<Alt>F5']"
+
     # Move to monitor up: disable <Super><Shift>Up
     dconf write ${KEYS_GNOME_WM}/move-to-monitor-up "@as []"
     # Move to monitor down: disable <Super><Shift>Down
     dconf write ${KEYS_GNOME_WM}/move-to-monitor-down "@as []"
-
-    # Super + direction keys, move window left and right monitors, or up and down workspaces
-    # Move window one monitor to the left
+    # Move to monitor left: disable <Super><Shift>Left
     dconf write ${KEYS_GNOME_WM}/move-to-monitor-left "@as []"
-    # Move window one monitor to the right
+    # Move to monitor right: disable <Super><Shift>Right
     dconf write ${KEYS_GNOME_WM}/move-to-monitor-right "@as []"
-    # Move window one workspace down
-    dconf write ${KEYS_GNOME_WM}/move-to-workspace-down "@as []"
-    # Move window one workspace up
-    dconf write ${KEYS_GNOME_WM}/move-to-workspace-up "@as []"
-
-    # Super + Ctrl + direction keys, change workspaces, move focus between monitors
-    # Move to workspace below
-    dconf write ${KEYS_GNOME_WM}/switch-to-workspace-down "['<Primary><Super>Down','<Primary><Super>${down}']"
-    # Move to workspace above
-    dconf write ${KEYS_GNOME_WM}/switch-to-workspace-up "['<Primary><Super>Up','<Primary><Super>${up}']"
-
-    # Super + Ctrl + Shift + direction keys, move window left and right workspaces
-    # Move to workspace left
-    dconf write ${KEYS_GNOME_WM}/move-to-workspace-left "@as ['<Primary><Super><Shift>Left', '<Primary><Super><Shift>${left}']"
-    # Move to workspace right
-    dconf write ${KEYS_GNOME_WM}/move-to-workspace-right "@as ['<Primary><Super><Shift>Right', '<Primary><Super><Shift>${right}']"
 
     # Disable tiling to left / right of screen
     dconf write ${KEYS_MUTTER}/toggle-tiled-left "@as []"
