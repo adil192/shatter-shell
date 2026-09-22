@@ -55,8 +55,8 @@ set_keybindings() {
 
     # Toggle maximization state: changed from <Alt>F10
     dconf write ${KEYS_GNOME_WM}/toggle-maximized "['<Super>m', '<Alt>F10']"
-    # Lock screen
-    dconf write ${KEYS_MEDIA}/screensaver "['<Super>Escape']"
+    # Lock screen: changed from <Super>l
+    dconf write ${KEYS_MEDIA}/screensaver "['<Super>Escape', '<Super>l']"
     # Home folder
     dconf write ${KEYS_MEDIA}/home "['<Super>f']"
     # Launch email client
