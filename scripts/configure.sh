@@ -35,6 +35,8 @@ set_keybindings() {
     dconf write ${KEYS_MUTTER_WAYLAND_RESTORE} "@as []"
     # Toggle message tray: disable <Super>m, retain <Super>v
     dconf write ${KEYS_GNOME_SHELL}/toggle-message-tray "@as ['<Super>v']"
+    # Toggle quick settings: disable <Super>s
+    dconf write ${KEYS_GNOME_SHELL}/toggle-quick-settings "@as []"
     # Maximize window: disable <Super>Up
     dconf write ${KEYS_GNOME_WM}/maximize "@as []"
     # Restore window: disable <Super>Down, retain <Alt>F5
