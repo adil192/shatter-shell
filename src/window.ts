@@ -285,7 +285,7 @@ export class ShellWindow {
         return this.meta.get_transient_for() !== null;
     }
 
-    move(ext: Ext, rect: Mtk.Rectangle | St.Viewport, on_complete?: () => void) {
+    move(ext: Ext, rect: Mtk.Rectangle, on_complete?: () => void) {
         if (!this.same_workspace() && this.is_maximized()) {
             return;
         }
@@ -305,7 +305,7 @@ export class ShellWindow {
             }
             actor.remove_all_transitions();
 
-            ext.movements.insert(this.entity, rect instanceof Mtk.Rectangle ? rect : new Mtk.Rectangle(rect));
+            ext.movements.insert(this.entity, rect);
 
             ext.register({ tag: 'window_move', window: this });
             if (on_complete) ext.register_fn(on_complete);

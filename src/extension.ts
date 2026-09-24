@@ -108,7 +108,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     // Widgets
 
     /** An overlay which shows a preview of where a window will be moved */
-    overlay: St.Viewport = new St.BoxLayout({ style_class: 'shatter-shell-overlay', visible: false });
+    overlay = new St.BoxLayout({ style_class: 'shatter-shell-overlay', visible: false });
 
     /** DBus */
     dbus: dbus_service.Service = new dbus_service.Service();
