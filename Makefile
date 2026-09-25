@@ -59,11 +59,11 @@ install: compile
 	mkdir -p $(INSTALLBASE)/$(INSTALLNAME)
 	cp -r _build/* $(INSTALLBASE)/$(INSTALLNAME)/
 
-local-schema: ~/.local/share/glib-2.0/schemas/org.gnome.shell.extensions.shatter-shell.gschema.xml
-~/.local/share/glib-2.0/schemas/org.gnome.shell.extensions.shatter-shell.gschema.xml: schemas/*.gschema.xml
-	mkdir -p ~/.local/share/glib-2.0/schemas/
-	cp schemas/*.gschema.xml ~/.local/share/glib-2.0/schemas/
-	glib-compile-schemas ~/.local/share/glib-2.0/schemas/
+local-schema: $(XDG_DATA_HOME)/glib-2.0/schemas/org.gnome.shell.extensions.shatter-shell.gschema.xml
+$(XDG_DATA_HOME)/glib-2.0/schemas/org.gnome.shell.extensions.shatter-shell.gschema.xml: schemas/*.gschema.xml
+	mkdir -p $(XDG_DATA_HOME)/glib-2.0/schemas/
+	cp schemas/*.gschema.xml $(XDG_DATA_HOME)/glib-2.0/schemas/
+	glib-compile-schemas $(XDG_DATA_HOME)/glib-2.0/schemas/
 
 uninstall:
 	rm -rf $(INSTALLBASE)/$(INSTALLNAME)
