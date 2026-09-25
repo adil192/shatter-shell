@@ -59,12 +59,6 @@ set_keybindings() {
     dconf write ${KEYS_GNOME_WM}/toggle-maximized "['<Super>m', '<Alt>F10']"
     # Lock screen: changed from <Super>l
     dconf write ${KEYS_MEDIA}/screensaver "['<Super>Escape', '<Super>l']"
-    # Home folder
-    dconf write ${KEYS_MEDIA}/home "['<Super>f']"
-    # Launch email client
-    dconf write ${KEYS_MEDIA}/email "['<Super>e']"
-    # Launch web browser
-    dconf write ${KEYS_MEDIA}/www "['<Super>b']"
     # Toggle automatic screen orientation: disable <Super>o, retain XF86RotationLockToggle
     dconf write ${KEYS_MEDIA}/rotate-video-lock-static "@as ['XF86RotationLockToggle']"
 
