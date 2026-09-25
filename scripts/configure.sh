@@ -42,15 +42,6 @@ set_keybindings() {
     # Restore window: disable <Super>Down, retain <Alt>F5
     dconf write ${KEYS_GNOME_WM}/unmaximize "@as ['<Alt>F5']"
 
-    # Move to monitor up: disable <Super><Shift>Up
-    dconf write ${KEYS_GNOME_WM}/move-to-monitor-up "@as []"
-    # Move to monitor down: disable <Super><Shift>Down
-    dconf write ${KEYS_GNOME_WM}/move-to-monitor-down "@as []"
-    # Move to monitor left: disable <Super><Shift>Left
-    dconf write ${KEYS_GNOME_WM}/move-to-monitor-left "@as []"
-    # Move to monitor right: disable <Super><Shift>Right
-    dconf write ${KEYS_GNOME_WM}/move-to-monitor-right "@as []"
-
     # Disable tiling to left / right of screen
     dconf write ${KEYS_MUTTER}/toggle-tiled-left "@as []"
     dconf write ${KEYS_MUTTER}/toggle-tiled-right "@as []"

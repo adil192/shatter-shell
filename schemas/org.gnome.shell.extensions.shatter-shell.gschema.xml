@@ -225,38 +225,6 @@
             <summary>Swap window right</summary>
         </key>
 
-        <!-- Workspace Management -->
-
-        <key type="as" name="shatter-shell-workspace-down">
-            <default><![CDATA[['<Super><Shift>Down','<Super><Shift>KP_Down']]]></default>
-            <summary>Move window to the lower workspace</summary>
-        </key>
-
-        <key type="as" name="shatter-shell-workspace-up">
-            <default><![CDATA[['<Super><Shift>Up','<Super><Shift>KP_Up']]]></default>
-            <summary>Move window to the upper workspace</summary>
-        </key>
-
-        <key type="as" name="shatter-shell-monitor-down">
-            <default><![CDATA[['<Super><Shift><Primary>Down','<Super><Shift><Primary>KP_Down']]]></default>
-            <summary>Move window to the lower monitor</summary>
-        </key>
-
-        <key type="as" name="shatter-shell-monitor-up">
-            <default><![CDATA[['<Super><Shift><Primary>Up','<Super><Shift><Primary>KP_Up']]]></default>
-            <summary>Move window to the upper monitor</summary>
-        </key>
-
-        <key type="as" name="shatter-shell-monitor-left">
-            <default><![CDATA[['<Super><Shift>Left','<Super><Shift>KP_Left']]]></default>
-            <summary>Move window to the leftward monitor</summary>
-        </key>
-
-        <key type="as" name="shatter-shell-monitor-right">
-            <default><![CDATA[['<Super><Shift>Right','<Super><Shift>KP_Right']]]></default>
-            <summary>Move window to the rightward monitor</summary>
-        </key>
-
         <key type="s" name="hint-color-rgba">
             <default>'rgba(53, 132, 228, 1)'</default>
             <summary>The current active-hint-color in RGBA</summary>

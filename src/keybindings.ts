@@ -46,18 +46,6 @@ export class Keybindings {
             'tile-move-up-global': () => ext.tiler.move_up(ext, ext.focus_window()?.entity),
 
             'tile-move-right-global': () => ext.tiler.move_right(ext, ext.focus_window()?.entity),
-
-            'shatter-shell-monitor-left': () => ext.move_monitor(Meta.DisplayDirection.LEFT),
-
-            'shatter-shell-monitor-right': () => ext.move_monitor(Meta.DisplayDirection.RIGHT),
-
-            'shatter-shell-monitor-up': () => ext.move_monitor(Meta.DisplayDirection.UP),
-
-            'shatter-shell-monitor-down': () => ext.move_monitor(Meta.DisplayDirection.DOWN),
-
-            'shatter-shell-workspace-up': () => ext.move_workspace(Meta.DisplayDirection.UP),
-
-            'shatter-shell-workspace-down': () => ext.move_workspace(Meta.DisplayDirection.DOWN),
         };
     }
 
