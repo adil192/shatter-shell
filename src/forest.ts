@@ -26,11 +26,11 @@ export interface MoveByCursor {
     swap: boolean;
 }
 
-export interface MoveByKeyboard {
+interface MoveByKeyboard {
     src: Mtk.Rectangle;
 }
 
-export interface MoveByAuto {
+interface MoveByAuto {
     auto: 0;
 }
 

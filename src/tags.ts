@@ -4,5 +4,3 @@ export enum Tags {
     Blocked = 2,
     ForceTile = 3,
 }
-
-export default Tags;

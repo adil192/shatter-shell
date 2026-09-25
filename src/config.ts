@@ -3,9 +3,9 @@ import Gio from 'gi://Gio';
 import { Result, Ok, Err } from './result.js';
 
 const CONF_DIR = GLib.get_user_config_dir() + '/shatter-shell';
-export const CONF_FILE = CONF_DIR + '/config.json';
+const CONF_FILE = CONF_DIR + '/config.json';
 
-export interface FloatRule {
+interface FloatRule {
     class?: string;
     title?: string;
     disabled?: boolean;

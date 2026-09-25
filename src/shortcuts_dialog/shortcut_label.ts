@@ -50,7 +50,7 @@ export const LabelledShortcutLabel = GObject.registerClass(class LabelledShortcu
  * A row of keycaps representing a keyboard shortcut.
  * Styling is inherited from {@link Adw.ShortcutLabel}
  */
-export const ShortcutLabel = GObject.registerClass(class ShortcutLabel extends Gtk.Box {
+const ShortcutLabel = GObject.registerClass(class ShortcutLabel extends Gtk.Box {
     constructor(keys: Keybinding) {
         super({
             css_name: 'shortcut-label',

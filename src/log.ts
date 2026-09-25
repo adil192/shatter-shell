@@ -10,7 +10,7 @@ export enum LOG_LEVELS {
 /**
  * parse level at runtime so we don't have to restart shattershell
  */
-export function log_level(): LOG_LEVELS {
+function log_level(): LOG_LEVELS {
     // log.js is at the level of prefs.js where the shattershell Ext instance
     // is not yet available or visible, so we have to use the built in
     // ExtensionUtils to get the current settings
@@ -19,7 +19,7 @@ export function log_level(): LOG_LEVELS {
     return log_level;
 }
 
-export function log(text: string) {
+function log(text: string) {
     globalThis.log('shatter-shell: ' + text);
 }
 

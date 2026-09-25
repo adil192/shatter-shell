@@ -9,31 +9,31 @@ import type { Ext } from './extension.js';
 export type ExtEvent = CallbackEvent | WindowMove | CreateWindow | WindowEvent | GlobalEventMessage;
 
 /** Event with generic callback */
-export interface CallbackEvent {
+interface CallbackEvent {
     tag: 'callback';
     callback: () => void;
     name?: string;
 }
 
 /** Event that moves a registered window */
-export interface WindowMove {
+interface WindowMove {
     tag: 'window_move';
     window: Window.ShellWindow;
 }
 
 /** Event that registers a new window */
-export interface CreateWindow {
+interface CreateWindow {
     tag: 'window_create';
     window: Meta.Window;
 }
 
-export interface WindowEvent {
+interface WindowEvent {
     tag: 'window_event';
     window: Window.ShellWindow;
     event: WindowEventType;
 }
 
-export interface GlobalEventMessage {
+interface GlobalEventMessage {
     tag: 'global';
     event: GlobalEvent;
 }

@@ -1,6 +1,6 @@
 import * as lib from './lib.js';
 import * as log from './log.js';
-import Tags from './tags.js';
+import { Tags } from './tags.js';
 import * as utils from './utils.js';
 import type { Entity } from './ecs.js';
 import type { Ext } from './extension.js';

@@ -12,7 +12,7 @@ import type { Ext } from './extension.js';
 import type { NodeStack } from './node.js';
 import { AutoTiler } from './auto_tiler.js';
 import { Fork } from './fork.js';
-import Tags from './tags.js';
+import { Tags } from './tags.js';
 
 import Clutter from 'gi://Clutter';
 import Meta from 'gi://Meta';
@@ -843,7 +843,7 @@ export class Tiler {
     }
 }
 
-export function locate_monitor(
+function locate_monitor(
     win: window.ShellWindow,
     direction: Meta.DisplayDirection,
 ): [MonitorID, Mtk.Rectangle] | null {
