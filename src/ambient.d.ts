@@ -1,3 +1,4 @@
+import '@girs/adw-1';
 import '@girs/giounix-2.0';
 import '@girs/gjs';
 import '@girs/gjs/dom';
