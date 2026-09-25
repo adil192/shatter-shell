@@ -5,7 +5,7 @@ import GioUnix from 'gi://GioUnix';
 import GLib from 'gi://GLib';
 import GObject from 'gi://GObject';
 import Adw from 'gi://Adw';
-import Gtk from 'gi://Gtk';
+import Gtk from 'gi://Gtk?version=4.0';
 
 /** Add our directory so we can import modules from it. */
 const SCRIPT_DIR = GLib.path_get_dirname(new Error().stack!.split(':')[0]!.slice(1));
