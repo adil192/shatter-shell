@@ -60,8 +60,6 @@ const AppWindow = GObject.registerClass(class AppWindow extends Adw.ApplicationW
 
         const workspacesAndDisplaysPage = new WorkspacesAndDisplaysPage();
         stack.add_titled_with_icon(workspacesAndDisplaysPage, 'workspaces_and_displays', 'Workspaces and displays', 'video-joined-displays-symbolic');
-
-        this.present();
     }
 });
 
@@ -69,7 +67,10 @@ function main() {
     const application = new Adw.Application({
         application_id: WM_CLASS_ID,
     });
-    application.connect('activate', () => new AppWindow(application));
+    application.connect('activate', () => {
+        const window = application.get_windows()[0] ?? new AppWindow(application);
+        window.present();
+    });
     return application.run(null);
 }
 
