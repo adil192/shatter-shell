@@ -15,7 +15,7 @@ INSTALLNAME = $(UUID)
 
 SOURCES = src/*.ts src/*/*.ts *.scss icons/*.svg schemas/*.gschema.xml metadata.json README.md
 
-.PHONY: all clean install zip-file lint
+.PHONY: all clean install local-install local-schema zip-file lint
 
 all: compile
 
@@ -52,12 +52,18 @@ nested:
 listen:
 	journalctl -o cat -n 0 -f "$$(which gnome-shell)" | grep -v warning
 
-local-install: compile install configure restart-shell enable
+local-install: compile install local-schema configure restart-shell enable
 
 install: compile
 	rm -rf $(INSTALLBASE)/$(INSTALLNAME)
 	mkdir -p $(INSTALLBASE)/$(INSTALLNAME)
 	cp -r _build/* $(INSTALLBASE)/$(INSTALLNAME)/
+
+local-schema: ~/.local/share/glib-2.0/schemas/org.gnome.shell.extensions.shatter-shell.gschema.xml
+~/.local/share/glib-2.0/schemas/org.gnome.shell.extensions.shatter-shell.gschema.xml: schemas/*.gschema.xml
+	mkdir -p ~/.local/share/glib-2.0/schemas/
+	cp schemas/*.gschema.xml ~/.local/share/glib-2.0/schemas/
+	glib-compile-schemas ~/.local/share/glib-2.0/schemas/
 
 uninstall:
 	rm -rf $(INSTALLBASE)/$(INSTALLNAME)
