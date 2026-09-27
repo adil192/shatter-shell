@@ -29,9 +29,9 @@ export class AddExceptionDialog {
         this.dialog.addButton({
             label: 'Cancel',
             action: () => {
+                this.close();
                 cancel();
                 on_close();
-                this.close();
             },
             key: Clutter.KEY_Escape,
         });
@@ -39,18 +39,18 @@ export class AddExceptionDialog {
         this.dialog.addButton({
             label: 'This App\'s Windows',
             action: () => {
+                this.close();
                 this_app();
                 on_close();
-                this.close();
             },
         });
 
         this.dialog.addButton({
             label: 'Current Window Only',
             action: () => {
+                this.close();
                 current_window();
                 on_close();
-                this.close();
             },
         });
     }
