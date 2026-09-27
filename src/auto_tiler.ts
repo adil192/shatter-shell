@@ -177,7 +177,7 @@ export class AutoTiler {
     /** Tile a window onto a workspace */
     attach_to_workspace(ext: Ext, win: ShellWindow, id: MonitorWorkspaceID) {
         if (ext.should_ignore_workspace(id[0])) {
-            id = [id[0], workspaceID(0)];
+            id = [id[0], 0];
         }
 
         const toplevel = this.forest.find_toplevel(id);

@@ -15,6 +15,8 @@ import GLib from 'gi://GLib';
 import Mtk from 'gi://Mtk';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
+const wom = global.workspace_manager;
+
 export const window_tracker = Shell.WindowTracker.get_default();
 
 /** Contains SourceID of a restack operation. Used to prevent multiple restacks. */
@@ -98,8 +100,8 @@ export class ShellWindow {
             // Quit if window has override-redirect set.
             if (this.meta.is_override_redirect()) return;
 
-            const workspace = this.meta.get_workspace();
-            workspace.activate_with_focus(this.meta, global.get_current_time());
+            const workspace = this.meta.get_workspace() as Meta.Workspace | null;
+            workspace?.activate_with_focus(this.meta, global.get_current_time());
 
             move_mouse = move_mouse
                 && Main.modalCount === 0
@@ -344,8 +346,13 @@ export class ShellWindow {
         return title ? title : this.name(this.ext);
     }
 
+    /**
+     * Returns the index of the window's workspace.
+     * In rare cases, this may be null and the active workspace index or 0 is used instead.
+     */
     workspace_id(): WorkspaceID {
-        const id = this.meta.get_workspace().index();
+        const workspace = this.meta.get_workspace() as Meta.Workspace | null;
+        const id = workspace?.index() ?? wom.get_active_workspace_index() ?? 0;
         return workspaceID(id);
     }
 
@@ -541,9 +548,8 @@ export class ShellWindow {
             if (dimensions) {
                 [x, y, width, height] = dimensions;
 
-                const workspace = this.meta.get_workspace();
-
-                if (workspace === null) return;
+                const workspace = this.meta.get_workspace() as Meta.Workspace | null;
+                if (workspace == null) return;
 
                 const screen = workspace.get_work_area_for_monitor(this.monitor_id());
                 width = Math.min(width, screen.x + screen.width);

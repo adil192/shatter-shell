@@ -625,7 +625,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     find_unused_workspace(monitor: MonitorID): [WorkspaceID, Meta.Workspace | null] {
-        if (!this.auto_tiler) return [workspaceID(0), wom.get_workspace_by_index(0)];
+        if (!this.auto_tiler) return [0, wom.get_workspace_by_index(0)];
 
         let id = 0;
 
@@ -792,7 +792,7 @@ export class Ext extends Ecs.System<ExtEvent> {
             const active = this.workspace_active.get(workspace_id);
             if (active) {
                 const window = this.windows.get(active);
-                if (window && window.meta.get_workspace().index() == workspace_id && !window.meta.minimized) {
+                if (window && window.workspace_id() == workspace_id && !window.meta.minimized) {
                     activate_window(window);
                     return;
                 }
@@ -2145,7 +2145,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                             [new_workspace] = this.find_unused_workspace(new_monitor);
                         } else {
                             assigned_monitors.add(new_monitor);
-                            new_workspace = workspaceID(0);
+                            new_workspace = 0;
                         }
                     } else {
                         new_workspace = fork.workspace;
@@ -2244,7 +2244,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
                             if (f.monitor === old_monitor) {
                                 f.monitor = new_monitor;
-                                f.workspace = workspaceID(0);
+                                f.workspace = 0;
                                 migration = [f, new_monitor, display.ws, true];
                             }
                         }
@@ -2395,7 +2395,7 @@ export class Ext extends Ecs.System<ExtEvent> {
             : [this.active_monitor(), this.active_workspace()];
 
         if (id[0] < 0) id[0] = monitorID(0);
-        if (id[1] < 0) id[1] = workspaceID(0);
+        if (id[1] < 0) id[1] = 0;
 
         return id;
     }
