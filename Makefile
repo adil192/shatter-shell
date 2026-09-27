@@ -15,7 +15,7 @@ INSTALLNAME = $(UUID)
 
 SOURCES = src/*.ts src/*/*.ts *.scss icons/*.svg schemas/*.gschema.xml metadata.json README.md
 
-.PHONY: all clean install local-install local-schema zip-file lint
+.PHONY: all clean configure compile debug listen install local-install local-schema uninstall zip-file lint
 
 all: compile
 
@@ -23,36 +23,27 @@ clean:
 	rm -rf _build schemas/gschemas.compiled target .eslintcache tsconfig.tsbuildinfo $(UUID)_*.zip
 
 # Configure local settings on system
-configure:
+configure: install
 	sh scripts/configure.sh
 
 compile: _build/extension.js
 _build/extension.js: node_modules/.package-lock.json $(SOURCES) scripts/transpile.sh
 	./scripts/transpile.sh
 
-debug: compile install configure enable nested
-
-node_modules/.package-lock.json: package.json package-lock.json
-	npm ci
-
-enable:
-	-gnome-extensions disable "pop-shell@system76.com" 2>/dev/null || true
-	gnome-extensions enable "$(UUID)"
-
-disable:
-	gnome-extensions disable "$(UUID)"
-
-nested:
+debug: local-install
 	@if [ "$$(gnome-shell --version | awk '{print int($$3)}')" -ge 49 ]; then \
 		dbus-run-session gnome-shell --devkit --wayland; \
 	else \
 		dbus-run-session gnome-shell --nested --wayland; \
 	fi
 
+node_modules/.package-lock.json: package.json package-lock.json
+	npm ci
+
 listen:
 	journalctl -o cat -n 0 -f "$$(which gnome-shell)" | grep -v warning
 
-local-install: compile install local-schema configure restart-shell enable
+local-install: compile install local-schema configure
 
 install: compile
 	rm -rf $(INSTALLBASE)/$(INSTALLNAME)
@@ -67,14 +58,7 @@ $(XDG_DATA_HOME)/glib-2.0/schemas/org.gnome.shell.extensions.shatter-shell.gsche
 
 uninstall:
 	rm -rf $(INSTALLBASE)/$(INSTALLNAME)
-
-restart-shell:
-	@echo "Please logout and login again!"
-
-update-repository:
-	git fetch origin
-	git reset --hard origin/master
-	git clean -fd
+	echo "To complete uninstallation, reset your keyboard shortcuts in GNOME Settings."
 
 zip-file: $(UUID)_$(VERSION_NAME).zip
 $(UUID)_$(VERSION_NAME).zip: compile
@@ -83,5 +67,3 @@ $(UUID)_$(VERSION_NAME).zip: compile
 lint: .eslintcache
 .eslintcache: node_modules/.package-lock.json $(SOURCES)
 	npx eslint --cache $(shell echo $$CUSTOM_ESLINT_ARGS)
-
-.NOTPARALLEL: debug local-install
