@@ -52,6 +52,7 @@ export const DEFAULT_FLOAT_RULES: Array<FloatRule> = [
     { class: 'gjs' },
     { class: 'git-credential-manager' },
     { class: 'xwaylandvideobridge' },
+    { class: 'net.sapples.LiveCaptions' },
 ];
 
 const _regExpCache = new Map<string, RegExp>();
