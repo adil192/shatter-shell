@@ -169,7 +169,7 @@ export class Tiler {
         left: Node.Node,
         right: Node.Node,
         is_left: boolean,
-    ): null | Fork {
+    ): Fork | null {
         if (!ext.auto_tiler) return null;
 
         const forest = ext.auto_tiler.forest;
@@ -251,7 +251,7 @@ export class Tiler {
         focused: window.ShellWindow,
         direction: Direction,
     ) {
-        let new_fork: null | Fork = null;
+        let new_fork: Fork | null = null;
 
         if (fork.is_toplevel && fork.smart_gapped) {
             fork.smart_gapped = false;
@@ -339,7 +339,7 @@ export class Tiler {
             return;
         }
 
-        let new_fork: null | Fork = null;
+        let new_fork: Fork | null = null;
 
         if (fork.is_toplevel && fork.smart_gapped) {
             fork.smart_gapped = false;
@@ -542,7 +542,7 @@ export class Tiler {
         move_to: window.ShellWindow | MonitorID,
         stack_from_left: boolean = true,
     ) {
-        let watching: null | window.ShellWindow = null;
+        let watching: window.ShellWindow | null = null;
 
         const at = ext.auto_tiler;
         if (at) {

@@ -55,11 +55,11 @@ export class ShellWindow {
     // True if this window is currently smart-gapped
     smart_gapped: boolean = false;
 
-    border: null | St.Bin = new St.Bin({
+    border: St.Bin | null = new St.Bin({
         style_class: 'shatter-shell-active-hint shatter-shell-border-normal',
     });
 
-    prev_rect: null | Mtk.Rectangle = null;
+    prev_rect: Mtk.Rectangle | null = null;
 
     window_app: Shell.App;
 

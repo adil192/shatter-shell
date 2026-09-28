@@ -142,14 +142,14 @@ const TabButton = GObject.registerClass(
 export class Stack {
     ext: Ext;
 
-    widgets: null | StackWidgets = null;
+    widgets: StackWidgets | null = null;
 
     /** The currently active tab */
     active: Entity;
     /** The currently active tab's index */
     active_id: number = 0;
 
-    prev_active: null | Entity = null;
+    prev_active: Entity | null = null;
     prev_active_id: number = 0;
 
     tabs: Array<Tab> = [];
@@ -221,7 +221,7 @@ export class Stack {
     }
 
     /** Activates a tab based on the previously active entry */
-    auto_activate(): null | Entity {
+    auto_activate(): Entity | null {
         if (this.tabs.length === 0) return null;
 
         if (this.tabs.length <= this.active_id) {
@@ -517,7 +517,7 @@ export class Stack {
     }
 
     /** Removes the tab associated with the entity */
-    remove_tab(entity: Entity): null | number {
+    remove_tab(entity: Entity): number | null {
         if (!this.widgets) return null;
 
         if (this.prev_active && Ecs.entity_eq(entity, this.prev_active)) {

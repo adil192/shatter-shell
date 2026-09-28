@@ -1,6 +1,6 @@
 /** Hop slot arena allocator */
 export class Arena<T> {
-    private slots: Array<null | T> = [];
+    private slots: Array<T | null> = [];
 
     private unused: Array<number> = [];
 
@@ -9,7 +9,7 @@ export class Arena<T> {
         this.unused.splice(n);
     }
 
-    get(n: number): null | T {
+    get(n: number): T | null {
         return this.slots[n] ?? null;
     }
 
@@ -27,7 +27,7 @@ export class Arena<T> {
         return n;
     }
 
-    remove(n: number): null | T {
+    remove(n: number): T | null {
         const v = this.slots[n] ?? null;
         if (v) {
             this.slots[n] = null;

@@ -44,7 +44,7 @@ function stack_detach(node: NodeStack, stack: Stack, idx: number) {
     stack.remove_by_pos(idx);
 }
 
-export function stack_find(node: NodeStack, entity: Entity): null | number {
+export function stack_find(node: NodeStack, entity: Entity) {
     let idx = 0;
     while (idx < node.entities.length) {
         if (Ecs.entity_eq(entity, node.entities[idx]!)) {
@@ -121,7 +121,7 @@ export function stack_replace(ext: Ext, node: NodeStack, window: ShellWindow) {
 }
 
 /** Removes a window from a stack */
-export function stack_remove(forest: Forest, node: NodeStack, entity: Entity): null | number {
+export function stack_remove(forest: Forest, node: NodeStack, entity: Entity) {
     const stack = forest.stacks.get(node.idx);
     if (!stack) return null;
     const idx = stack.remove_tab(entity);

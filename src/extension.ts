@@ -143,7 +143,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     /** The current scaling factor in GNOME Shell */
     dpi: number = St.ThemeContext.get_for_stage(global.stage).scale_factor;
 
-    drag_signal: null | SignalID = null;
+    drag_signal: SignalID | null = null;
 
     /** If set, the user is currently selecting a window to add to floating exceptions */
     exception_selecting: boolean = false;
@@ -174,7 +174,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     injections: Array<Injection<any>> = [];
 
     /** The window that was focused before the last window */
-    private prev_focused: [null | Entity, null | Entity] = [null, null];
+    private prev_focused: [Entity | null, Entity | null] = [null, null];
 
     /** Initially set to true when the extension is initializing */
     init: boolean = true;
@@ -184,7 +184,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     /** Set when a window is being moved by the mouse */
     moved_by_mouse: boolean = false;
 
-    private workareas_update: null | SignalID = null;
+    private workareas_update: SignalID | null = null;
 
     /** Record of misc. global objects and their attached signals */
     private signals: Map<GObject.Object | Misc.signals.EventEmitter, Array<SignalID>> = new Map();
@@ -192,7 +192,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     private size_requests: Map<GObject.Object, SignalID> = new Map();
 
     /** Stores windows that were focused on a workspace */
-    private workspace_active: Map<WorkspaceID, null | Entity> = new Map();
+    private workspace_active: Map<WorkspaceID, Entity | null> = new Map();
 
     // Entity-component associations
 
@@ -439,7 +439,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         return workspaceID(id);
     }
 
-    actor_of(entity: Entity): null | Meta.WindowActor {
+    actor_of(entity: Entity): Meta.WindowActor | null {
         const window = this.windows.get(entity);
         return window ? window.meta.get_compositor_private<Meta.WindowActor | null>() : null;
     }
@@ -1192,7 +1192,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         }
     }
 
-    previously_focused(active: Window.ShellWindow): null | Ecs.Entity {
+    previously_focused(active: Window.ShellWindow): Ecs.Entity | null {
         for (const id of [1, 0]) {
             const prev = this.prev_focused[id];
             if (prev && !Ecs.entity_eq(active.entity, prev)) {
@@ -1232,7 +1232,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     /** Triggered when a grab operation has been started */
-    on_grab_start(meta: null | Meta.Window, op: number) {
+    on_grab_start(meta: Meta.Window | null, op: number) {
         if (!meta) return;
         const win = this.get_window(meta);
         if (win) {

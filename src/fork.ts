@@ -129,7 +129,7 @@ export class Fork {
     }
 
     /** Replaces the association of a window in a fork with another */
-    replace_window(ext: Ext, a: ShellWindow, b: ShellWindow): null | (() => void) {
+    replace_window(ext: Ext, a: ShellWindow, b: ShellWindow): (() => void) | null {
         let closure = null;
 
         const check_right = () => {

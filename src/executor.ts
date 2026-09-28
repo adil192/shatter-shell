@@ -73,7 +73,7 @@ export class OnceExecutor<X, T extends Iterable<X, void>> {
 export class ChannelExecutor<X> {
     #channel: Array<X> = [];
 
-    #signal: null | number = null;
+    #signal: number | null = null;
 
     clear() {
         this.#channel.splice(0);

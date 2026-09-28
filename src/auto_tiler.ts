@@ -299,7 +299,7 @@ export class AutoTiler {
         return false;
     }
 
-    find_stack(entity: Entity): null | [Fork, node.Node, boolean] {
+    find_stack(entity: Entity): [Fork, node.Node, boolean] | null {
         const att = this.attached.get(entity);
         if (att) {
             const fork = this.forest.forks.get(att);
@@ -316,7 +316,7 @@ export class AutoTiler {
     }
 
     /** Find the fork that belongs to a window */
-    get_parent_fork(window: Entity): null | Fork {
+    get_parent_fork(window: Entity): Fork | null {
         const entity = this.attached.get(window);
         if (entity === null) return null;
 
@@ -325,7 +325,7 @@ export class AutoTiler {
         return fork;
     }
 
-    largest_on_workspace(ext: Ext, monitor: MonitorID, workspace: WorkspaceID): null | ShellWindow {
+    largest_on_workspace(ext: Ext, monitor: MonitorID, workspace: WorkspaceID): ShellWindow | null {
         const workspace_id: MonitorWorkspaceID = [monitor, workspace];
         const toplevel = this.forest.find_toplevel(workspace_id);
         if (toplevel) {
@@ -412,7 +412,7 @@ export class AutoTiler {
                 ? fork.area
                 : attach_to.meta.get_frame_rect();
 
-        let placement: null | MoveBy = cursor_placement(ext, attach_area, cursor);
+        let placement: MoveBy | null = cursor_placement(ext, attach_area, cursor);
         const stack = ext.auto_tiler?.find_stack(attach_to.entity);
 
         const matching_stack = win.stack !== null && win.stack === attach_to.stack;
@@ -740,13 +740,13 @@ export class AutoTiler {
  *
  * A null indicates that the window should be stacked
  */
-export function cursor_placement(ext: Ext, area: Mtk.Rectangle, cursor: Mtk.Rectangle): null | MoveByCursor {
+export function cursor_placement(ext: Ext, area: Mtk.Rectangle, cursor: Mtk.Rectangle): MoveByCursor | null {
     const { LEFT, RIGHT, TOP, BOTTOM } = geom.Side;
     const { HORIZONTAL, VERTICAL } = Clutter.Orientation;
 
     const [, side] = geom.nearest_side(ext, [cursor.x, cursor.y], area);
 
-    const res: null | [Clutter.Orientation, boolean]
+    const res: [Clutter.Orientation, boolean] | null
         = side === LEFT
             ? [HORIZONTAL, true]
             : side === RIGHT
