@@ -63,7 +63,7 @@ export class Keybindings {
         return this;
     }
 
-    disable(keybindings: object) {
+    disable(keybindings: Record<string, Meta.KeyHandlerFunc>) {
         for (const name in keybindings) {
             wm.removeKeybinding(name);
         }
