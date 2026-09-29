@@ -2455,6 +2455,10 @@ export default class ShatterShellExtension extends Extension {
         }
 
         ext.keybindings.enable(ext.keybindings.global).enable(ext.keybindings.window_focus);
+        if (ext.settings.need_overrides_setup()) {
+            const path = get_current_path() + '/shortcuts_dialog/main.js';
+            return GLib.spawn_command_line_async(`gjs --module "${path} -- --need-overrides-setup"`);
+        }
 
         if (ext.settings.tile_by_default()) {
             ext.auto_tile_on();
