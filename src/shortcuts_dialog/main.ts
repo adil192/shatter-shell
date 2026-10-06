@@ -57,9 +57,7 @@ const AppWindow = GObject.registerClass(class AppWindow extends Adw.ApplicationW
         if (need_overrides_setup) {
             const welcomePage = new WelcomePage();
             stack.add_titled_with_icon(welcomePage, 'welcome', 'Welcome', 'start-here-symbolic');
-            welcomePage.connect('quit', () => {
-                this.close();
-            });
+            welcomePage.connect('quit', () => this.close());
         }
 
         const manipulateWindowPage = new ManipulateWindowPage();

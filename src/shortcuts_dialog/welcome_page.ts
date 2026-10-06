@@ -4,12 +4,14 @@ import GObject from 'gi://GObject';
 import Gtk from 'gi://Gtk?version=4.0';
 
 export const WelcomePage = GObject.registerClass({
-    Signals: { pop: {}, quit: {} }
+    Signals: { quit: {} }
 }, class WelcomePage extends Gtk.Box {
     declare logs;
     declare setup_button;
     declare skip_button;
     declare close_button;
+
+    declare confirming_skip;
 
     constructor() {
         super({
@@ -56,10 +58,12 @@ export const WelcomePage = GObject.registerClass({
         this.setup_button.connect('clicked', () => this._setupKeybindings());
         buttons_box.append(this.setup_button);
 
+        this.confirming_skip = false;
         this.skip_button = new Gtk.Button();
         this.skip_button.label = 'No thanks';
         this.skip_button.add_css_class('pill');
         this.skip_button.add_css_class('flat');
+        this.skip_button.connect('clicked', () => this._skip());
         buttons_box.append(this.skip_button);
 
         this.close_button = new Gtk.Button();
@@ -170,6 +174,21 @@ or click below to close this dialog.
             this.setup_button.visible = false;
             this.skip_button.visible = false;
             this.close_button.visible = true;
+
+            const settings = new Gio.Settings({ schema_id: 'org.gnome.shell.extensions.shatter-shell' });
+            settings.set_boolean('need-overrides-setup', false);
         }
+    }
+
+    _skip() {
+        if (!this.confirming_skip) {
+            this.skip_button.label = 'Some keybindings will conflict. Confirm skip?'
+            this.confirming_skip = true;
+            return;
+        }
+
+        const settings = new Gio.Settings({ schema_id: 'org.gnome.shell.extensions.shatter-shell' });
+        settings.set_boolean('need-overrides-setup', false);
+        this.emit('quit');
     }
 });
