@@ -1,10 +1,9 @@
 import Gio from 'gi://Gio';
-import GLib from 'gi://GLib';
 import GObject from 'gi://GObject';
 import Gtk from 'gi://Gtk?version=4.0';
 
 export const WelcomePage = GObject.registerClass({
-    Signals: { quit: {} }
+    Signals: { quit: {} },
 }, class WelcomePage extends Gtk.Box {
     declare logs;
     declare setup_button;
@@ -85,7 +84,7 @@ export const WelcomePage = GObject.registerClass({
             if (!success) {
                 errors.push(`Warning: Failed to set ${settings.schema_id} ${key} to ${value}.`);
             }
-        }
+        };
 
         try {
             const wmKeys = new Gio.Settings({ schema_id: 'org.gnome.desktop.wm.keybindings' });
@@ -149,7 +148,7 @@ export const WelcomePage = GObject.registerClass({
 Something went wrong. Please try again or make a bug report with the following logs:
 `;
             for (const error of errors) {
-                label += error + '\n';
+                label += error as string + '\n';
             }
             this.logs.label = label;
             this.logs.add_css_class('monospace');
@@ -182,7 +181,7 @@ or click below to close this dialog.
 
     _skip() {
         if (!this.confirming_skip) {
-            this.skip_button.label = 'Some keybindings will conflict. Confirm skip?'
+            this.skip_button.label = 'Some keybindings will conflict. Confirm skip?';
             this.confirming_skip = true;
             return;
         }
