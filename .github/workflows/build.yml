@@ -38,4 +38,4 @@ jobs:
           archive: false
 
       - name: Run lints
-        run: CUSTOM_ESLINT_ARGS="--cache-strategy content" make lint
+        run: make CUSTOM_ESLINT_ARGS="--cache-strategy content" lint

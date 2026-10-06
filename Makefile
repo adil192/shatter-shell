@@ -66,4 +66,4 @@ $(UUID)_$(VERSION_NAME).zip: compile
 
 lint: .eslintcache
 .eslintcache: node_modules/.package-lock.json $(SOURCES)
-	npx eslint --cache $(shell echo $$CUSTOM_ESLINT_ARGS)
+	npx eslint --cache $(CUSTOM_ESLINT_ARGS)
