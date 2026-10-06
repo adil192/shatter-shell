@@ -36,8 +36,6 @@ export const WelcomePage = GObject.registerClass({
         }));
 
         this.logs = new Gtk.Label({
-            justify: Gtk.Justification.LEFT,
-            selectable: true,
             wrap: true,
         });
         this.logs.add_css_class('monospace');
@@ -134,14 +132,22 @@ export const WelcomePage = GObject.registerClass({
         }
 
         if (errors.length) {
-            let label = 'Failed to set some keybindings:\n';
+            let label = `<span size="x-large">Error</span>
+
+Something went wrong. Please try again or make a bug report with the following logs:
+`;
             for (const error of errors) {
                 label += error + '\n';
             }
             this.logs.label = label;
             this.logs.add_css_class('monospace');
             this.logs.justify = Gtk.Justification.LEFT;
-            this.logs.use_markup = false;
+            this.logs.use_markup = true;
+            this.logs.selectable = true;
+
+            this.setup_button.visible = true;
+            this.skip_button.visible = true;
+            this.close_button.visible = false;
         } else {
             this.logs.label = `<span size="x-large">Success!</span>
 
@@ -151,6 +157,7 @@ or click below to close this dialog.
             this.logs.remove_css_class('monospace');
             this.logs.justify = Gtk.Justification.CENTER;
             this.logs.use_markup = true;
+            this.logs.selectable = false;
 
             this.setup_button.visible = false;
             this.skip_button.visible = false;
