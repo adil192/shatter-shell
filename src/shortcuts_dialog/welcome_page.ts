@@ -1,4 +1,5 @@
 import Adw from 'gi://Adw';
+import Gio from 'gi://Gio';
 import GObject from 'gi://GObject';
 import Gtk from 'gi://Gtk?version=4.0';
 
@@ -29,9 +30,10 @@ export const WelcomePage = GObject.registerClass(class WelcomePage extends Gtk.B
 
         {
             const button = new Gtk.Button();
-            button.label = 'Setup keyboard shortcuts';
+            button.label = 'Setup keyboard shortcuts (recommended)';
             button.add_css_class('suggested-action');
             button.add_css_class('pill');
+            button.connect('activate', () => this._setupKeyboardShortcuts())
             this.append(button);
         }
         {
@@ -41,5 +43,15 @@ export const WelcomePage = GObject.registerClass(class WelcomePage extends Gtk.B
             button.add_css_class('flat');
             this.append(button);
         }
+    }
+
+    _setupKeyboardShortcuts() {
+        const wmKeys = new Gio.Settings({ schema_id: 'org.gnome.desktop.wm.keybindings' });
+        const mutterKeys = new Gio.Settings({ schema_id: 'org.gnome.mutter.keybindings' });
+        const mutterWaylandKeys = new Gio.Settings({ schema_id: 'org.gnome.mutter.wayland.keybindings' });
+        const mediaKeys = new Gio.Settings({ schema_id: 'org.gnome.settings-daemon.plugins.media-keys' });
+        const shellKeys = new Gio.Settings({ schema_id: 'org.gnome.shell.keybindings' });
+
+        
     }
 });
