@@ -3,10 +3,13 @@ import GLib from 'gi://GLib';
 import GObject from 'gi://GObject';
 import Gtk from 'gi://Gtk?version=4.0';
 
-export const WelcomePage = GObject.registerClass(class WelcomePage extends Gtk.Box {
-    declare setup_button;
-    declare opt_out_button;
+export const WelcomePage = GObject.registerClass({
+    Signals: { pop: {}, quit: {} }
+}, class WelcomePage extends Gtk.Box {
     declare logs;
+    declare setup_button;
+    declare skip_button;
+    declare close_button;
 
     constructor() {
         super({
@@ -44,14 +47,22 @@ export const WelcomePage = GObject.registerClass(class WelcomePage extends Gtk.B
         this.setup_button.label = 'Setup keyboard shortcuts (recommended)';
         this.setup_button.add_css_class('suggested-action');
         this.setup_button.add_css_class('pill');
-        this.setup_button.connect('clicked', () => this._setupKeybindings())
+        this.setup_button.connect('clicked', () => this._setupKeybindings());
         this.append(this.setup_button);
 
-        this.opt_out_button = new Gtk.Button();
-        this.opt_out_button.label = 'Or opt out';
-        this.opt_out_button.add_css_class('pill');
-        this.opt_out_button.add_css_class('flat');
-        this.append(this.opt_out_button);
+        this.skip_button = new Gtk.Button();
+        this.skip_button.label = 'Skip';
+        this.skip_button.add_css_class('pill');
+        this.skip_button.add_css_class('flat');
+        this.append(this.skip_button);
+
+        this.close_button = new Gtk.Button();
+        this.close_button.visible = false;
+        this.close_button.label = 'Close';
+        this.close_button.add_css_class('suggested-action');
+        this.close_button.add_css_class('pill');
+        this.close_button.connect('clicked', () => this.emit('quit'));
+        this.append(this.close_button);
     }
 
     _setupKeybindings() {
@@ -128,6 +139,22 @@ export const WelcomePage = GObject.registerClass(class WelcomePage extends Gtk.B
                 label += error + '\n';
             }
             this.logs.label = label;
+            this.logs.add_css_class('monospace');
+            this.logs.justify = Gtk.Justification.LEFT;
+            this.logs.use_markup = false;
+        } else {
+            this.logs.label = `<span size="x-large">Success!</span>
+
+View available keyboard shortcuts in the other tabs,
+or click below to close this dialog.
+`;
+            this.logs.remove_css_class('monospace');
+            this.logs.justify = Gtk.Justification.CENTER;
+            this.logs.use_markup = true;
+
+            this.setup_button.visible = false;
+            this.skip_button.visible = false;
+            this.close_button.visible = true;
         }
     }
 });
