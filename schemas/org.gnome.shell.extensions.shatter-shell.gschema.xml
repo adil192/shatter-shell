@@ -242,5 +242,15 @@
             </summary>
         </key>
 
+        <key type="b" name="need-overrides-setup">
+            <default>true</default>
+            <summary>
+                Whether the extension should prompt the user to setup keybinding overrides.
+
+                This may be false if the user has already setup the overrides,
+                has declined the prompt,
+                or if the distro's package maintainer patches it out.
+            </summary>
+        </key>
     </schema>
 </schemalist>

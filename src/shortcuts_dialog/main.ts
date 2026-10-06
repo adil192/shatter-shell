@@ -1,9 +1,11 @@
 #!/usr/bin/gjs --module
 
+import GLib from 'gi://GLib';
 import GObject from 'gi://GObject';
 import Gtk from 'gi://Gtk?version=4.0';
 import Adw from 'gi://Adw';
 
+import { WelcomePage } from './welcome_page.js';
 import { AdjustmentModePage } from './adjustment_mode_page.js';
 import { ManipulateWindowPage } from './manipulate_window_page.js';
 import { WorkspacesAndDisplaysPage } from './workspaces_and_displays_page.js';
@@ -11,7 +13,7 @@ import { WorkspacesAndDisplaysPage } from './workspaces_and_displays_page.js';
 const WM_CLASS_ID = 'org.gnome.shell.extensions.shatter-shell.shortcuts';
 
 const AppWindow = GObject.registerClass(class AppWindow extends Adw.ApplicationWindow {
-    constructor(application: Adw.Application) {
+    constructor(application: Adw.Application, need_overrides_setup: boolean) {
         super({
             application,
             title: 'Shatter Shell Shortcuts',
@@ -52,6 +54,12 @@ const AppWindow = GObject.registerClass(class AppWindow extends Adw.ApplicationW
         });
         toolbar_view.add_bottom_bar(settingsHint);
 
+        if (need_overrides_setup) {
+            const welcomePage = new WelcomePage();
+            stack.add_titled_with_icon(welcomePage, 'welcome', 'Welcome', 'start-here-symbolic');
+            welcomePage.connect('quit', () => this.close());
+        }
+
         const manipulateWindowPage = new ManipulateWindowPage();
         stack.add_titled_with_icon(manipulateWindowPage, 'manipulate_windows', 'Manipulate windows', 'window-symbolic');
 
@@ -63,15 +71,32 @@ const AppWindow = GObject.registerClass(class AppWindow extends Adw.ApplicationW
     }
 });
 
-function main() {
+function main(argv: string[]) {
     const application = new Adw.Application({
         application_id: WM_CLASS_ID,
     });
-    application.connect('activate', () => {
-        const window = application.get_windows()[0] ?? new AppWindow(application);
+
+    application.add_main_option(
+        'need-overrides-setup',
+        'o'.charCodeAt(0),
+        GLib.OptionFlags.NONE,
+        GLib.OptionArg.NONE,
+        'Prompt the user to setup keybinding overrides.',
+        null,
+    );
+
+    let need_overrides_setup: boolean;
+    application.connect('handle-local-options', (_application, options) => {
+        need_overrides_setup = options.lookup_value('need-overrides-setup', null)?.get_boolean() ?? false;
+        return -1;
+    });
+
+    application.connect('activate', (application) => {
+        const window = application.get_windows()[0] ?? new AppWindow(application, need_overrides_setup!);
         window.present();
     });
-    return application.run(null);
+
+    return application.run(argv);
 }
 
-main();
+main(ARGV);

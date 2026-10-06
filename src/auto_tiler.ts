@@ -18,7 +18,6 @@ import type { Fork } from './fork.js';
 import type { ShellWindow } from './window.js';
 
 const { NodeKind } = node;
-const { workspaceID } = lib;
 import { Tags } from './tags.js';
 
 export class AutoTiler {

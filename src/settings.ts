@@ -54,6 +54,7 @@ const LOG_LEVEL = 'log-level';
 const MOUSE_CURSOR_FOLLOWS_ACTIVE_WINDOW = 'mouse-cursor-follows-active-window';
 const MOUSE_CURSOR_FOCUS_LOCATION = 'mouse-cursor-focus-location';
 const MAX_WINDOW_WIDTH = 'max-window-width';
+const NEED_OVERRIDES_SETUP = 'need-overrides-setup';
 
 export class ExtensionSettings {
     ext: Gio.Settings = settings_new_schema('org.gnome.shell.extensions.shatter-shell');
@@ -155,6 +156,10 @@ export class ExtensionSettings {
         return this.ext.get_uint(MAX_WINDOW_WIDTH);
     }
 
+    need_overrides_setup(): boolean {
+        return this.ext.get_boolean(NEED_OVERRIDES_SETUP);
+    }
+
     // Setters
 
     set_active_hint(set: boolean) {
@@ -229,5 +234,9 @@ export class ExtensionSettings {
 
     set_max_window_width(set: number) {
         this.ext.set_uint(MAX_WINDOW_WIDTH, set);
+    }
+
+    set_need_overrides_setup(set: boolean) {
+         this.ext.set_boolean(NEED_OVERRIDES_SETUP, set);
     }
 }
