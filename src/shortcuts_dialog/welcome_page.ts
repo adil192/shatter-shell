@@ -41,18 +41,26 @@ export const WelcomePage = GObject.registerClass({
         this.logs.add_css_class('monospace');
         this.append(this.logs);
 
+        const buttons_box = new Gtk.Box({
+            orientation: Gtk.Orientation.VERTICAL,
+            halign: Gtk.Align.CENTER,
+            hexpand: false,
+            spacing: 4,
+        });
+        this.append(buttons_box);
+
         this.setup_button = new Gtk.Button();
         this.setup_button.label = 'Setup keyboard shortcuts (recommended)';
         this.setup_button.add_css_class('suggested-action');
         this.setup_button.add_css_class('pill');
         this.setup_button.connect('clicked', () => this._setupKeybindings());
-        this.append(this.setup_button);
+        buttons_box.append(this.setup_button);
 
         this.skip_button = new Gtk.Button();
-        this.skip_button.label = 'Skip';
+        this.skip_button.label = 'No thanks';
         this.skip_button.add_css_class('pill');
         this.skip_button.add_css_class('flat');
-        this.append(this.skip_button);
+        buttons_box.append(this.skip_button);
 
         this.close_button = new Gtk.Button();
         this.close_button.visible = false;
@@ -60,7 +68,7 @@ export const WelcomePage = GObject.registerClass({
         this.close_button.add_css_class('suggested-action');
         this.close_button.add_css_class('pill');
         this.close_button.connect('clicked', () => this.emit('quit'));
-        this.append(this.close_button);
+        buttons_box.append(this.close_button);
     }
 
     _setupKeybindings() {
