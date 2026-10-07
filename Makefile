@@ -17,6 +17,8 @@ SOURCES = src/*.ts src/*/*.ts *.scss icons/*.svg schemas/*.gschema.xml metadata.
 
 .PHONY: all clean configure compile debug listen install local-install local-schema uninstall zip-file lint
 
+COMPILE_SCHEMAS = true
+
 all: compile
 
 clean:
@@ -28,7 +30,7 @@ configure: install
 
 compile: _build/extension.js
 _build/extension.js: node_modules/.package-lock.json $(SOURCES) scripts/transpile.sh
-	./scripts/transpile.sh
+	COMPILE_SCHEMAS=$(COMPILE_SCHEMAS) ./scripts/transpile.sh
 
 debug: local-install
 	@if [ "$$(gnome-shell --version | awk '{print int($$3)}')" -ge 49 ]; then \

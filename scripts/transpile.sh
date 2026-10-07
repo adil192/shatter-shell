@@ -17,8 +17,10 @@ use_sass() {
     fi
 }
 
+[ COMPILE_SCHEMAS == "true" ] || [ COMPILE_SCHEMAS == "false" ] || (echo "Invalid COMPILE_SCHEMAS=$COMPILE_SCHEMAS"; exit 1)
+
 echo Compiling into target/...
-glib-compile-schemas schemas &
+[ COMPILE_SCHEMAS == "true" ] && glib-compile-schemas schemas &
 use_tsc
 use_sass --no-source-map \
     light.scss:target/light.css \
@@ -30,7 +32,8 @@ echo
 
 echo Packing into _build/...
 rm -rf _build && mkdir _build
-cp -r metadata.json icons README.md schemas target/* _build/
+cp -r metadata.json icons README.md target/* _build/
+[ COMPILE_SCHEMAS == "true" ] && cp -r schemas _build/
 find _build -name "*.tsbuildinfo" -delete
 find _build -name "*.d.ts" -delete
 ls _build
