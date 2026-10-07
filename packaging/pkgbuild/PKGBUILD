@@ -1,0 +1,44 @@
+# Maintainer: Adil Hanney <adilhanney at disroot dot org>
+# Based on https://aur.archlinux.org/packages/gnome-shell-extension-pop-shell-git
+
+pkgname=gnome-shell-extension-shatter-shell
+pkgver=2.3.1
+pkgrel=1
+pkgdesc="Tiling window management for GNOME: a fork of Pop!_OS Shell"
+arch=('any')
+url="https://github.com/adil192/shatter-shell"
+license=('GPL-3.0-only')
+depends=(
+  'gnome-shell>=48'
+)
+optdepends=(
+  'gnome-control-center: keybindings customization'
+)
+makedepends=(
+  'make'
+  'git'
+  'npm'
+)
+provides=("gnome-shell-extension-pop-shell")
+conflicts=("gnome-shell-extension-pop-shell")
+source=("${url}/archive/refs/tags/${pkgver}.tar.gz")
+sha256sums=('58109a6522553eeddbb7f98126b20cacff2dcd2f18619272936751091a7b3cc0')
+
+build() {
+  cd shatter-shell-${pkgver}
+  make COMPILE_SCHEMAS=false compile
+}
+
+package() {
+  cd shatter-shell-${pkgver}
+  make DESTDIR="$pkgdir" install
+
+  install -Dm644 schemas/org.gnome.shell.extensions.shatter-shell.gschema.xml -t \
+    "$pkgdir/usr/share/glib-2.0/schemas/"
+
+  install -Dm644 keybindings/*.xml -t \
+    "$pkgdir/usr/share/gnome-control-center/keybindings/"
+
+  install -Dm644 keybinding-overrides/*.shatter-shell.gschema.override -t \
+    "$pkgdir/usr/share/glib-2.0/schemas/"
+}
