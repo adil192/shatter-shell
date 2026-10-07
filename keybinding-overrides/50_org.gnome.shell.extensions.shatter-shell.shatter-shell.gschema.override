@@ -1,0 +1,2 @@
+[org.gnome.shell.extensions.shatter-shell]
+need-overrides-setup = false
