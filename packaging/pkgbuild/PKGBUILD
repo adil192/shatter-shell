@@ -2,7 +2,7 @@
 # Based on https://aur.archlinux.org/packages/gnome-shell-extension-pop-shell-git
 
 pkgname=gnome-shell-extension-shatter-shell
-pkgver=2.3.1
+pkgver=2.4.0
 pkgrel=1
 pkgdesc="Tiling window management for GNOME: a fork of Pop!_OS Shell"
 arch=('any')
@@ -22,7 +22,7 @@ makedepends=(
 provides=("gnome-shell-extension-pop-shell")
 conflicts=("gnome-shell-extension-pop-shell")
 source=("${url}/archive/refs/tags/${pkgver}.tar.gz")
-sha256sums=('58109a6522553eeddbb7f98126b20cacff2dcd2f18619272936751091a7b3cc0')
+sha256sums=('SKIP')
 
 build() {
   cd shatter-shell-${pkgver}
