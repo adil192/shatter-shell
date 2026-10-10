@@ -269,16 +269,16 @@ function color_selector(ext: Ext, menu: PopupMenu) {
     const color_selector_item = new PopupMenuItem('Active Hint Color');
     const color_button = new St.Button();
     const settings = ext.settings;
-    const selected_color = settings.hint_color_rgba();
+    const hint_color = settings.hint_color();
 
     // TODO, find a way to expand the button text, :)
     color_button.label = '           '; // blank for now
-    color_button.set_style(`background-color: ${selected_color}; border: 2px solid lightgray; border-radius: 2px`);
+    color_button.set_style(`background-color: ${hint_color.to_string()}; border: 2px solid lightgray; border-radius: 2px`);
 
     settings.ext.connect('changed', (_, key) => {
         if (key === 'hint-color-rgba') {
-            const color_value = settings.hint_color_rgba();
-            color_button.set_style(`background-color: ${color_value}; border: 2px solid lightgray; border-radius: 2px`);
+            const hint_color = settings.hint_color();
+            color_button.set_style(`background-color: ${hint_color.to_string()}; border: 2px solid lightgray; border-radius: 2px`);
         }
     });
 

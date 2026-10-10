@@ -7,13 +7,14 @@ import type { Ext } from './extension.js';
 import * as focus from './focus.js';
 const { monitorID, workspaceID } = lib;
 
-import Gdk from 'gi://Gdk';
+import Cogl from 'gi://Cogl';
 import Meta from 'gi://Meta';
 import Shell from 'gi://Shell';
 import St from 'gi://St';
 import GLib from 'gi://GLib';
 import Mtk from 'gi://Mtk';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+import { DEFAULT_HINT_COLOR } from './settings.js';
 
 const wom = global.workspace_manager;
 
@@ -171,23 +172,21 @@ export class ShellWindow {
      * - overlay
      */
     private update_hint_colors() {
+        // TODO: Probably move overlay color/opacity to prefs.js in future.
+        // For now, mimic the hint color with lower opacity.
+        const overlay_alpha_uint8 = 77;
+
         const settings = this.ext.settings;
-        const color_value = settings.hint_color_rgba();
+        let overlay_color = settings.hint_color();
 
-        const gdk = new Gdk.RGBA();
-        // TODO Probably move overlay color/opacity to prefs.js in future,
-        // For now mimic the hint color with lower opacity
-        const overlay_alpha = 0.3;
-        const orig_overlay = 'rgba(53, 132, 228, 0.3)';
-        gdk.parse(color_value);
-
-        if (utils.is_dark(gdk.to_string())) {
+        if (utils.is_dark(overlay_color)) {
             // too dark, use the blue overlay
-            gdk.parse(orig_overlay);
+            overlay_color = new Cogl.Color(DEFAULT_HINT_COLOR);
         }
 
-        gdk.alpha = overlay_alpha;
-        this.ext.overlay.set_style(`background: ${gdk.to_string()}`);
+        overlay_color.alpha = overlay_alpha_uint8;
+
+        this.ext.overlay.set_style(`background: ${overlay_color.to_string()}`);
 
         this.update_border_style();
     }
@@ -563,10 +562,10 @@ export class ShellWindow {
 
     update_border_style() {
         const { settings } = this.ext;
-        const color_value = settings.hint_color_rgba();
+        const hint_color = settings.hint_color();
         const radius_value = settings.active_hint_border_radius();
         if (this.border) {
-            this.border.set_style(`border-color: ${color_value}; border-radius: ${radius_value}px;`);
+            this.border.set_style(`border-color: ${hint_color.to_string()}; border-radius: ${radius_value}px;`);
         }
     }
 

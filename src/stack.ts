@@ -114,8 +114,8 @@ const TabButton = GObject.registerClass(
         }
 
         set_active(tabActive: TabActive) {
-            const hint_color_rgba = this._settings.hint_color_rgba();
-            this.style = `--accent-color: ${hint_color_rgba};`;
+            const hint_color = this._settings.hint_color();
+            this.style = `--accent-color: ${hint_color.to_string()};`;
 
             switch (tabActive) {
                 case TabActive.active:

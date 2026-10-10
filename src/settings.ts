@@ -1,6 +1,5 @@
-// const Me = imports.misc.extensionUtils.getCurrentExtension();
+import Cogl from 'gi://Cogl';
 import Gio from 'gi://Gio';
-import Gdk from 'gi://Gdk';
 import { get_current_path } from './paths.js';
 
 const DARK = ['dark', 'adapta', 'plata', 'dracula'];
@@ -48,8 +47,8 @@ const SMART_GAPS = 'smart-gaps';
 const SNAP_TO_GRID = 'snap-to-grid';
 const TILE_BY_DEFAULT = 'tile-by-default';
 const UNTILE_RESET_WINDOWS = 'untile-reset-windows';
-const HINT_COLOR_RGBA = 'hint-color-rgba';
-const DEFAULT_RGBA_COLOR = 'rgba(53, 132, 228, 1)'; // adwaita blue
+const HINT_COLOR = 'hint-color-rgba';
+export const DEFAULT_HINT_COLOR = { red: 53, green: 132, blue: 228, alpha: 255 } as const; // adwaita blue
 const LOG_LEVEL = 'log-level';
 const MOUSE_CURSOR_FOLLOWS_ACTIVE_WINDOW = 'mouse-cursor-follows-active-window';
 const MOUSE_CURSOR_FOCUS_LOCATION = 'mouse-cursor-focus-location';
@@ -92,15 +91,13 @@ export class ExtensionSettings {
         return this.ext.get_uint(GAP_OUTER);
     }
 
-    hint_color_rgba() {
-        const rgba = this.ext.get_string(HINT_COLOR_RGBA);
-        const valid_color = new Gdk.RGBA().parse(rgba);
-
-        if (!valid_color) {
-            return DEFAULT_RGBA_COLOR;
+    hint_color(): Cogl.Color {
+        const css = this.ext.get_string(HINT_COLOR);
+        let [valid, color] = Cogl.Color.from_string(css);
+        if (!valid) {
+            color = new Cogl.Color(DEFAULT_HINT_COLOR);
         }
-
-        return rgba;
+        return color;
     }
 
     theme(): string {
@@ -190,14 +187,8 @@ export class ExtensionSettings {
         this.ext.set_uint(GAP_OUTER, gap);
     }
 
-    set_hint_color_rgba(rgba: string) {
-        const valid_color = new Gdk.RGBA().parse(rgba);
-
-        if (valid_color) {
-            this.ext.set_string(HINT_COLOR_RGBA, rgba);
-        } else {
-            this.ext.set_string(HINT_COLOR_RGBA, DEFAULT_RGBA_COLOR);
-        }
+    set_hint_color(color: Cogl.Color) {
+        this.ext.set_string(HINT_COLOR, color.to_string());
     }
 
     set_row_size(size: number) {
@@ -237,6 +228,6 @@ export class ExtensionSettings {
     }
 
     set_need_overrides_setup(set: boolean) {
-         this.ext.set_boolean(NEED_OVERRIDES_SETUP, set);
+        this.ext.set_boolean(NEED_OVERRIDES_SETUP, set);
     }
 }
