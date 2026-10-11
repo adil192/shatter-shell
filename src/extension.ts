@@ -53,6 +53,7 @@ const {
 } = Main;
 import type { Misc } from '@girs/gnome-shell';
 import { ScreenShield } from 'resource:///org/gnome/shell/ui/screenShield.js';
+import { ControlsState } from 'resource:///org/gnome/shell/ui/overviewControls.js';
 import { Tags } from './tags.js';
 import { get_current_path } from './paths.js';
 import { clampRect, fmtRect } from './rectangle.js';
@@ -600,10 +601,10 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     exception_select() {
-        GLib.timeout_add(GLib.PRIORITY_LOW, 500, () => {
+        GLib.timeout_add(GLib.PRIORITY_LOW, 100, () => {
             this.exception_selecting = true;
-            overview.show();
-            return false;
+            overview.show(ControlsState.WINDOW_PICKER);
+            return GLib.SOURCE_REMOVE;
         });
     }
 
