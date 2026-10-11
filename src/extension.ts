@@ -2038,7 +2038,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         if (this.movements.is_empty()) {
             return func();
         }
-        GLib.timeout_add(GLib.PRIORITY_DEFAULT, 100, () => {
+        GLib.timeout_add(GLib.PRIORITY_DEFAULT, 20, () => {
             if (this.movements.is_empty()) {
                 func();
                 return GLib.SOURCE_REMOVE;
