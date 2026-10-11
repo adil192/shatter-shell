@@ -177,11 +177,12 @@ export class ShellWindow {
         const overlay_alpha_uint8 = 77;
 
         const settings = this.ext.settings;
-        let overlay_color = settings.hint_color();
+        const hint_color_rgba = settings.hint_color_rgba();
+        let [valid, overlay_color] = Cogl.Color.from_string(hint_color_rgba);
 
-        if (utils.is_dark(overlay_color)) {
+        if (!valid || utils.is_dark(overlay_color)) {
             // too dark, use the blue overlay
-            overlay_color = new Cogl.Color(DEFAULT_HINT_COLOR);
+            [, overlay_color] = Cogl.Color.from_string(DEFAULT_HINT_COLOR);
         }
 
         overlay_color.alpha = overlay_alpha_uint8;
@@ -562,10 +563,10 @@ export class ShellWindow {
 
     update_border_style() {
         const { settings } = this.ext;
-        const hint_color = settings.hint_color();
+        const hint_color_rgba = settings.hint_color_rgba();
         const radius_value = settings.active_hint_border_radius();
         if (this.border) {
-            this.border.set_style(`border-color: ${utils.fmtRgba(hint_color)}; border-radius: ${radius_value}px;`);
+            this.border.set_style(`border-color: ${hint_color_rgba}; border-radius: ${radius_value}px;`);
         }
     }
 

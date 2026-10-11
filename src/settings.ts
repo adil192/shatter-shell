@@ -1,7 +1,5 @@
-import Cogl from 'gi://Cogl';
 import Gio from 'gi://Gio';
 import { get_current_path } from './paths.js';
-import { fmtRgba } from './utils.js';
 
 const DARK = ['dark', 'adapta', 'plata', 'dracula'];
 
@@ -49,7 +47,7 @@ const SNAP_TO_GRID = 'snap-to-grid';
 const TILE_BY_DEFAULT = 'tile-by-default';
 const UNTILE_RESET_WINDOWS = 'untile-reset-windows';
 const HINT_COLOR_RGBA = 'hint-color-rgba';
-export const DEFAULT_HINT_COLOR = { red: 53, green: 132, blue: 228, alpha: 255 } as const; // adwaita blue
+export const DEFAULT_HINT_COLOR = 'rgba(53, 132, 228, 1)'; // adwaita blue
 const LOG_LEVEL = 'log-level';
 const MOUSE_CURSOR_FOLLOWS_ACTIVE_WINDOW = 'mouse-cursor-follows-active-window';
 const MOUSE_CURSOR_FOCUS_LOCATION = 'mouse-cursor-focus-location';
@@ -92,13 +90,8 @@ export class ExtensionSettings {
         return this.ext.get_uint(GAP_OUTER);
     }
 
-    hint_color(): Cogl.Color {
-        const css = this.ext.get_string(HINT_COLOR_RGBA);
-        let [valid, color] = Cogl.Color.from_string(css);
-        if (!valid) {
-            color = new Cogl.Color(DEFAULT_HINT_COLOR);
-        }
-        return color;
+    hint_color_rgba(): string {
+        return this.ext.get_string(HINT_COLOR_RGBA);
     }
 
     theme(): string {
@@ -188,8 +181,8 @@ export class ExtensionSettings {
         this.ext.set_uint(GAP_OUTER, gap);
     }
 
-    set_hint_color(color: Cogl.Color) {
-        this.ext.set_string(HINT_COLOR_RGBA, fmtRgba(color));
+    set_hint_color_rgba(color: string) {
+        this.ext.set_string(HINT_COLOR_RGBA, color);
     }
 
     set_row_size(size: number) {

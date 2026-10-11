@@ -14,7 +14,6 @@ import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
 import { get_current_path } from './paths.js';
-import { fmtRgba } from './utils.js';
 // import * as Settings from './settings.js';
 
 export class Indicator {
@@ -270,16 +269,16 @@ function color_selector(ext: Ext, menu: PopupMenu) {
     const color_selector_item = new PopupMenuItem('Active Hint Color');
     const color_button = new St.Button();
     const settings = ext.settings;
-    const hint_color = settings.hint_color();
+    const hint_color_rgba = settings.hint_color_rgba();
 
     // TODO, find a way to expand the button text, :)
     color_button.label = '           '; // blank for now
-    color_button.set_style(`background-color: ${fmtRgba(hint_color)}; border: 2px solid lightgray; border-radius: 2px`);
+    color_button.set_style(`background-color: ${hint_color_rgba}; border: 2px solid lightgray; border-radius: 2px`);
 
     settings.ext.connect('changed', (_, key) => {
         if (key === 'hint-color-rgba') {
-            const hint_color = settings.hint_color();
-            color_button.set_style(`background-color: ${fmtRgba(hint_color)}; border: 2px solid lightgray; border-radius: 2px`);
+            const hint_color_rgba = settings.hint_color_rgba();
+            color_button.set_style(`background-color: ${hint_color_rgba}; border: 2px solid lightgray; border-radius: 2px`);
         }
     });
 
