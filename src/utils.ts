@@ -2,6 +2,7 @@ import * as result from './result.js';
 import * as error from './error.js';
 import * as log from './log.js';
 
+import Cogl from 'gi://Cogl';
 import Gio from 'gi://Gio';
 import GObject from 'gi://GObject';
 const { Ok, Err } = result;
@@ -34,40 +35,29 @@ export function exists(path: string): boolean {
 }
 
 /**
- * Parse the current background color's darkness
+ * Whether `color` is dark based on its WCAG relative luminance.
  * https://stackoverflow.com/a/41491220 - the advanced solution
  * @param color - the RGBA or hex string value
+ * @returns Whether the color is dark
  */
-export function is_dark(color: string): boolean {
-    // 'rgba(53, 132, 228, 1)' // adwaita blue
-    let r = 255;
-    let g = 255;
-    let b = 255;
+export function is_dark(color: Cogl.Color): boolean {
+    /// Maps an sRGB component to its linear intensity.
+    const linearize = (c: number) => c <= 0.04045
+        ? c / 12.92
+        : Math.pow((c + 0.055) / 1.055, 2.4);
 
-    // handle rgba(255,255,255,1.0) format
-    if (color.indexOf('rgb') >= 0) {
-        // starts with parsed value from Gdk.RGBA
-        color = color.replace('rgba', 'rgb').replace('rgb(', '').replace(')', ''); // make it 255, 255, 255, 1
-        const colors = color.split(',') as [string, string, string];
-        r = parseInt(colors[0].trim());
-        g = parseInt(colors[1].trim());
-        b = parseInt(colors[2].trim());
-    } else if (color.charAt(0) === '#') {
-        const color_val = color.substring(1, 7);
-        r = parseInt(color_val.substring(0, 2), 16); // hexToR
-        g = parseInt(color_val.substring(2, 4), 16); // hexToG
-        b = parseInt(color_val.substring(4, 6), 16); // hexToB
-    }
+    const luminance
+        = 0.2126 * linearize(color.get_red())
+        + 0.7152 * linearize(color.get_green())
+        + 0.0722 * linearize(color.get_blue());
 
-    const uicolors = [r / 255, g / 255, b / 255] as const;
-    const c = uicolors.map((col) => {
-        if (col <= 0.03928) {
-            return col / 12.92;
-        }
-        return Math.pow((col + 0.055) / 1.055, 2.4);
-    }) as [number, number, number];
-    const L = 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
-    return L <= 0.179;
+    return luminance <= 0.179;
+}
+
+export function fmtRgba(color: Cogl.Color): string {
+    return color.alpha < 255
+        ? `rgba(${color.red}, ${color.green}, ${color.blue}, ${color.alpha / 255})`
+        : `rgb(${color.red}, ${color.green}, ${color.blue})`;
 }
 
 export function async_process_ipc(argv: Array<string>) {
