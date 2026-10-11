@@ -26,7 +26,7 @@ sha256sums=('SKIP')
 
 build() {
   cd shatter-shell-${pkgver}
-  make COMPILE_SCHEMAS=false compile
+  make compile
 }
 
 package() {
