@@ -54,6 +54,12 @@ export function is_dark(color: Cogl.Color): boolean {
     return luminance <= 0.179;
 }
 
+export function fmtRgba(color: Cogl.Color): string {
+    return color.alpha < 255
+        ? `rgba(${color.red}, ${color.green}, ${color.blue}, ${color.alpha})`
+        : `rgb(${color.red}, ${color.green}, ${color.blue})`;
+}
+
 export function async_process_ipc(argv: Array<string>) {
     const { SubprocessLauncher, SubprocessFlags } = Gio;
 

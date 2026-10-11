@@ -186,7 +186,7 @@ export class ShellWindow {
 
         overlay_color.alpha = overlay_alpha_uint8;
 
-        this.ext.overlay.set_style(`background: ${overlay_color.to_string()}`);
+        this.ext.overlay.set_style(`background: ${utils.fmtRgba(overlay_color)}`);
 
         this.update_border_style();
     }
@@ -565,7 +565,7 @@ export class ShellWindow {
         const hint_color = settings.hint_color();
         const radius_value = settings.active_hint_border_radius();
         if (this.border) {
-            this.border.set_style(`border-color: ${hint_color.to_string()}; border-radius: ${radius_value}px;`);
+            this.border.set_style(`border-color: ${utils.fmtRgba(hint_color)}; border-radius: ${radius_value}px;`);
         }
     }
 

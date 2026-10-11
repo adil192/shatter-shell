@@ -13,6 +13,7 @@ import GObject from 'gi://GObject';
 import Meta from 'gi://Meta';
 import Mtk from 'gi://Mtk';
 import St from 'gi://St';
+import { fmtRgba } from './utils.js';
 
 enum TabActive { active, inactive, urgent }
 
@@ -115,7 +116,7 @@ const TabButton = GObject.registerClass(
 
         set_active(tabActive: TabActive) {
             const hint_color = this._settings.hint_color();
-            this.style = `--accent-color: ${hint_color.to_string()};`;
+            this.style = `--accent-color: ${fmtRgba(hint_color)};`;
 
             switch (tabActive) {
                 case TabActive.active:
