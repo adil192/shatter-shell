@@ -2034,15 +2034,18 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     /** Calls a function once windows are no longer queued for movement. */
-    schedule_idle(func: () => boolean) {
-        if (!this.movements.is_empty()) {
-            GLib.timeout_add(GLib.PRIORITY_DEFAULT, 100, () => {
-                if (!this.movements.is_empty()) return true;
-                return func();
-            });
-        } else {
-            func();
+    when_movements_empty(func: () => void) {
+        if (this.movements.is_empty()) {
+            return func();
         }
+        GLib.timeout_add(GLib.PRIORITY_DEFAULT, 100, () => {
+            if (this.movements.is_empty()) {
+                func();
+                return GLib.SOURCE_REMOVE;
+            } else {
+                return GLib.SOURCE_CONTINUE;
+            }
+        });
     }
 
     should_ignore_workspace(monitor: MonitorID): boolean {
@@ -2348,12 +2351,10 @@ export class Ext extends Ecs.System<ExtEvent> {
             this.monitors.insert(entity, [win.monitor_id(), win.workspace_id()]);
 
             const grab_focus = () => {
-                this.schedule_idle(() => {
+                this.when_movements_empty(() => {
                     this.windows.with(entity!, (window) => {
                         this.register_fn(() => window.request_activate(false));
                     });
-
-                    return false;
                 });
             };
 
