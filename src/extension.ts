@@ -928,7 +928,6 @@ export class Ext extends Ecs.System<ExtEvent> {
         if (this.conf.log_on_focus) {
             let msg = `focused Window(${win.entity}) {\n`
                 + `  class: "${win.meta.get_wm_class()}",\n`
-                + `  cmdline: ${win.cmdline()},\n`
                 + `  monitor: ${win.monitor_id()},\n`
                 + `  name: ${win.name(this)},\n`
                 + `  rect: ${fmtRect(win.rect())},\n`

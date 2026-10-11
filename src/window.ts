@@ -192,25 +192,6 @@ export class ShellWindow {
         this.update_border_style();
     }
 
-    cmdline(): string | null {
-        const pid = this.meta.get_pid() as number;
-        if (pid === 0) return null;
-
-        const path = '/proc/' + pid + '/cmdline';
-        if (!utils.exists(path)) return null;
-
-        const result = utils.read_to_string(path);
-        let out: string | null;
-        if (result.ok) {
-            out = result.value.trim();
-        } else {
-            out = null;
-            log.error(`failed to fetch cmdline: ${result.why.format()}`);
-        }
-
-        return out;
-    }
-
     icon(size: number) {
         let icon = this.window_app.create_icon_texture(size) as St.Icon | null;
 
