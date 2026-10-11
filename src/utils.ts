@@ -56,7 +56,7 @@ export function is_dark(color: Cogl.Color): boolean {
 
 export function fmtRgba(color: Cogl.Color): string {
     return color.alpha < 255
-        ? `rgba(${color.red}, ${color.green}, ${color.blue}, ${color.alpha})`
+        ? `rgba(${color.red}, ${color.green}, ${color.blue}, ${color.alpha / 255})`
         : `rgb(${color.red}, ${color.green}, ${color.blue})`;
 }
 
