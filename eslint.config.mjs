@@ -7,7 +7,7 @@ import tseslint from 'typescript-eslint';
 
 export default defineConfig([
     {
-        ignores: ['target/**', '_build/**'],
+        ignores: ['target/**', '_build/**', 'packaging/**', 'venv/**'],
     },
     {
         extends: [stylistic.configs.customize({
