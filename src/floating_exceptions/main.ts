@@ -176,7 +176,7 @@ class App {
             content: this.nav,
         });
 
-        this.config.reload();
+        this.config.reload_sync();
 
         for (const value of config.DEFAULT_FLOAT_RULES.values()) {
             const wmtitle = value.title;

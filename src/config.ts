@@ -104,16 +104,25 @@ export class Config {
         return false;
     }
 
-    reload() {
-        const conf = Config.from_config();
-
-        if (conf.ok) {
-            const c = conf.value;
-            this.float = c.float;
-            this.log_on_focus = c.log_on_focus;
-        } else {
-            log(`error loading conf: ${conf.why}`);
+    async reload() {
+        const config = await Config.read_file();
+        if (!config.ok) {
+            return log(`error loading conf: ${config.why}`);
         }
+        this.load_from(config.value);
+    }
+
+    reload_sync() {
+        const config = Config.read_file_sync();
+        if (!config.ok) {
+            return log(`error loading conf: ${config.why}`);
+        }
+        this.load_from(config.value);
+    }
+
+    private load_from(config: Config) {
+        this.float = config.float;
+        this.log_on_focus = config.log_on_focus;
     }
 
     rule_disabled(rule: FloatRule): boolean {
@@ -183,11 +192,38 @@ export class Config {
         }
     }
 
-    private static from_config(): Result<Config, string> {
-        const stream = Config.read();
-        if (!stream.ok) return stream;
-        const value = Config.from_json(stream.value);
-        return Ok(value);
+    private static async read_file(): Promise<Result<Config, string>> {
+        try {
+            const file = Config.gio_file();
+            if (!file.ok) return file;
+
+            const [buffer] = await file.value.load_contents_async(null);
+
+            const decoder = new TextDecoder('utf-8');
+            const json = decoder.decode(buffer);
+
+            const config = Config.from_json(json);
+            return Ok(config);
+        } catch (why) {
+            return Err(`failed to read shatter-shell config: ${why}`);
+        }
+    }
+
+    private static read_file_sync(): Result<Config, string> {
+        try {
+            const file = Config.gio_file();
+            if (!file.ok) return file;
+
+            const [, buffer] = file.value.load_contents(null);
+
+            const decoder = new TextDecoder('utf-8');
+            const json = decoder.decode(buffer);
+
+            const config = Config.from_json(json);
+            return Ok(config);
+        } catch (why) {
+            return Err(`failed to read shatter-shell config: ${why}`);
+        }
     }
 
     private static gio_file(): Result<Gio.File, string> {
@@ -209,19 +245,6 @@ export class Config {
             return Ok(conf);
         } catch (why) {
             return Err(`Gio.File I/O error: ${why}`);
-        }
-    }
-
-    private static read(): Result<string, string> {
-        try {
-            const file = Config.gio_file();
-            if (!file.ok) return file;
-
-            const [, buffer] = file.value.load_contents(null);
-
-            return Ok(imports.byteArray.toString(buffer));
-        } catch (why) {
-            return Err(`failed to read shatter-shell config: ${why}`);
         }
     }
 

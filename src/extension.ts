@@ -242,7 +242,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
         this.register_fn(() => load_theme(this.current_style));
 
-        this.conf.reload();
+        this.conf.reload_sync();
 
         if (this.settings.int) {
             this.settings.int.connect('changed::gtk-theme', () => {
@@ -551,10 +551,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                 this.exception_dialog();
             },
             // Reload the tiling config on dialog close
-            () => {
-                this.conf.reload();
-                this.tiling_config_reapply();
-            },
+            () => void this.reload_and_reapply_tiling_config(),
         );
         d.open();
     }
@@ -565,10 +562,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         const event_handler = (event: string): boolean => {
             switch (event) {
                 case 'MODIFIED':
-                    this.register_fn(() => {
-                        this.conf.reload();
-                        this.tiling_config_reapply();
-                    });
+                    this.register_fn(() => void this.reload_and_reapply_tiling_config());
                     break;
                 case 'SELECT':
                     this.register_fn(() => this.exception_select());
@@ -1953,18 +1947,20 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     /** If the auto-tilable status of a window has changed, detach or attach the window. */
-    tiling_config_reapply() {
-        if (this.auto_tiler) {
-            const at = this.auto_tiler;
-            for (const [entity, window] of this.windows.iter()) {
-                const attachment = at.attached.get(entity);
-                if (window.is_tilable(this)) {
-                    if (!attachment) {
-                        at.auto_tile(this, window, this.init);
-                    }
-                } else if (attachment) {
-                    at.detach_window(this, entity);
+    async reload_and_reapply_tiling_config() {
+        await this.conf.reload();
+
+        const at = this.auto_tiler;
+        if (!at) return;
+
+        for (const [entity, window] of this.windows.iter()) {
+            const attachment = at.attached.get(entity);
+            if (window.is_tilable(this)) {
+                if (!attachment) {
+                    at.auto_tile(this, window, this.init);
                 }
+            } else if (attachment) {
+                at.detach_window(this, entity);
             }
         }
     }
