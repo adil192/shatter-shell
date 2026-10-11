@@ -15,16 +15,12 @@ INSTALLNAME = $(UUID)
 
 SOURCES = src/*.ts src/*/*.ts *.scss icons/*.svg schemas/*.gschema.xml metadata.json README.md
 
-.PHONY: all clean configure compile debug listen install local-install local-schema uninstall zip-file lint
+.PHONY: all clean compile debug listen install local-install uninstall zip-file lint
 
 all: compile
 
 clean:
 	rm -rf _build schemas/gschemas.compiled target .eslintcache tsconfig.tsbuildinfo $(UUID)_*.zip
-
-# Configure local settings on system
-configure: install
-	sh scripts/configure.sh
 
 compile: _build/extension.js
 _build/extension.js: node_modules/.package-lock.json $(SOURCES) scripts/transpile.sh
@@ -43,18 +39,14 @@ node_modules/.package-lock.json: package.json package-lock.json
 listen:
 	journalctl -o cat -n 0 -f "$$(which gnome-shell)" | grep -v warning
 
-local-install: compile install local-schema configure
+local-install: zip-file
+	gnome-extensions install -f $(UUID)_$(VERSION_NAME).zip
+	bash scripts/configure.sh
 
 install: compile
 	rm -rf $(INSTALLBASE)/$(INSTALLNAME)
 	mkdir -p $(INSTALLBASE)/$(INSTALLNAME)
 	cp -r _build/* $(INSTALLBASE)/$(INSTALLNAME)/
-
-local-schema: $(XDG_DATA_HOME)/glib-2.0/schemas/org.gnome.shell.extensions.shatter-shell.gschema.xml
-$(XDG_DATA_HOME)/glib-2.0/schemas/org.gnome.shell.extensions.shatter-shell.gschema.xml: schemas/*.gschema.xml
-	mkdir -p $(XDG_DATA_HOME)/glib-2.0/schemas/
-	cp schemas/*.gschema.xml $(XDG_DATA_HOME)/glib-2.0/schemas/
-	glib-compile-schemas $(XDG_DATA_HOME)/glib-2.0/schemas/
 
 uninstall:
 	rm -rf $(INSTALLBASE)/$(INSTALLNAME)
