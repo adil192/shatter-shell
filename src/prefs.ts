@@ -15,8 +15,8 @@ interface AppWidgets {
     outer_gap: Gtk.Entry;
     smart_gaps: Gtk.Switch;
     snap_to_grid: Gtk.Switch;
-    mouse_cursor_focus_position: Gtk.ComboBoxText;
-    log_level: Gtk.ComboBoxText;
+    mouse_cursor_focus_position: Gtk.DropDown;
+    log_level: Gtk.DropDown;
     max_window_width: Gtk.Entry;
     untile_reset_windows: Gtk.Switch;
 }
@@ -66,10 +66,10 @@ function settings_dialog_new(): Gtk.Grid {
         }
     });
 
-    app.log_level.set_active(ext.log_level());
-    app.log_level.connect('changed', () => {
-        const active_id = parseInt(app.log_level.get_active_id()!);
-        ext.set_log_level(active_id);
+    app.log_level.selected = ext.log_level();
+    app.log_level.connect('notify::selected', () => {
+        const selected = app.log_level.selected;
+        ext.set_log_level(selected);
     });
 
     app.mouse_cursor_follows_active_window.set_active(ext.mouse_cursor_follows_active_window());
@@ -84,10 +84,10 @@ function settings_dialog_new(): Gtk.Grid {
         Settings.sync();
     });
 
-    app.mouse_cursor_focus_position.set_active(ext.mouse_cursor_focus_location());
-    app.mouse_cursor_focus_position.connect('changed', () => {
-        const active_id = parseInt(app.mouse_cursor_focus_position.get_active_id()!);
-        ext.set_mouse_cursor_focus_location(active_id);
+    app.mouse_cursor_focus_position.selected = ext.mouse_cursor_focus_location();
+    app.mouse_cursor_focus_position.connect('notify::selected', () => {
+        const selected = app.mouse_cursor_focus_position.selected;
+        ext.set_mouse_cursor_focus_location(selected);
     });
 
     app.stacking_with_mouse.set_active(ext.stacking_with_mouse());
@@ -219,22 +219,16 @@ function number_entry(): Gtk.Entry {
     return new Gtk.Entry({ input_purpose: Gtk.InputPurpose.NUMBER });
 }
 
-function build_combo<Enum extends Record<string, number | string>>(grid: Gtk.Grid, top_index: number, iter_enum: Enum, label: string): Gtk.ComboBoxText {
+function build_combo<Enum extends Record<string, number | string>>(grid: Gtk.Grid, top_index: number, iter_enum: Enum, label: string): Gtk.DropDown {
     const label_ = new Gtk.Label({
         label: label,
         halign: Gtk.Align.START,
     });
-
     grid.attach(label_, 0, top_index, 1, 1);
 
-    const combo = new Gtk.ComboBoxText();
+    const options = Object.values(iter_enum).filter(option => typeof option == 'string');
+    const dropdown = Gtk.DropDown.new_from_strings(options);
+    grid.attach(dropdown, 1, top_index, 1, 1);
 
-    for (const [index, key] of Object.keys(iter_enum).entries()) {
-        if (typeof iter_enum[key] == 'string') {
-            combo.append(`${index}`, iter_enum[key]);
-        }
-    }
-
-    grid.attach(combo, 1, top_index, 1, 1);
-    return combo;
+    return dropdown;
 }
