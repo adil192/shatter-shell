@@ -505,7 +505,7 @@ export class Ext extends Ecs.System<ExtEvent> {
             const new_s = GLib.timeout_add(GLib.PRIORITY_LOW, 500, () => {
                 this.register(Events.window_event(win, WindowEventType.Size));
                 this.size_requests.delete(win.meta);
-                return false;
+                return GLib.SOURCE_REMOVE;
             });
 
             this.size_requests.set(win.meta, new_s);
@@ -524,6 +524,13 @@ export class Ext extends Ecs.System<ExtEvent> {
                 this.register(Events.window_event(win, WindowEventType.Minimize));
             }),
         ]);
+    }
+
+    dispose_size_requests() {
+        for (const [_meta, tag] of this.size_requests) {
+            GLib.source_remove(tag);
+        }
+        this.size_requests.clear();
     }
 
     exception_add(win: Window.ShellWindow) {
@@ -2474,6 +2481,7 @@ export default class ShatterShellExtension extends Extension {
             ext.signals_remove();
             ext.exit_modes();
             ext.hide_all_borders();
+            ext.dispose_size_requests();
 
             layoutManager.removeChrome(ext.overlay);
 
