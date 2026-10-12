@@ -56,6 +56,5 @@ zip-file: $(UUID)_$(VERSION_NAME).zip
 $(UUID)_$(VERSION_NAME).zip: compile
 	cd _build && zip -qr "../$(UUID)_$(VERSION_NAME).zip" .
 
-lint: .eslintcache
-.eslintcache: node_modules/.package-lock.json $(SOURCES)
+lint: node_modules/.package-lock.json $(SOURCES)
 	npx eslint --cache $(CUSTOM_ESLINT_ARGS)
