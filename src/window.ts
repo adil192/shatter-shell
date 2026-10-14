@@ -130,10 +130,13 @@ export class ShellWindow {
                 this.meta.connect('workspace-changed', () => this.workspace_changed()),
                 this.meta.connect('raised', () => this.window_raised()),
 
-                this.meta.connect('notify::wm-class', () => this.reconsider_tiling()),
+                this.meta.connect('notify::fullscreen', () => this.reconsider_tiling()),
+                this.meta.connect('notify::maximized-horizontally', () => this.reconsider_tiling()),
+                this.meta.connect('notify::maximized-vertically', () => this.reconsider_tiling()),
                 this.meta.connect('notify::resizeable', () => this.reconsider_tiling()),
                 this.meta.connect('notify::skip-taskbar', () => this.reconsider_tiling()),
                 this.meta.connect('notify::window-type', () => this.reconsider_tiling()),
+                this.meta.connect('notify::wm-class', () => this.reconsider_tiling()),
             );
     }
 
@@ -238,6 +241,7 @@ export class ShellWindow {
         // Quake-style terminals such as Tilix's quake mode.
         if (this.meta.get_role() === 'quake') return false;
 
+        // Note: `allows_resize` is also false if maximized or fullscreen.
         if (!this.meta.allows_resize()) return false;
         if (!this.meta.allows_move()) return false;
 
