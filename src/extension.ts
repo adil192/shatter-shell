@@ -503,7 +503,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                 } catch (_) { /* empty */ }
             }
 
-            const new_s = GLib.timeout_add(GLib.PRIORITY_LOW, 500, () => {
+            const new_s = GLib.timeout_add(GLib.PRIORITY_LOW, 150, () => {
                 this.register(Events.window_event(win, WindowEventType.Size));
                 this.size_requests.delete(win.meta);
                 return GLib.SOURCE_REMOVE;
