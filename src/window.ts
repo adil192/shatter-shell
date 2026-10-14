@@ -556,6 +556,13 @@ export class ShellWindow {
             if (!this.meta.minimized) {
                 this.ext.auto_tiler?.auto_tile(this.ext, this, this.ext.init);
             }
+        } else {
+            if (this.is_maximized() || this.meta.is_fullscreen()) {
+                // Retain tiled position for when the window is unmaximized.
+            } else {
+                // Untile window
+                this.ext.auto_tiler?.detach_window(this.ext, this.entity);
+            }
         }
     }
 
