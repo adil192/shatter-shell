@@ -220,6 +220,8 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     /** Signals which have been registered for each window */
     window_signals: Ecs.Storage<Array<SignalID>> = this.register_storage();
+    /** Signals which have been registered for each tilable window, a subset of {@link window_signals}. */
+    tilable_window_signals: Ecs.Storage<Array<SignalID>> = this.register_storage();
 
     // Systems
 
@@ -480,6 +482,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         });
 
         this.window_signals.get_or(win.entity, () => []).push(id);
+        this.tilable_window_signals.get_or(win.entity, () => []).push(id);
 
         return id;
     }
@@ -495,7 +498,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         });
     }
 
-    connect_window_signals(win: Window.ShellWindow) {
+    connect_tilable_window_signals(win: Window.ShellWindow) {
         const debounce_size_event = () => {
             const old = this.size_requests.get(win.meta) ?? 0;
             if (old) {
@@ -524,12 +527,19 @@ export class Ext extends Ecs.System<ExtEvent> {
         });
     }
 
-    disconnect_window_signals(win: Window.ShellWindow) {
-        this.window_signals.take_with(win.entity, (signals) => {
+    disconnect_tilable_window_signals(win: Window.ShellWindow) {
+        this.tilable_window_signals.take_with(win.entity, (signals) => {
+            const window_signals = this.window_signals.get(win.entity);
+
             for (const signal of signals) {
                 try {
                     win.meta.disconnect(signal);
                 } catch (_) { /* empty */ }
+
+                const i = window_signals?.indexOf(signal) ?? -1;
+                if (i !== -1) {
+                    window_signals!.splice(i, 1);
+                }
             }
         });
     }
@@ -1509,7 +1519,7 @@ export class Ext extends Ecs.System<ExtEvent> {
             });
 
             if (win.is_tilable(this)) {
-                this.connect_window_signals(win);
+                this.connect_tilable_window_signals(win);
             }
         }
     }
@@ -1910,6 +1920,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                 } catch (_) { /* empty */ }
             }
         });
+        this.tilable_window_signals.clear();
 
         this.tiler.queue.stop();
     }

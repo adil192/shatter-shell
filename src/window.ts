@@ -546,9 +546,9 @@ export class ShellWindow {
     }
 
     private reconsider_tiling() {
-        this.ext.disconnect_window_signals(this);
+        this.ext.disconnect_tilable_window_signals(this);
         if (this.is_tilable(this.ext)) {
-            this.ext.connect_window_signals(this);
+            this.ext.connect_tilable_window_signals(this);
             if (!this.meta.minimized) {
                 this.ext.auto_tiler?.auto_tile(this.ext, this, this.ext.init);
             }

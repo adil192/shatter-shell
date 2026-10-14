@@ -143,6 +143,10 @@ export class Storage<T> {
             this.store[idx] = null;
         }
     }
+
+    clear() {
+        this.store.fill(null);
+    }
 }
 
 /**
