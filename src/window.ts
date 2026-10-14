@@ -121,7 +121,7 @@ export class ShellWindow {
         return !this.destroying && this.meta.get_compositor_private<Meta.WindowActor | null>() !== null;
     }
 
-    private bind_window_events() {
+    bind_window_events() {
         this.ext.window_signals
             .get_or(this.entity, () => [])
             .push(

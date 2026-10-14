@@ -498,6 +498,20 @@ export class Ext extends Ecs.System<ExtEvent> {
         });
     }
 
+    /**
+     * Connects the relevant signals on every known window,
+     * used when the extension is re-enabled.
+     */
+    reconnect_each_windows_signals() {
+        for (const [, window] of this.windows.iter()) {
+            this.disconnect_tilable_window_signals(window);
+            window.bind_window_events();
+            if (window.is_tilable(this)) {
+                this.connect_tilable_window_signals(window);
+            }
+        }
+    }
+
     connect_tilable_window_signals(win: Window.ShellWindow) {
         const debounce_size_event = () => {
             const old = this.size_requests.get(win.meta) ?? 0;
@@ -1900,6 +1914,8 @@ export class Ext extends Ecs.System<ExtEvent> {
             }
 
             this.register_fn(() => (this.init = false));
+        } else {
+            this.reconnect_each_windows_signals();
         }
     }
 
