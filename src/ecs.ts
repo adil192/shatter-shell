@@ -133,6 +133,16 @@ export class Storage<T> {
         const component = this.get(entity);
         return component != null ? func(component) : null;
     }
+
+    /**
+     * Clears all components, and passes them to the `func` callback.
+     */
+    clear_with(fun: (entity: Entity, component: T) => void) {
+        for (const [idx, [gen, value]] of this._iter()) {
+            fun(entity_new(idx, gen), value);
+            this.store[idx] = null;
+        }
+    }
 }
 
 /**

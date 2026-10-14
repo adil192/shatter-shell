@@ -1899,10 +1899,19 @@ export class Ext extends Ecs.System<ExtEvent> {
                 object.disconnect(signal);
             }
         }
+        this.signals.clear();
+
+        this.window_signals.clear_with((entity, signals) => {
+            const win = this.windows.get(entity);
+            if (!win) return;
+            for (const signal of signals) {
+                try {
+                    win.meta.disconnect(signal);
+                } catch (_) { /* empty */ }
+            }
+        });
 
         this.tiler.queue.stop();
-
-        this.signals.clear();
     }
 
     size_changed_block() {
