@@ -212,9 +212,6 @@ export class Ext extends Ecs.System<ExtEvent> {
     /** Signal ID which handles size-changed signals */
     size_changed_signal: SignalID = 0;
 
-    /** Store for size-changed signals attached to each window */
-    size_signals: Ecs.Storage<SignalID[]> = this.register_storage();
-
     /** Set to true if a window is snapped to the grid */
     snapped: Ecs.Storage<boolean> = this.register_storage();
 
@@ -477,7 +474,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         return signal;
     }
 
-    connect_meta(win: Window.ShellWindow, signal: string, callback: () => void): number {
+    connect_meta(win: Window.ShellWindow, signal: keyof Meta.Window.SignalSignatures, callback: () => void): number {
         const id = win.meta.connect(signal, () => {
             if (win.actor_exists()) callback();
         });
@@ -487,16 +484,20 @@ export class Ext extends Ecs.System<ExtEvent> {
         return id;
     }
 
-    connect_size_signal(win: Window.ShellWindow, signal: string, func: () => void): number {
+    /**
+     * Connects an event that only calls `func` if the window does not have {@link Tags.Blocked}.
+     *
+     * See also {@link size_signals_block} and {@link size_signals_unblock}.
+     */
+    connect_size_signal(win: Window.ShellWindow, signal: keyof Meta.Window.SignalSignatures, func: () => void): number {
         return this.connect_meta(win, signal, () => {
             if (!this.contains_tag(win.entity, Tags.Blocked)) func();
         });
     }
 
     connect_window(win: Window.ShellWindow) {
-        const size_event = () => {
+        const debounce_size_event = () => {
             const old = this.size_requests.get(win.meta) ?? 0;
-
             if (old) {
                 try {
                     GLib.source_remove(old);
@@ -508,7 +509,6 @@ export class Ext extends Ecs.System<ExtEvent> {
                 this.size_requests.delete(win.meta);
                 return GLib.SOURCE_REMOVE;
             });
-
             this.size_requests.set(win.meta, new_s);
         };
 
@@ -516,22 +516,12 @@ export class Ext extends Ecs.System<ExtEvent> {
             this.register(Events.window_event(win, WindowEventType.Workspace));
         });
 
-        this.size_signals.insert(win.entity, [
-            this.connect_size_signal(win, 'size-changed', size_event),
+        this.connect_size_signal(win, 'size-changed', debounce_size_event);
+        this.connect_size_signal(win, 'position-changed', debounce_size_event);
 
-            this.connect_size_signal(win, 'position-changed', size_event),
-
-            this.connect_size_signal(win, 'notify::minimized', () => {
-                this.register(Events.window_event(win, WindowEventType.Minimize));
-            }),
-        ]);
-    }
-
-    dispose_size_requests() {
-        for (const [_meta, tag] of this.size_requests) {
-            GLib.source_remove(tag);
-        }
-        this.size_requests.clear();
+        this.connect_size_signal(win, 'notify::minimized', () => {
+            this.register(Events.window_event(win, WindowEventType.Minimize));
+        });
     }
 
     exception_add(win: Window.ShellWindow) {
@@ -2483,7 +2473,6 @@ export default class ShatterShellExtension extends Extension {
             ext.signals_remove();
             ext.exit_modes();
             ext.hide_all_borders();
-            ext.dispose_size_requests();
 
             layoutManager.removeChrome(ext.overlay);
 
