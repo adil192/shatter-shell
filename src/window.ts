@@ -75,11 +75,6 @@ export class ShellWindow {
 
         this.known_workspace = this.workspace_id();
 
-        // Float fullscreen windows by default, such as Kodi.
-        if (this.meta.is_fullscreen()) {
-            ext.add_tag(entity, Tags.Floating);
-        }
-
         this.bind_window_events();
         this.bind_hint_events();
 
