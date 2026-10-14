@@ -495,7 +495,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         });
     }
 
-    connect_window(win: Window.ShellWindow) {
+    connect_window_signals(win: Window.ShellWindow) {
         const debounce_size_event = () => {
             const old = this.size_requests.get(win.meta) ?? 0;
             if (old) {
@@ -521,6 +521,16 @@ export class Ext extends Ecs.System<ExtEvent> {
 
         this.connect_size_signal(win, 'notify::minimized', () => {
             this.register(Events.window_event(win, WindowEventType.Minimize));
+        });
+    }
+
+    disconnect_window_signals(win: Window.ShellWindow) {
+        this.window_signals.take_with(win.entity, (signals) => {
+            for (const signal of signals) {
+                try {
+                    win.meta.disconnect(signal);
+                } catch (_) { /* empty */ }
+            }
         });
     }
 
@@ -1499,7 +1509,7 @@ export class Ext extends Ecs.System<ExtEvent> {
             });
 
             if (win.is_tilable(this)) {
-                this.connect_window(win);
+                this.connect_window_signals(win);
             }
         }
     }

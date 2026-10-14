@@ -125,21 +125,15 @@ export class ShellWindow {
         this.ext.window_signals
             .get_or(this.entity, () => [])
             .push(
-                this.meta.connect('size-changed', () => {
-                    this.window_changed();
-                }),
-                this.meta.connect('position-changed', () => {
-                    this.window_changed();
-                }),
-                this.meta.connect('workspace-changed', () => {
-                    this.workspace_changed();
-                }),
-                this.meta.connect('notify::wm-class', () => {
-                    this.wm_class_changed();
-                }),
-                this.meta.connect('raised', () => {
-                    this.window_raised();
-                }),
+                this.meta.connect('size-changed', () => this.window_changed()),
+                this.meta.connect('position-changed', () => this.window_changed()),
+                this.meta.connect('workspace-changed', () => this.workspace_changed()),
+                this.meta.connect('raised', () => this.window_raised()),
+
+                this.meta.connect('notify::wm-class', () => this.reconsider_tiling()),
+                this.meta.connect('notify::resizeable', () => this.reconsider_tiling()),
+                this.meta.connect('notify::skip-taskbar', () => this.reconsider_tiling()),
+                this.meta.connect('notify::window-type', () => this.reconsider_tiling()),
             );
     }
 
@@ -551,9 +545,10 @@ export class ShellWindow {
         }
     }
 
-    private wm_class_changed() {
+    private reconsider_tiling() {
+        this.ext.disconnect_window_signals(this);
         if (this.is_tilable(this.ext)) {
-            this.ext.connect_window(this);
+            this.ext.connect_window_signals(this);
             if (!this.meta.minimized) {
                 this.ext.auto_tiler?.auto_tile(this.ext, this, this.ext.init);
             }
