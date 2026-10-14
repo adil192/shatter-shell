@@ -1922,6 +1922,11 @@ export class Ext extends Ecs.System<ExtEvent> {
         });
         this.tilable_window_signals.clear();
 
+        for (const [_meta, tag] of this.size_requests) {
+            GLib.source_remove(tag);
+        }
+        this.size_requests.clear();
+
         this.tiler.queue.stop();
     }
 
