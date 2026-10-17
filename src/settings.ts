@@ -15,7 +15,7 @@ function settings_new_id(schema_id: string): Gio.Settings | null {
     }
 }
 
-function settings_new_schema(schema: string): Gio.Settings {
+export function settings_new_schema(schema: string): Gio.Settings {
     const GioSSS = Gio.SettingsSchemaSource;
     const schemaDir = Gio.File.new_for_path(get_current_path()).get_child('schemas');
 
@@ -26,9 +26,7 @@ function settings_new_schema(schema: string): Gio.Settings {
     const schemaObj = schemaSource?.lookup(schema, true);
 
     if (!schemaObj) {
-        throw new Error(
-            'Schema ' + schema + ' could not be found for extension shatter-shell' + '. Please check your installation.',
-        );
+        throw new Error(`Schema ${schema} could not be found for Shatter Shell. Please check your installation.`);
     }
 
     return new Gio.Settings({ settings_schema: schemaObj });
