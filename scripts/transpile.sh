@@ -17,6 +17,9 @@ use_sass() {
     fi
 }
 
+# We no longer call `glib-compile-schemas`. This flag now controls whether the .gschemas.xml file is included in _build.
+[ "$COMPILE_SCHEMAS" == "true" ] || [ "$COMPILE_SCHEMAS" == "false" ] || (echo "Invalid COMPILE_SCHEMAS=$COMPILE_SCHEMAS"; exit 1)
+
 echo Compiling into target/...
 use_tsc
 use_sass --no-source-map \
@@ -26,7 +29,7 @@ use_sass --no-source-map \
 
 echo Packing into _build/...
 rm -rf _build && mkdir _build
-cp -r metadata.json icons README.md schemas target/* _build/
-rm -f _build/schemas/gschemas.compiled
+cp -r metadata.json icons README.md target/* _build/
+[ "$COMPILE_SCHEMAS" == "true" ] && install -D schemas/org.gnome.shell.extensions.shatter-shell.gschema.xml -t _build/schemas/
 find _build -name "*.tsbuildinfo" -delete
 find _build -name "*.d.ts" -delete

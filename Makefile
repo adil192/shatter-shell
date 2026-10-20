@@ -17,6 +17,9 @@ SOURCES = src/*.ts src/*/*.ts *.scss icons/*.svg schemas/*.gschema.xml metadata.
 
 .PHONY: all clean compile debug listen install local-install uninstall zip-file lint
 
+# We no longer call `glib-compile-schemas`. This flag now controls whether the .gschemas.xml file is included in _build.
+COMPILE_SCHEMAS = true
+
 all: compile
 
 clean:
@@ -24,7 +27,7 @@ clean:
 
 compile: _build/extension.js
 _build/extension.js: node_modules/.package-lock.json $(SOURCES) scripts/transpile.sh
-	./scripts/transpile.sh
+	COMPILE_SCHEMAS=$(COMPILE_SCHEMAS) ./scripts/transpile.sh
 
 debug: local-install
 	@if [ "$$(gnome-shell --version | awk '{print int($$3)}')" -ge 49 ]; then \
