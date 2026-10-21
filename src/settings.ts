@@ -1,5 +1,6 @@
 import Gio from 'gi://Gio';
 import { get_current_path } from './paths.js';
+import { type LogLevel } from './log.js';
 
 const DARK = ['dark', 'adapta', 'plata', 'dracula'];
 
@@ -129,7 +130,7 @@ export class ExtensionSettings {
         return this.mutter ? this.mutter.get_boolean('workspaces-only-on-primary') : false;
     }
 
-    log_level(): number {
+    log_level(): LogLevel {
         return this.ext.get_uint(LOG_LEVEL);
     }
 
@@ -203,7 +204,7 @@ export class ExtensionSettings {
         this.ext.set_boolean(UNTILE_RESET_WINDOWS, set);
     }
 
-    set_log_level(set: number) {
+    set_log_level(set: LogLevel) {
         this.ext.set_uint(LOG_LEVEL, set);
     }
 
