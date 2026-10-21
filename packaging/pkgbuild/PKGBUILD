@@ -1,26 +1,17 @@
 # Maintainer: Adil Hanney <adilhanney at disroot dot org>
 # Based on https://aur.archlinux.org/packages/gnome-shell-extension-pop-shell-git
 
-pkgname=gnome-shell-extension-shatter-shell
+pkgname=(
+  gnome-shell-extension-shatter-shell
+  gnome-shell-extension-shatter-shell-shortcut-overrides
+)
 pkgver=2.4.3
 pkgrel=1
 pkgdesc="Tiling window management for GNOME: a fork of Pop!_OS Shell"
 arch=('any')
 url="https://github.com/adil192/shatter-shell"
 license=('GPL-3.0-only')
-depends=(
-  'gnome-shell>=48'
-)
-optdepends=(
-  'gnome-control-center: keybindings customization'
-)
-makedepends=(
-  'make'
-  'git'
-  'npm'
-)
-provides=("gnome-shell-extension-pop-shell")
-conflicts=("gnome-shell-extension-pop-shell")
+makedepends=(make git npm)
 source=("${url}/archive/refs/tags/${pkgver}.tar.gz")
 sha256sums=('SKIP')
 
@@ -29,7 +20,17 @@ build() {
   make COMPILE_SCHEMAS=false compile
 }
 
-package() {
+package_gnome-shell-extension-shatter-shell() {
+  depends=(
+    'gnome-shell>=48'
+  )
+  optdepends=(
+    'gnome-control-center: keybinding settings'
+    'gnome-shell-extension-shatter-shell-shortcut-overrides: fix keybinding conflicts'
+  )
+  provides=("gnome-shell-extension-pop-shell")
+  conflicts=("gnome-shell-extension-pop-shell")
+
   cd shatter-shell-${pkgver}
   make DESTDIR="$pkgdir" install
 
@@ -38,7 +39,15 @@ package() {
 
   install -Dm644 keybindings/*.xml -t \
     "$pkgdir/usr/share/gnome-control-center/keybindings/"
+}
 
+package_gnome-shell-extension-shatter-shell-shortcut-overrides() {
+  pkgdesc="Minimal config to prevent conflicts between GNOME and Shatter Shell keybindings"
+  depends=(gnome-shell-extension-shatter-shell)
+  provides=("gnome-shell-extension-pop-shell-shortcut-overrides")
+  conflicts=("gnome-shell-extension-pop-shell-shortcut-overrides")
+
+  cd shatter-shell-${pkgver}
   install -Dm644 keybinding-overrides/*.shatter-shell.gschema.override -t \
     "$pkgdir/usr/share/glib-2.0/schemas/"
 }
