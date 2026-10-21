@@ -43,7 +43,7 @@ export class Indicator {
 
         this.toggle_tiled = tiled(ext);
 
-        this.toggle_active = toggle(_('Show Active Hint'), ext.settings.active_hint(), (toggle) => {
+        this.toggle_active = toggle(_('Show active hint'), ext.settings.active_hint(), (toggle) => {
             ext.settings.set_active_hint(toggle.state);
         });
 
@@ -53,7 +53,7 @@ export class Indicator {
         });
 
         this.border_radius = number_entry(
-            _('Active Border Radius'),
+            _('Active border radius'),
             {
                 value: ext.settings.active_hint_border_radius(),
                 min: 0,
@@ -92,7 +92,7 @@ function menu_separator(text: string) {
 
 function floating_window_exceptions(ext: Ext, menu: PopupMenu) {
     const widget = new St.BoxLayout({ orientation: Clutter.Orientation.HORIZONTAL, x_expand: true });
-    widget.add_child(new St.Label({ text: 'Floating Window Exceptions', x_expand: true }));
+    widget.add_child(new St.Label({ text: _('Floating window exceptions'), x_expand: true }));
     widget.add_child(new St.Icon({ icon_name: 'go-next-symbolic', icon_size: 16 }));
 
     const base = new PopupBaseMenuItem();
@@ -111,7 +111,7 @@ function floating_window_exceptions(ext: Ext, menu: PopupMenu) {
 
 function more_settings(ext: Ext, menu: PopupMenu) {
     const widget = new St.BoxLayout({ orientation: Clutter.Orientation.HORIZONTAL, x_expand: true });
-    widget.add_child(new St.Label({ text: 'More Settings', x_expand: true }));
+    widget.add_child(new St.Label({ text: _('More settings'), x_expand: true }));
     widget.add_child(new St.Icon({ icon_name: 'go-next-symbolic', icon_size: 16 }));
 
     const base = new PopupBaseMenuItem();
@@ -270,7 +270,7 @@ function toggle(desc: string, active: boolean, connect: (toggle: PopupSwitchMenu
 }
 
 function tiled(ext: Ext) {
-    return toggle(_('Tile Windows'), null != ext.auto_tiler, (_, shouldTile) => {
+    return toggle(_('Tile windows'), null != ext.auto_tiler, (_, shouldTile) => {
         if (shouldTile) {
             ext.auto_tile_on();
         } else {
@@ -280,7 +280,7 @@ function tiled(ext: Ext) {
 }
 
 function color_selector(ext: Ext, menu: PopupMenu) {
-    const color_selector_item = new PopupMenuItem('Active Hint Color');
+    const color_selector_item = new PopupMenuItem(_('Active hint color'));
     const color_button = new St.Button();
     const settings = ext.settings;
     const hint_color_rgba = settings.hint_color_rgba();
