@@ -5,7 +5,7 @@ pkgname=(
   gnome-shell-extension-shatter-shell
   gnome-shell-extension-shatter-shell-shortcut-overrides
 )
-pkgver=2.4.3
+pkgver=2.5.0
 pkgrel=1
 pkgdesc="Tiling window management for GNOME: a fork of Pop!_OS Shell"
 arch=('any')
