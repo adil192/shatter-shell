@@ -98,6 +98,8 @@ interface Injection<T> {
 }
 
 export class Ext extends Ecs.System<ExtEvent> {
+    extension: ShatterShellExtension | null;
+
     /** Mechanism for managing keybindings */
     keybindings: Keybindings.Keybindings = new Keybindings.Keybindings(this);
 
@@ -234,8 +236,9 @@ export class Ext extends Ecs.System<ExtEvent> {
     /** Calculates window placements when tiling and focus-switching */
     tiler: Tiling.Tiler = new Tiling.Tiler(this);
 
-    constructor() {
+    constructor(extension: ShatterShellExtension) {
         super(new Executor.GLibExecutor());
+        this.extension = extension;
 
         this.load_settings();
         this.reload_theme();
@@ -2477,11 +2480,13 @@ export default class ShatterShellExtension extends Extension {
         log.info('enable');
 
         if (!ext) {
-            ext = new Ext();
+            ext = new Ext(this);
 
             ext.register_fn(() => {
                 if (ext?.auto_tiler) ext.snap_windows();
             });
+        } else {
+            ext.extension = this;
         }
 
         if (ext.was_locked) {
@@ -2533,6 +2538,8 @@ export default class ShatterShellExtension extends Extension {
                 ext.auto_tiler.destroy(ext);
                 ext.auto_tiler = null;
             }
+
+            ext.extension = null;
         }
 
         if (indicator) {

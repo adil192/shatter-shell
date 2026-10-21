@@ -66,6 +66,7 @@ export class Indicator {
 
         bm.addMenuItem(this.toggle_tiled);
         bm.addMenuItem(floating_window_exceptions(ext, bm));
+        bm.addMenuItem(more_settings(ext, bm));
 
         bm.addMenuItem(menu_separator(''));
         bm.addMenuItem(shortcuts(bm));
@@ -90,20 +91,33 @@ function menu_separator(text: string) {
 }
 
 function floating_window_exceptions(ext: Ext, menu: PopupMenu) {
-    const label = new St.Label({ text: 'Floating Window Exceptions' });
-    label.set_x_expand(true);
-
-    const icon = new St.Icon({ icon_name: 'go-next-symbolic', icon_size: 16 });
-
-    const widget = new St.BoxLayout({ orientation: Clutter.Orientation.HORIZONTAL });
-    widget.add_child(label);
-    widget.add_child(icon);
-    widget.set_x_expand(true);
+    const widget = new St.BoxLayout({ orientation: Clutter.Orientation.HORIZONTAL, x_expand: true });
+    widget.add_child(new St.Label({ text: 'Floating Window Exceptions', x_expand: true }));
+    widget.add_child(new St.Icon({ icon_name: 'go-next-symbolic', icon_size: 16 }));
 
     const base = new PopupBaseMenuItem();
     base.add_child(widget);
     base.connect('activate', () => {
         ext.exception_dialog();
+
+        GLib.timeout_add(GLib.PRIORITY_LOW, 300, () => {
+            menu.close();
+            return false;
+        });
+    });
+
+    return base;
+}
+
+function more_settings(ext: Ext, menu: PopupMenu) {
+    const widget = new St.BoxLayout({ orientation: Clutter.Orientation.HORIZONTAL, x_expand: true });
+    widget.add_child(new St.Label({ text: 'More Settings', x_expand: true }));
+    widget.add_child(new St.Icon({ icon_name: 'go-next-symbolic', icon_size: 16 }));
+
+    const base = new PopupBaseMenuItem();
+    base.add_child(widget);
+    base.connect('activate', () => {
+        ext.extension?.openPreferences();
 
         GLib.timeout_add(GLib.PRIORITY_LOW, 300, () => {
             menu.close();
