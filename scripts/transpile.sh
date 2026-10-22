@@ -12,7 +12,6 @@ use_sass() {
     if command -v sass >/dev/null 2>&1; then
         sass "$@"
     else
-        echo "Warning: Using npm sass. Install dart sass for faster builds: https://sass-lang.com/install/"
         npx sass "$@"
     fi
 }
