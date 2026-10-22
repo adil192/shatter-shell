@@ -17,7 +17,7 @@ export class FocusSelector {
         direction: (a: ShellWindow, b: Array<ShellWindow>) => Array<ShellWindow>,
         window: ShellWindow | null,
     ): ShellWindow | null {
-        window = window ?? ext.focus_window();
+        window = window ?? ext.get_focused_window();
         if (window) {
             const window_list = ext.active_window_list();
             return select(direction, window, window_list);

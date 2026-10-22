@@ -494,7 +494,7 @@ export class AutoTiler {
     }
 
     toggle_floating(ext: Ext) {
-        const focused = ext.focus_window();
+        const focused = ext.get_focused_window();
         if (!focused) return;
 
         const wm_class = focused.meta.get_wm_class();
@@ -540,7 +540,7 @@ export class AutoTiler {
     }
 
     toggle_stacking(ext: Ext, window?: ShellWindow) {
-        const focused = window ?? ext.focus_window();
+        const focused = window ?? ext.get_focused_window();
         if (!focused) return;
 
         // Disable floating if floating is enabled

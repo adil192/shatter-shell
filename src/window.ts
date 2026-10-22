@@ -346,7 +346,7 @@ export class ShellWindow {
             const permitted = () => {
                 return (
                     this.actor_exists()
-                    && this.ext.focus_window() == this
+                    && this.ext.get_focused_window() == this
                     && !this.meta.is_fullscreen()
                     && (!this.is_single_max_screen() || this.is_snap_edge())
                     && !this.meta.minimized

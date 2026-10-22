@@ -64,7 +64,7 @@ export class Tiler {
     }
 
     toggle_orientation(ext: Ext) {
-        const window = ext.focus_window();
+        const window = ext.get_focused_window();
         if (window && ext.auto_tiler) {
             ext.auto_tiler.toggle_orientation(ext, window);
             ext.register_fn(() => window.request_activate(true));
@@ -73,7 +73,7 @@ export class Tiler {
 
     toggle_stacking(ext: Ext) {
         ext.auto_tiler?.toggle_stacking(ext);
-        const win = ext.focus_window();
+        const win = ext.get_focused_window();
         if (win) this.overlay_watch(ext, win);
     }
 
@@ -214,7 +214,7 @@ export class Tiler {
         if (ext.auto_tiler && win.is_tilable(ext)) {
             if (this.queue.length === 2) return;
             this.queue.send(() => {
-                const focused = ext.focus_window();
+                const focused = ext.get_focused_window();
                 if (focused) {
                     // The window that the focused window is being moved onto
                     const move_to = focus();
@@ -750,7 +750,7 @@ export class Tiler {
 
     enter(ext: Ext) {
         if (!this.window) {
-            const win = ext.focus_window();
+            const win = ext.get_focused_window();
             if (!win) return;
 
             this.window = win.entity;
@@ -920,7 +920,7 @@ function move_window_or_monitor(
         next_window = (next_window && next_window.actor_exists()) ? next_window : null;
 
         // Check if a display exists between the next window and the focused window.
-        const focus = ext.focus_window();
+        const focus = ext.get_focused_window();
         if (focus) {
             // Return display number if the next window didn't exist.
             const next_monitor = locate_monitor(focus, direction);

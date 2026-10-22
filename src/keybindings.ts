@@ -26,7 +26,7 @@ export class Keybindings {
             'focus-right': () => ext.focus_right(),
 
             'tile-orientation': () => {
-                const win = ext.focus_window();
+                const win = ext.get_focused_window();
                 if (win && ext.auto_tiler) {
                     ext.auto_tiler.toggle_orientation(ext, win);
                     ext.register_fn(() => win.request_activate(true));
@@ -39,13 +39,13 @@ export class Keybindings {
 
             'toggle-stacking-global': () => ext.auto_tiler?.toggle_stacking(ext),
 
-            'tile-move-left-global': () => ext.tiler.move_left(ext, ext.focus_window()?.entity),
+            'tile-move-left-global': () => ext.tiler.move_left(ext, ext.get_focused_window()?.entity),
 
-            'tile-move-down-global': () => ext.tiler.move_down(ext, ext.focus_window()?.entity),
+            'tile-move-down-global': () => ext.tiler.move_down(ext, ext.get_focused_window()?.entity),
 
-            'tile-move-up-global': () => ext.tiler.move_up(ext, ext.focus_window()?.entity),
+            'tile-move-up-global': () => ext.tiler.move_up(ext, ext.get_focused_window()?.entity),
 
-            'tile-move-right-global': () => ext.tiler.move_right(ext, ext.focus_window()?.entity),
+            'tile-move-right-global': () => ext.tiler.move_right(ext, ext.get_focused_window()?.entity),
         };
     }
 

@@ -705,7 +705,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         this.focus_selector.up(this, null)?.request_activate();
     }
 
-    focus_window(): Window.ShellWindow | null {
+    get_focused_window(): Window.ShellWindow | null {
         const meta = display.get_focus_window() as Meta.Window | null;
         return this.get_window(meta);
     }
@@ -737,7 +737,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     stack_switch(apply: (stack: node.NodeStack) => boolean) {
-        const window = this.focus_window();
+        const window = this.get_focused_window();
         if (window) {
             if (this.auto_tiler) {
                 const node = this.auto_tiler.find_stack(window.entity);
@@ -804,7 +804,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                 this.prev_focused = [null, window.entity];
             };
 
-            const focused = this.focus_window();
+            const focused = this.get_focused_window();
             if (focused && focused.same_workspace()) {
                 activate_window(focused);
                 return;
@@ -990,7 +990,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     show_border_on_focused() {
-        const focus = this.focus_window();
+        const focus = this.get_focused_window();
         for (const win of this.windows.values()) {
             if (win != focus) win.hide_border();
         }
@@ -1415,7 +1415,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     /** Handle window minimization notifications */
     on_minimize(win: Window.ShellWindow) {
-        if (this.focus_window() == win && this.settings.active_hint()) {
+        if (this.get_focused_window() == win && this.settings.active_hint()) {
             if (win.meta.minimized) {
                 win.hide_border();
             } else {
@@ -1764,7 +1764,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
         // @ts-expect-error Typescript does't know the overview's signals
         this.connect_emitter(overview, 'hiding', () => {
-            const window = this.focus_window();
+            const window = this.get_focused_window();
             if (window) {
                 this.on_focused(window);
             }
@@ -1833,7 +1833,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                 return false;
             });
 
-            const window = this.focus_window();
+            const window = this.get_focused_window();
             if (window) {
                 this.on_focused(window);
             }
