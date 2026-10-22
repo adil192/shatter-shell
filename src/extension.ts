@@ -422,12 +422,6 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     // Extension methods
 
-    activate_window(window: Window.ShellWindow | null) {
-        if (window) {
-            window.request_activate();
-        }
-    }
-
     active_monitor(): MonitorID {
         return monitorID(display.get_current_monitor());
     }
@@ -692,23 +686,23 @@ export class Ext extends Ecs.System<ExtEvent> {
     focus_left() {
         this.stack_select(
             (id, stack) => (id === 0 ? null : stack.tabs[id - 1]?.entity),
-            () => this.activate_window(this.focus_selector.left(this, null)),
+            () => this.focus_selector.left(this, null)?.request_activate(),
         );
     }
 
     focus_right() {
         this.stack_select(
             (id, stack) => (stack.tabs.length > id + 1 ? stack.tabs[id + 1]?.entity : null),
-            () => this.activate_window(this.focus_selector.right(this, null)),
+            () => this.focus_selector.right(this, null)?.request_activate(),
         );
     }
 
     focus_down() {
-        this.activate_window(this.focus_selector.down(this, null));
+        this.focus_selector.down(this, null)?.request_activate();
     }
 
     focus_up() {
-        this.activate_window(this.focus_selector.up(this, null));
+        this.focus_selector.up(this, null)?.request_activate();
     }
 
     focus_window(): Window.ShellWindow | null {
