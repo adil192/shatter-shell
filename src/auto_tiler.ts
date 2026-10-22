@@ -719,13 +719,16 @@ export class AutoTiler {
         fork.toggle_orientation();
         this.forest.measure(ext, fork, fork.area);
 
-        for (const child of this.forest.iter(fork_entity, NodeKind.FORK)) {
-            const child_fork = this.forest.forks.get((child.inner as node.NodeFork).entity);
+        for (const child of this.forest.iter(fork_entity)) {
+            if (child.inner.kind != NodeKind.FORK) continue;
+
+            const entity = child.inner.entity;
+            const child_fork = this.forest.forks.get(entity);
             if (child_fork) {
                 child_fork.rebalance_orientation();
                 this.forest.measure(ext, child_fork, child_fork.area);
             } else {
-                Log.error('toggle_orientation: Fork(${child.entity}) does not exist to have its orientation toggled');
+                Log.error(`toggle_orientation: Fork(${entity}) does not exist to have its orientation toggled`);
             }
         }
 

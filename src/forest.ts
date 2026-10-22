@@ -542,18 +542,17 @@ export class Forest extends Ecs.World {
         }
     }
 
-    /** Walks the tree starting at a given fork entity, and filtering by node kind. */
-    * iter(entity: Entity, kind: Node.NodeKind | null = null) {
+    /** Walks the tree starting at a given fork entity. */
+    * iter(entity: Entity) {
         let fork = this.forks.get(entity);
         const forks = new Array<Fork.Fork>(2);
 
         while (fork) {
-            if (fork.left.inner.kind === Node.NodeKind.FORK) {
-                const child = this.forks.get(fork.left.inner.entity);
-                if (child != null) forks.push(child);
-            }
-
-            if (kind === null || fork.left.inner.kind === kind) {
+            {
+                if (fork.left.inner.kind === Node.NodeKind.FORK) {
+                    const child = this.forks.get(fork.left.inner.entity);
+                    if (child != null) forks.push(child);
+                }
                 yield fork.left;
             }
 
@@ -562,10 +561,7 @@ export class Forest extends Ecs.World {
                     const child = this.forks.get(fork.right.inner.entity);
                     if (child != null) forks.push(child);
                 }
-
-                if (kind === null || fork.right.inner.kind == kind) {
-                    yield fork.right;
-                }
+                yield fork.right;
             }
 
             fork = forks.pop()!;

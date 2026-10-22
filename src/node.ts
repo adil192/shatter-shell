@@ -8,7 +8,7 @@ import type { Ext } from './extension.js';
 import { TAB_HEIGHT_UNSCALED, type Stack } from './stack.js';
 import { ShellWindow } from './window.js';
 
-/** A node is either a fork a window */
+/** A node is either a fork, a window, or a stack. */
 export enum NodeKind {
     FORK = 1,
     WINDOW = 2,
@@ -16,8 +16,15 @@ export enum NodeKind {
 }
 
 /** Fetch the string representation of this value */
-function node_variant_as_string(value: NodeKind): string {
-    return value == NodeKind.FORK ? 'NodeVariant::Fork' : 'NodeVariant::Window';
+function node_kind_as_string(kind: NodeKind): string {
+    switch (kind) {
+        case NodeKind.FORK:
+            return 'NodeKind.FORK';
+        case NodeKind.WINDOW:
+            return 'NodeKind.WINDOW';
+        case NodeKind.STACK:
+            return 'NodeKind.STACK';
+    }
 }
 
 /** Identifies this node as a fork */
@@ -138,48 +145,46 @@ function stack_swap(node: NodeStack, from: number, to: number) {
 export type NodeADT = NodeFork | NodeWindow | NodeStack;
 
 /** A tiling node may either refer to a window entity, or another fork entity */
-export class Node {
+export class Node<T extends NodeADT = NodeADT> {
     /** The actual data for this node */
-    inner: NodeADT;
+    inner: T;
 
-    constructor(inner: NodeADT) {
+    constructor(inner: T) {
         this.inner = inner;
     }
 
     /** Create a fork variant of a `Node` */
-    static fork(entity: Entity): Node {
+    static fork(entity: Entity): Node<NodeFork> {
         return new Node({ kind: NodeKind.FORK, entity });
     }
 
     /** Create the window variant of a `Node` */
-    static window(entity: Entity): Node {
+    static window(entity: Entity): Node<NodeWindow> {
         return new Node({ kind: NodeKind.WINDOW, entity });
     }
 
-    static stacked(window: Entity, idx: number): Node {
-        const node = new Node({
+    static stacked(window: Entity, idx: number): Node<NodeStack> {
+        return new Node({
             kind: NodeKind.STACK,
             entities: [window],
             idx,
             rect: null,
         });
-
-        return node;
     }
 
     /** Generates a string representation of the this value. */
-    display(fmt: string): string {
-        fmt += `{\n    kind: ${node_variant_as_string(this.inner.kind)},\n    `;
-
+    display(): string {
+        let fmt = `Node{\n    kind: ${node_kind_as_string(this.inner.kind)},\n`;
         switch (this.inner.kind) {
             case NodeKind.FORK:
             case NodeKind.WINDOW:
-                fmt += `entity: (${this.inner.entity})\n  }`;
-                return fmt;
+                fmt += `    entity: (${this.inner.entity})\n  }`;
+                break;
             case NodeKind.STACK:
-                fmt += `entities: ${this.inner.entities}\n  }`;
-                return fmt;
+                fmt += `    entities: ${this.inner.entities}\n  }`;
+                break;
         }
+        return fmt;
     }
 
     /** Check if the entity exists as a child of this stack */
