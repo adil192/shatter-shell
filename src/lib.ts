@@ -1,14 +1,13 @@
-import * as log from './log.js';
-
 import Meta from 'gi://Meta';
 import Mtk from 'gi://Mtk';
+import { Log } from './log.js';
 
 export function bench<T>(name: string, callback: () => T): T {
     const start = new Date().getMilliseconds();
     const value = callback();
     const end = new Date().getMilliseconds();
 
-    log.info(`bench ${name}: ${end - start} ms elapsed`);
+    Log.info(`bench ${name}: ${end - start} ms elapsed`);
 
     return value;
 }

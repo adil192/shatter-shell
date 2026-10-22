@@ -1,8 +1,8 @@
-import * as log from './log.js';
-
 import Cogl from 'gi://Cogl';
 import Gio from 'gi://Gio';
 import GObject from 'gi://GObject';
+
+import { Log } from './log.js';
 
 export function block_signal(object: GObject.Object, signal: SignalID) {
     GObject.signal_handler_block(object, signal);
@@ -53,7 +53,7 @@ export function async_process_ipc(argv: Array<string>) {
     try {
         child = launcher.spawnv(argv);
     } catch (why) {
-        log.error(`failed to spawn ${argv}: ${why}`);
+        Log.error(`failed to spawn ${argv}: ${why}`);
         return null;
     }
 

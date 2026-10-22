@@ -1,40 +1,37 @@
-// simplified log4j levels
-export enum LogLevel {
-    OFF,
-    ERROR,
-    WARN,
-    INFO,
-    DEBUG,
-}
+import Gio from 'gi://Gio';
+import { LogLevel } from './log_level.js';
 
 /**
- * parse level at runtime so we don't have to restart shattershell
+ * A wrapper around {@link console.log} and similar methods.
+ *
+ * Shatter Shell is a chatty program so this class applies a user-controlled
+ * {@link LogLevel} filter.
  */
-function log_level(): LogLevel {
-    // log.js is at the level of prefs.js where the shattershell Ext instance
-    // is not yet available or visible, so we have to use the built in
-    // ExtensionUtils to get the current settings
-    const settings = globalThis.shatterShellExtension?.getSettings();
-    const log_level = settings?.get_uint('log-level') ?? LogLevel.OFF;
-    return log_level;
-}
+export class Log {
+    static settings: Gio.Settings | null;
 
-function log(text: string) {
-    globalThis.log('shatter-shell: ' + text);
-}
+    static log_level(): LogLevel {
+        return this.settings?.get_uint('log-level') ?? LogLevel.OFF;
+    }
 
-export function error(text: string) {
-    if (log_level() > LogLevel.OFF) log('[ERROR] ' + text);
-}
+    static error(msg: string) {
+        if (this.log_level() < LogLevel.ERROR) return;
+        console.error(`shatter-shell: [ERROR] ${msg}`);
+    }
 
-export function warn(text: string) {
-    if (log_level() > LogLevel.ERROR) log('[WARN] ' + text);
-}
+    static warn(msg: string) {
+        if (this.log_level() < LogLevel.WARN) return;
+        console.warn(`shatter-shell: [WARN] ${msg}`);
+    }
 
-export function info(text: string) {
-    if (log_level() > LogLevel.WARN) log('[INFO] ' + text);
-}
+    static info(msg: string) {
+        if (this.log_level() < LogLevel.INFO) return;
+        console.info(`shatter-shell: [INFO] ${msg}`);
+    }
 
-export function debug(text: string) {
-    if (log_level() > LogLevel.INFO) log('[DEBUG] ' + text);
+    static debug(msg: string) {
+        if (this.log_level() < LogLevel.DEBUG) return;
+        console.debug(`shatter-shell: [DEBUG] ${msg}`);
+    }
 }
+export { LogLevel };

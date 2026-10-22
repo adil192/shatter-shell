@@ -6,12 +6,11 @@ const Settings = Gio.Settings;
 import { ExtensionPreferences } from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 
 import * as settings from './settings.js';
-import * as log from './log.js';
 import * as focus from './focus.js';
+import { LogLevel } from './log_level.js';
 
 export default class ShatterShellPreferences extends ExtensionPreferences {
     fillPreferencesWindow(window: Adw.PreferencesWindow) {
-        globalThis.shatterShellExtension ??= this;
         const ext = new settings.ExtensionSettings();
 
         const page = new Adw.PreferencesPage();
@@ -88,7 +87,7 @@ export default class ShatterShellPreferences extends ExtensionPreferences {
                 const row = new Adw.ComboRow({
                     title: 'Log level',
                     subtitle: 'For developers',
-                    model: Gtk.StringList.new(Object.values(log.LogLevel).filter(option => typeof option == 'string')),
+                    model: Gtk.StringList.new(Object.values(LogLevel).filter(option => typeof option == 'string')),
                     selected: ext.log_level(),
                 });
                 row.connect('notify::selected', (row) => {

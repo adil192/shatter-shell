@@ -4,7 +4,6 @@ import Mtk from 'gi://Mtk';
 
 import * as ecs from './ecs.js';
 import * as lib from './lib.js';
-import * as log from './log.js';
 import * as node from './node.js';
 import { Result, Ok, Err } from './result.js';
 import { Stack } from './stack.js';
@@ -19,6 +18,7 @@ import type { ShellWindow } from './window.js';
 
 const { NodeKind } = node;
 import { Tags } from './tags.js';
+import { Log } from './log.js';
 
 export class AutoTiler {
     forest: Forest;
@@ -166,7 +166,7 @@ export class AutoTiler {
                 this.tile(ext, fork, fork.area.copy());
                 return true;
             } else {
-                log.error(`missing monitor association for Window(${attachee.entity})`);
+                Log.error(`missing monitor association for Window(${attachee.entity})`);
             }
         }
 
@@ -204,10 +204,10 @@ export class AutoTiler {
         const result = this.fetch_mode(ext, win, ignore_focus);
         this.detach_window(ext, win.entity);
         if (!result.ok) {
-            log.debug(`attach to workspace: ${result.why}`);
+            Log.debug(`attach to workspace: ${result.why}`);
             this.attach_to_workspace(ext, win, ext.workspace_id(win));
         } else {
-            log.debug(`attaching to window ${win.entity}`);
+            Log.debug(`attaching to window ${win.entity}`);
             this.attach_to_window(ext, result.value, win, { auto: 0 });
         }
     }
@@ -535,7 +535,7 @@ export class AutoTiler {
     toggle_orientation(ext: Ext, window: ShellWindow) {
         const result = this.toggle_orientation_(ext, window);
         if (!result.ok) {
-            log.warn(`toggle_orientation: ${result.why}`);
+            Log.warn(`toggle_orientation: ${result.why}`);
         }
     }
 
@@ -646,7 +646,7 @@ export class AutoTiler {
                 container.auto_activate();
             }
         } else {
-            log.warn('stack rect was null');
+            Log.warn('stack rect was null');
         }
     }
 
@@ -725,7 +725,7 @@ export class AutoTiler {
                 child_fork.rebalance_orientation();
                 this.forest.measure(ext, child_fork, child_fork.area);
             } else {
-                log.error('toggle_orientation: Fork(${child.entity}) does not exist to have its orientation toggled');
+                Log.error('toggle_orientation: Fork(${child.entity}) does not exist to have its orientation toggled');
             }
         }
 

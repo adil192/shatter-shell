@@ -4,7 +4,6 @@ import Mtk from 'gi://Mtk';
 
 import * as arena from './arena.js';
 import * as Ecs from './ecs.js';
-import * as log from './log.js';
 import * as movement from './movement.js';
 import * as Node from './node.js';
 import * as Fork from './fork.js';
@@ -15,6 +14,7 @@ import type { ShellWindow } from './window.js';
 import type { Ext } from './extension.js';
 import { Stack } from './stack.js';
 import { fmtRect } from './rectangle.js';
+import { Log } from './log.js';
 
 const { Arena } = arena;
 const { Movement } = movement;
@@ -196,10 +196,10 @@ export class Forest extends Ecs.World {
 
                 return [fork.entity, fork];
             } else {
-                log.warn('attempted to attach window to stack that does not exist');
+                Log.warn('attempted to attach window to stack that does not exist');
             }
         } else {
-            log.warn('attempted to attach to stack that does not exist');
+            Log.warn('attempted to attach to stack that does not exist');
         }
 
         return null;
@@ -718,7 +718,7 @@ export class Forest extends Ecs.World {
 
             this.delete_entity(child_entity);
         } else {
-            log.error(`Fork(${child_entity}) does not exist`);
+            Log.error(`Fork(${child_entity}) does not exist`);
         }
     }
 
@@ -923,14 +923,14 @@ export class Forest extends Ecs.World {
 
 function move_window(ext: Ext, window: ShellWindow, rect: Mtk.Rectangle, on_complete: () => void) {
     if (!(window.meta instanceof Meta.Window)) {
-        log.error(`attempting to a window entity in a tree which lacks a Meta.Window`);
+        Log.error(`attempting to a window entity in a tree which lacks a Meta.Window`);
         return;
     }
 
     const actor = window.meta.get_compositor_private<Meta.WindowActor | null>();
 
     if (!actor) {
-        log.warn(`Window(${window.entity}) does not have an actor, and therefore cannot be moved`);
+        Log.warn(`Window(${window.entity}) does not have an actor, and therefore cannot be moved`);
         return;
     }
 

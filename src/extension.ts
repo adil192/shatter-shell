@@ -6,7 +6,6 @@ import * as Focus from './focus.js';
 import * as GrabOp from './grab_op.js';
 import * as Keybindings from './keybindings.js';
 import * as Lib from './lib.js';
-import * as log from './log.js';
 import * as PanelSettings from './panel_settings.js';
 import * as Settings from './settings.js';
 import * as Tiling from './tiling.js';
@@ -57,6 +56,7 @@ import { ControlsState } from 'resource:///org/gnome/shell/ui/overviewControls.j
 import { Tags } from './tags.js';
 import { get_current_path } from './paths.js';
 import { clampRect, fmtRect } from './rectangle.js';
+import { Log } from './log.js';
 const { monitorID, workspaceID } = Lib;
 
 const screenShield = Main.screenShield as ScreenShield;
@@ -613,7 +613,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                         }
                     }
                 } catch (why) {
-                    log.error(`failed to read response from floating exceptions dialog: ${why}`);
+                    Log.error(`failed to read response from floating exceptions dialog: ${why}`);
                 }
             };
 
@@ -961,7 +961,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                 msg += `  fork: (${this.auto_tiler.attached.get(win.entity)}),\n`;
             }
 
-            log.debug(msg + '}');
+            Log.debug(msg + '}');
         }
     }
 
@@ -1148,7 +1148,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         }
 
         if (!(grab_op && Ecs.entity_eq(grab_op.entity, win.entity))) {
-            log.error(`grabbed entity is not the same as the one that was dropped`);
+            Log.error(`grabbed entity is not the same as the one that was dropped`);
             return;
         }
 
@@ -1203,10 +1203,10 @@ export class Ext extends Ecs.System<ExtEvent> {
                             forest.tile(this, fork, fork.area);
                         }
                     } else {
-                        log.error(`no fork component found`);
+                        Log.error(`no fork component found`);
                     }
                 } else {
-                    log.error(`no fork entity found`);
+                    Log.error(`no fork entity found`);
                 }
             }
         } else if (this.settings.snap_to_grid()) {
@@ -2462,16 +2462,10 @@ export class Ext extends Ecs.System<ExtEvent> {
 let ext: Ext | null = null;
 let indicator: Indicator | null = null;
 
-declare global {
-    var shatterShellExtension: {
-        getSettings(schema?: string): Gio.Settings;
-    } | undefined;
-}
-
 export default class ShatterShellExtension extends Extension {
     enable() {
-        globalThis.shatterShellExtension = this;
-        log.info('enable');
+        Log.settings = this.getSettings();
+        Log.info('enable');
 
         if (!ext) {
             ext = new Ext(this);
@@ -2510,7 +2504,7 @@ export default class ShatterShellExtension extends Extension {
     }
 
     disable() {
-        log.info('disable');
+        Log.info('disable');
 
         if (ext) {
             if (sessionMode.isLocked) {
@@ -2518,7 +2512,6 @@ export default class ShatterShellExtension extends Extension {
                 return;
             }
 
-            delete globalThis.shatterShellExtension;
             ext.injections_remove();
             ext.signals_remove();
             ext.exit_modes();
@@ -2540,6 +2533,8 @@ export default class ShatterShellExtension extends Extension {
             indicator.destroy();
             indicator = null;
         }
+
+        Log.settings = null;
     }
 }
 
@@ -2578,7 +2573,7 @@ function load_theme(style: Style): string | null {
 
         return shatter_stylesheet_path;
     } catch (e) {
-        log.error(`failed to load stylesheet: ${e}`);
+        Log.error(`failed to load stylesheet: ${e}`);
         return null;
     }
 }

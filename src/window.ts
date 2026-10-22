@@ -1,5 +1,4 @@
 import * as lib from './lib.js';
-import * as log from './log.js';
 import { Tags } from './tags.js';
 import * as utils from './utils.js';
 import type { Entity } from './ecs.js';
@@ -15,6 +14,7 @@ import GLib from 'gi://GLib';
 import Mtk from 'gi://Mtk';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import { DEFAULT_HINT_COLOR } from './settings.js';
+import { Log } from './log.js';
 
 const wom = global.workspace_manager;
 
@@ -108,7 +108,7 @@ export class ShellWindow {
                 place_pointer_on(this.ext, this.meta);
             }
         } catch (error) {
-            log.error(`failed to activate window: ${error}`);
+            Log.error(`failed to activate window: ${error}`);
         }
     }
 

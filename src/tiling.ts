@@ -1,7 +1,6 @@
 // import * as Ecs from './ecs.js';
 import * as GrabOp from './grab_op.js';
 import * as Lib from './lib.js';
-import * as Log from './log.js';
 import * as Node from './node.js';
 import * as window from './window.js';
 import * as geom from './geom.js';
@@ -20,6 +19,7 @@ import Mtk from 'gi://Mtk';
 import St from 'gi://St';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import { applyRect, clampRect, diffRect } from './rectangle.js';
+import { Log } from './log.js';
 const { monitorID } = Lib;
 const { ShellWindow } = window;
 

@@ -1,6 +1,6 @@
 import Gio from 'gi://Gio';
 import { get_current_path } from './paths.js';
-import { type LogLevel } from './log.js';
+import { type LogLevel } from './log_level.js';
 
 const DARK = ['dark', 'adapta', 'plata', 'dracula'];
 
