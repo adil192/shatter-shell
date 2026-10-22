@@ -37,6 +37,15 @@ After logging out and back in,
 enable the extension in [Extension Manager](https://flathub.org/en/apps/com.mattjakeman.ExtensionManager).
 Alternatively, run `gnome-extensions enable shatter-shell@adilhanney.com` in a terminal.
 
+### Install prebuilt extension from GitHub
+
+Download the zip from [the latest release](https://github.com/adil192/shatter-shell/releases/latest).
+Then run `gnome-extensions install -f path/to/shatter-shell@adilhanney.com_*.zip`.
+
+After logging out and back in,
+enable the extension in [Extension Manager](https://flathub.org/en/apps/com.mattjakeman.ExtensionManager).
+Alternatively, run `gnome-extensions enable shatter-shell@adilhanney.com` in a terminal.
+
 ### Build from source
 
 Run the following to build Shatter Shell from source:
@@ -60,6 +69,7 @@ Alternatively, run `gnome-extensions enable shatter-shell@adilhanney.com` in a t
 Feel free to delete the source code after installing.
 
 Additional notes:
+- Use `make local-install` NOT `make install`, since the latter will not compile necessary schemas and is intended for package maintainers.
 - If you are planning on developing Shatter Shell, see [Developing](#Developing) below.
 - If you want to uninstall the extension, run `make uninstall`. Then open the "Keyboard Shortcuts" page in GNOME Settings and click the "Reset All..." button.
 - If you are packaging for your Linux distribution, many features in Shatter Shell will not work out of the box because they require changes to GNOME's default keyboard shortcuts. You may wish to package some gschema overrides to work around this.
