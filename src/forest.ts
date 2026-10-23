@@ -601,17 +601,11 @@ export class Forest extends Ecs.World {
     /** Resize a window from a given fork based on a supplied movement. */
     resize(ext: Ext, fork_e: Entity, fork_c: Fork.Fork, win_e: Entity, movement: movement.Movement, crect: Mtk.Rectangle) {
         const is_left = fork_c.left.is_window(win_e) || fork_c.left.is_in_stack(win_e);
-
-        // eslint-disable-next-line @typescript-eslint/unbound-method
-        ((movement & Movement.SHRINK) != 0 ? this.shrink_sibling : this.grow_sibling).call(
-            this,
-            ext,
-            fork_e,
-            fork_c,
-            is_left,
-            movement,
-            crect,
-        );
+        if ((movement & Movement.SHRINK) != 0) {
+            this.shrink_sibling(ext, fork_e, fork_c, is_left, movement, crect);
+        } else {
+            this.grow_sibling(ext, fork_e, fork_c, is_left, movement, crect);
+        }
     }
 
     /** Higher order function which forwards record events to our record method. */
