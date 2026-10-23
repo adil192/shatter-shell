@@ -111,3 +111,12 @@ Licensed under the GNU General Public License, Version 3.0, ([LICENSE](LICENSE) 
 ### Contribution
 
 Any contribution intentionally submitted for inclusion in the work by you shall be licensed under the GNU GPLv3.
+
+## AI usage
+
+99.9% of the code is written by a human.
+
+I use AI code review as a second pair of eyes in pull requests,
+which sometimes catches mistakes I missed.
+
+AI does not decide anything, design anything, or write any meaningful amount of code.
