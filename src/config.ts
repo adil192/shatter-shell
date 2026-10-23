@@ -266,9 +266,8 @@ export class Config {
     }
 }
 
-function set_to_json(_key: string, value: unknown) {
-    if (typeof value === 'object' && value instanceof Set) {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+function set_to_json<T>(_key: string, value: T | Set<T>): T | T[] {
+    if (value instanceof Set) {
         return [...value];
     }
     return value;
