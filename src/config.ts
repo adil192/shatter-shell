@@ -55,16 +55,6 @@ export const DEFAULT_FLOAT_RULES: Array<FloatRule> = [
     { class: 'net.sapples.LiveCaptions' },
 ] as const;
 
-const _regExpCache = new Map<string, RegExp>();
-function getRegExp(pattern: string) {
-    let regExp = _regExpCache.get(pattern);
-    if (!regExp) {
-        regExp = new RegExp(pattern, 'i');
-        _regExpCache.set(pattern, regExp);
-    }
-    return regExp;
-}
-
 export class Config {
     /** List of windows that should float, regardless of their WM hints */
     float: Array<FloatRule> = [];
@@ -94,9 +84,9 @@ export class Config {
 
     window_shall_float(wclass: string, title: string): boolean {
         for (const rule of this.float.concat(DEFAULT_FLOAT_RULES)) {
-            if (rule.class !== undefined && !getRegExp(rule.class).test(wclass)) continue;
+            if (rule.class !== undefined && !this.getRegExp(rule.class).test(wclass)) continue;
 
-            if (rule.title !== undefined && !getRegExp(rule.title).test(title)) continue;
+            if (rule.title !== undefined && !this.getRegExp(rule.title).test(title)) continue;
 
             return !(rule.disabled ?? false);
         }
@@ -263,6 +253,16 @@ export class Config {
 
     sync_to_disk() {
         Config.write(this.to_json());
+    }
+
+    _regExpCache = new Map<string, RegExp>();
+    getRegExp(pattern: string) {
+        let regExp = this._regExpCache.get(pattern);
+        if (!regExp) {
+            regExp = new RegExp(pattern, 'i');
+            this._regExpCache.set(pattern, regExp);
+        }
+        return regExp;
     }
 }
 
