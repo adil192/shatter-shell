@@ -14,12 +14,10 @@ export class Error {
     }
 
     * chain() {
-        // eslint-disable-next-line @typescript-eslint/no-this-alias
-        let current: Error | null = this;
+        yield this;
 
-        while (current != null) {
-            yield current;
-            current = current.cause;
+        for (let cause = this.cause; cause != null; cause = cause.cause) {
+            yield cause;
         }
     }
 
