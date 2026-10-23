@@ -255,12 +255,12 @@ export class Config {
         Config.write(this.to_json());
     }
 
-    _regExpCache = new Map<string, RegExp>();
+    #regExpCache = new Map<string, RegExp>();
     getRegExp(pattern: string) {
-        let regExp = this._regExpCache.get(pattern);
+        let regExp = this.#regExpCache.get(pattern);
         if (!regExp) {
             regExp = new RegExp(pattern, 'i');
-            this._regExpCache.set(pattern, regExp);
+            this.#regExpCache.set(pattern, regExp);
         }
         return regExp;
     }
