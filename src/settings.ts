@@ -12,7 +12,7 @@ function maybe_gio_settings(schema_id: string): Gio.Settings | null {
     }
 }
 
-export function gio_settings_from_schema(schema: string): Gio.Settings {
+function gio_settings_from_schema(schema: string): Gio.Settings {
     const GioSSS = Gio.SettingsSchemaSource;
     const schemaDir = Gio.File.new_for_path(get_current_path()).get_child('schemas');
 
@@ -49,8 +49,10 @@ const MOUSE_CURSOR_FOCUS_LOCATION = 'mouse-cursor-focus-location';
 const MAX_WINDOW_WIDTH = 'max-window-width';
 const NEED_OVERRIDES_SETUP = 'need-overrides-setup';
 
+export const extSettings = gio_settings_from_schema('org.gnome.shell.extensions.shatter-shell');
+
 export class ExtensionSettings {
-    ext = gio_settings_from_schema('org.gnome.shell.extensions.shatter-shell');
+    ext = extSettings;
     int = new Gio.Settings({ schema_id: 'org.gnome.desktop.interface' });
     mutter = new Gio.Settings({ schema_id: 'org.gnome.mutter' });
     shell = maybe_gio_settings('org.gnome.shell.extensions.user-theme');

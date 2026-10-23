@@ -1,7 +1,7 @@
 import Gio from 'gi://Gio';
 import GObject from 'gi://GObject';
 import Gtk from 'gi://Gtk?version=4.0';
-import { gio_settings_from_schema } from '../settings.js';
+import { extSettings } from '../settings.js';
 
 export const WelcomePage = GObject.registerClass({
     Signals: { quit: {} },
@@ -175,8 +175,7 @@ or click below to close this dialog.
             this.skip_button.visible = false;
             this.close_button.visible = true;
 
-            const settings = gio_settings_from_schema('org.gnome.shell.extensions.shatter-shell');
-            settings.set_boolean('need-overrides-setup', false);
+            extSettings.set_boolean('need-overrides-setup', false);
         }
     }
 
@@ -187,8 +186,7 @@ or click below to close this dialog.
             return;
         }
 
-        const settings = gio_settings_from_schema('org.gnome.shell.extensions.shatter-shell');
-        settings.set_boolean('need-overrides-setup', false);
+        extSettings.set_boolean('need-overrides-setup', false);
         this.emit('quit');
     }
 });
