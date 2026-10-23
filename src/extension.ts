@@ -247,11 +247,9 @@ export class Ext extends Ecs.System<ExtEvent> {
 
         this.conf.reload_sync();
 
-        if (this.settings.int) {
-            this.settings.int.connect('changed::gtk-theme', () => {
-                this.register(Events.global(GlobalEvent.GtkThemeChanged));
-            });
-        }
+        this.settings.int.connect('changed::gtk-theme', () => {
+            this.register(Events.global(GlobalEvent.GtkThemeChanged));
+        });
 
         if (this.settings.shell) {
             this.settings.shell.connect('changed::name', () => {
@@ -1736,11 +1734,9 @@ export class Ext extends Ecs.System<ExtEvent> {
             }
         });
 
-        if (this.settings.mutter) {
-            this.connect(this.settings.mutter, 'changed::workspaces-only-on-primary', () => {
-                this.register(Events.global(GlobalEvent.MonitorsChanged));
-            });
-        }
+        this.connect(this.settings.mutter, 'changed::workspaces-only-on-primary', () => {
+            this.register(Events.global(GlobalEvent.MonitorsChanged));
+        });
 
         // @ts-expect-error Typescript doesn't know LayoutManager supports 'monitors-changed' signal
         this.connect(layoutManager, 'monitors-changed', () => {
