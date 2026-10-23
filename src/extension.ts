@@ -91,10 +91,10 @@ interface Display {
     ws: Mtk.Rectangle;
 }
 
-interface Injection<T> {
+interface Injection<T extends object, K extends keyof T = keyof T> {
     object: T;
-    method: keyof T;
-    func: T[keyof T];
+    method: K;
+    func: T[K];
 }
 
 export class Ext extends Ecs.System<ExtEvent> {
@@ -173,8 +173,9 @@ export class Ext extends Ecs.System<ExtEvent> {
     ignore_display_update: boolean = false;
 
     /** Functions replaced in GNOME */
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    injections: Array<Injection<any>> = [];
+    injections: {
+        screen_unlock?: Injection<ScreenShield, 'deactivate'>;
+    } = {};
 
     /** The window that was focused before the last window */
     private prev_focused: [Entity | null, Entity | null] = [null, null];
@@ -750,27 +751,21 @@ export class Ext extends Ecs.System<ExtEvent> {
         return entity ? this.windows.get(entity) : null;
     }
 
-    inject<T>(object: T, method: keyof T, func: T[keyof T]) {
-        const prev = object[method];
-        const injection: Injection<T> = { object, method, func: prev };
-        this.injections.push(injection);
-        object[method] = func;
-    }
-
     injections_add() {
         // eslint-disable-next-line @typescript-eslint/unbound-method
         const screen_unlock_fn = ScreenShield.prototype['deactivate'];
-        this.inject(ScreenShield.prototype, 'deactivate', (animate: boolean) => {
+        this.injections.screen_unlock = { object: ScreenShield.prototype, method: 'deactivate', func: screen_unlock_fn };
+        ScreenShield.prototype['deactivate'] = (animate: boolean) => {
             screen_unlock_fn.apply(screenShield, [animate]);
             this.update_display_configuration(true);
-        });
+        };
     }
 
     injections_remove() {
-        for (const { object, method, func } of this.injections.splice(0)) {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-            object[method] = func;
+        for (const injection of Object.values(this.injections)) {
+            injection.object[injection.method] = injection.func;
         }
+        this.injections = {};
     }
 
     load_settings() {
