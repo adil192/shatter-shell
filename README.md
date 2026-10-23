@@ -15,64 +15,82 @@ which is no longer being developed<sup>[source](https://github.com/pop-os/shell/
 
 Find a summary of this fork's main improvements in the [2.0.0 release](https://github.com/adil192/shatter-shell/releases/tag/2.0.0) and incremental improvements in the [other releases](https://github.com/adil192/shatter-shell/releases).
 
-## Installation
+## Install
 
-### Install on Fedora (and derivatives)
+There are a few ways to install Shatter Shell. Expand the section that works for your system...
+
+<details>
+<summary><b>Install on <img src="https://raw.githubusercontent.com/PapirusDevelopmentTeam/papirus-icon-theme/refs/heads/master/Papirus/32x32/apps/distributor-logo-fedora.svg" width="16" height="16" aria-hidden="true"> Fedora and Fedora-based distros</b></summary>
 
 Shatter Shell is included in the [Terra](https://terrapkg.com/) community repo.
-Run the following to install:
 
-```bash
-# Add the Terra repo if you haven't already
-sudo dnf install --nogpgcheck --repofrompath 'terra,https://repos.fyralabs.com/terra$releasever' terra-release
+1.  Add the Terra repo if you haven't already:
+    ```bash
+    sudo dnf install --nogpgcheck --repofrompath 'terra,https://repos.fyralabs.com/terra$releasever' terra-release
+    ```
+2.  Remove the original Pop Shell if you have it:
+    ```bash
+    sudo dnf remove gnome-shell-extension-pop-shell
+    ```
+3.  Install Shatter Shell:
+    ```bash
+    sudo dnf install gnome-shell-extension-shatter-shell
+    ```
+</details>
+<details>
+<summary><b>Install on <img src="https://github.com/PapirusDevelopmentTeam/papirus-icon-theme/raw/refs/heads/master/Papirus/32x32/apps/distributor-logo-archlinux.svg" width="16" height="16" aria-hidden="true"> Arch and Arch-based distros</b></summary>
 
-# Uninstall Pop Shell if you have it
-sudo dnf remove gnome-shell-extension-pop-shell
+This repo includes a PKGBUILD for Arch.
 
-# Install Shatter Shell
-sudo dnf install gnome-shell-extension-shatter-shell
-```
+1.  Clone this repo:
+    ```bash
+    git clone https://github.com/adil192/shatter-shell
+    cd shatter-shell
+    ```
+2.  Build and install:
+    ```bash
+    makepkg -si
+    ```
+</details>
+<details>
+<summary><b>Install on any distro from a GitHub release</b></summary>
 
-After logging out and back in,
-enable the extension in [Extension Manager](https://flathub.org/en/apps/com.mattjakeman.ExtensionManager).
+1.  Download the zip from [the latest release](https://github.com/adil192/shatter-shell/releases/latest).
+2.  Run `gnome-extensions install -f path/to/shatter-shell@adilhanney.com_*.zip`.
+</details>
+<details>
+<summary><b>Install on any distro from source</b></summary>
+
+To get the latest bleeding edge changes, build Shatter Shell from source:
+
+1.  Install build dependencies, e.g.:
+    ```bash
+    sudo dnf install make git npm
+    ```
+1.  Clone this repo:
+    ```bash
+    git clone https://github.com/adil192/shatter-shell
+    cd shatter-shell
+    ```
+2.  Build and install:
+    ```bash
+    make local-install
+    ```
+
+**Note**: Make sure to use `make local-install` NOT `make install`. The latter is intended for package maintainers and bypasses the GNOME extension installation process.
+</details>
+<br>
+
+**Post-install (all methods)**:
+After installing with one of the above methods, you need to log out and back in.
+Then enable the extension in [Extension Manager](https://flathub.org/en/apps/com.mattjakeman.ExtensionManager).
 Alternatively, run `gnome-extensions enable shatter-shell@adilhanney.com` in a terminal.
 
-### Install prebuilt extension from GitHub
+## Uninstall
 
-Download the zip from [the latest release](https://github.com/adil192/shatter-shell/releases/latest).
-Then run `gnome-extensions install -f path/to/shatter-shell@adilhanney.com_*.zip`.
+Remove the extension with [Extension Manager](https://flathub.org/en/apps/com.mattjakeman.ExtensionManager). Alternatively, run `gnome-extensions uninstall shatter-shell@adilhanney.com` in a terminal.
 
-After logging out and back in,
-enable the extension in [Extension Manager](https://flathub.org/en/apps/com.mattjakeman.ExtensionManager).
-Alternatively, run `gnome-extensions enable shatter-shell@adilhanney.com` in a terminal.
-
-### Build from source
-
-Run the following to build Shatter Shell from source:
-
-```bash
-# Install the dependencies, e.g. for Fedora:
-sudo dnf install make npm
-
-# Clone the source code
-git clone https://github.com/adil192/shatter-shell.git
-cd shatter-shell
-
-# Build and install
-make local-install
-```
-
-After logging out and back in,
-enable the extension in [Extension Manager](https://flathub.org/en/apps/com.mattjakeman.ExtensionManager).
-Alternatively, run `gnome-extensions enable shatter-shell@adilhanney.com` in a terminal.
-
-Feel free to delete the source code after installing.
-
-Additional notes:
-- Use `make local-install` NOT `make install`, since the latter will not compile necessary schemas and is intended for package maintainers.
-- If you are planning on developing Shatter Shell, see [Developing](#Developing) below.
-- If you want to uninstall the extension, run `make uninstall`. Then open the "Keyboard Shortcuts" page in GNOME Settings and click the "Reset All..." button.
-- If you are packaging for your Linux distribution, many features in Shatter Shell will not work out of the box because they require changes to GNOME's default keyboard shortcuts. You may wish to package some gschema overrides to work around this.
+Then open the "Keyboard Shortcuts" page in GNOME Settings and click the "Reset All..." button.
 
 ## Developing
 
@@ -83,7 +101,8 @@ Please install the following as dependencies when developing:
 - [`dart-sass`](https://sass-lang.com/install/) (optional, for faster builds)
 - `mutter-devkit` (optional, for testing)
 
-To test your changes while working on the shell, run `make debug` to start a nested GNOME session. See the documentation at https://gjs.guide/extensions/development/debugging.html.
+To test your changes while working on the shell, run `make debug` to start a nested GNOME session.
+See the documentation at https://gjs.guide/extensions/development/debugging.html.
 
 ## License
 
