@@ -53,7 +53,7 @@ export const DEFAULT_FLOAT_RULES: Array<FloatRule> = [
     { class: 'git-credential-manager' },
     { class: 'xwaylandvideobridge' },
     { class: 'net.sapples.LiveCaptions' },
-];
+] as const;
 
 const _regExpCache = new Map<string, RegExp>();
 function getRegExp(pattern: string) {
@@ -187,7 +187,7 @@ export class Config {
     static from_json(json: string): Config {
         try {
             return JSON.parse(json) as Config;
-        } catch (_) {
+        } catch {
             return new Config();
         }
     }

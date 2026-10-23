@@ -439,7 +439,7 @@ export class Stack {
         for (const b of this.buttons.values()) {
             try {
                 b.destroy();
-            } catch (_) { /* empty */ }
+            } catch { /* empty */ }
         }
 
         if (this.widgets) {

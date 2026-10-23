@@ -461,7 +461,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     connect_emitter<T extends Misc.signals.EventEmitter<S>, S extends Misc.signals.SignalMap<S>, Name extends keyof S>(
         object: T,
         name: Name,
-        callback: (globalThis: T, ...args: S[Name]) => boolean | void,
+        callback: (self: T, ...args: S[Name]) => boolean | void,
     ): SignalID {
         const signal = object.connect(name, callback);
         const entry = this.signals.get(object);
@@ -515,7 +515,7 @@ export class Ext extends Ecs.System<ExtEvent> {
             if (old) {
                 try {
                     GLib.source_remove(old);
-                } catch (_) { /* empty */ }
+                } catch { /* empty */ }
             }
 
             const new_s = GLib.timeout_add(GLib.PRIORITY_LOW, 150, () => {
@@ -545,7 +545,7 @@ export class Ext extends Ecs.System<ExtEvent> {
             for (const signal of signals) {
                 try {
                     win.meta.disconnect(signal);
-                } catch (_) { /* empty */ }
+                } catch { /* empty */ }
 
                 const i = window_signals?.indexOf(signal) ?? -1;
                 if (i !== -1) {
@@ -1564,7 +1564,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     on_workspace_index_changed(prev: WorkspaceID, next: WorkspaceID) {
         this.on_workspace_modify(
             current => current == prev,
-            _ => next,
+            () => next,
         );
     }
 
@@ -1930,7 +1930,7 @@ export class Ext extends Ecs.System<ExtEvent> {
             for (const signal of signals) {
                 try {
                     win.meta.disconnect(signal);
-                } catch (_) { /* empty */ }
+                } catch { /* empty */ }
             }
         });
         this.tilable_window_signals.clear();
@@ -2349,7 +2349,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         let id: number;
         try {
             id = meta.get_stable_sequence();
-        } catch (_) {
+        } catch {
             return null;
         }
 
@@ -2366,7 +2366,7 @@ export class Ext extends Ecs.System<ExtEvent> {
             try {
                 window_app = Window.window_tracker.get_window_app(meta);
                 name = window_app.get_name().replace(/&/g, '&amp;');
-            } catch (_) {
+            } catch {
                 return null;
             }
 

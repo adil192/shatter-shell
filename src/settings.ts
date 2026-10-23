@@ -7,11 +7,7 @@ const DARK = ['dark', 'adapta', 'plata', 'dracula'];
 function settings_new_id(schema_id: string): Gio.Settings | null {
     try {
         return new Gio.Settings({ schema_id });
-    } catch (_) {
-        if (schema_id !== 'org.gnome.shell.extensions.user-theme') {
-            // global.log(`failed to get settings for ${schema_id}: ${why}`);
-        }
-
+    } catch {
         return null;
     }
 }
