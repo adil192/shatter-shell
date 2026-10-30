@@ -503,6 +503,7 @@ export class Ext extends Ecs.System<ExtEvent> {
             this.disconnect_tilable_window_signals(window);
             window.bind_window_events();
             if (window.is_tilable()) {
+                window.was_tilable = true;
                 this.connect_tilable_window_signals(window);
             }
         }
