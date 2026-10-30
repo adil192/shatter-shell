@@ -194,6 +194,60 @@ export default class ShatterShellPreferences extends ExtensionPreferences {
             }
         }
 
+        {
+            const group = new Adw.PreferencesGroup({
+                title: 'Oversized windows',
+                description: 'Some windows take too much space to be comfortably tiled.',
+            });
+            page.add(group);
+
+            {
+                const row = new Adw.SpinRow({
+                    title: 'Oversized window width',
+                    subtitle: '0 to disable',
+                    adjustment: new Gtk.Adjustment({
+                        lower: 0,
+                        upper: 9999,
+                        value: ext.oversized_window_width(),
+                        step_increment: 1,
+                        page_increment: 100,
+                    }),
+                    numeric: true,
+                    digits: 0,
+                    snap_to_ticks: true,
+                });
+                row.connect('notify::value', (row) => {
+                    const value = row.value;
+                    ext.set_oversized_window_width(value);
+                    Settings.sync();
+                });
+                group.add(row);
+            }
+
+            {
+                const row = new Adw.SpinRow({
+                    title: 'Oversized window height',
+                    subtitle: '0 to disable',
+                    adjustment: new Gtk.Adjustment({
+                        lower: 0,
+                        upper: 9999,
+                        value: ext.oversized_window_height(),
+                        step_increment: 1,
+                        page_increment: 100,
+                    }),
+                    numeric: true,
+                    digits: 0,
+                    snap_to_ticks: true,
+                });
+                row.connect('notify::value', (row) => {
+                    const value = row.value;
+                    ext.set_oversized_window_height(value);
+                    Settings.sync();
+                });
+                group.add(row);
+            }
+        }
+
         return Promise.resolve();
     }
 }
