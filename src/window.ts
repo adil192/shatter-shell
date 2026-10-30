@@ -544,14 +544,25 @@ export class ShellWindow {
         }
     }
 
+    private was_tilable: boolean | null = null;
     private reconsider_tiling() {
-        this.ext.disconnect_tilable_window_signals(this);
-        if (this.is_tilable()) {
+        if (this.was_tilable == null) {
+            // Initial signals are connected in Ext, ignore first change.
+            this.was_tilable = this.is_tilable();
+            return;
+        }
+
+        const is_tilable = this.is_tilable();
+        if (this.was_tilable == is_tilable) return;
+        this.was_tilable = is_tilable;
+
+        if (is_tilable) {
             this.ext.connect_tilable_window_signals(this);
             if (!this.meta.minimized) {
                 this.ext.auto_tiler?.auto_tile(this.ext, this, this.ext.init);
             }
         } else {
+            this.ext.disconnect_tilable_window_signals(this);
             if (this.is_maximized() || this.meta.is_fullscreen()) {
                 // Retain tiled position for when the window is unmaximized.
             } else {
