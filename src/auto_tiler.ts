@@ -510,6 +510,8 @@ export class AutoTiler {
             ext.add_tag(focused.entity, Tags.ForceTile);
             this.auto_tile(ext, focused, false);
         }
+        focused.was_tilable = was_tilable;
+        focused.reconsider_tiling();
 
         ext.register_fn(() => focused.request_activate(true));
     }

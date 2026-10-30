@@ -562,7 +562,7 @@ export class ShellWindow {
     }
 
     was_tilable: boolean;
-    private reconsider_tiling() {
+    reconsider_tiling() {
         const is_tilable = this.is_tilable();
         if (this.was_tilable == is_tilable) return;
         this.was_tilable = is_tilable;
