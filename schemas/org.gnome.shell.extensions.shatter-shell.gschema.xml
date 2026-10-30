@@ -75,6 +75,16 @@
             <summary>Maximum width of tiled windows, in pixels (0 to disable)</summary>
         </key>
 
+        <key type="u" name="oversized-window-width">
+            <default>1150</default>
+            <summary>Windows which cannot be resized smaller than this will float. 0 to disable.</summary>
+        </key>
+
+        <key type="u" name="oversized-window-height">
+            <default>650</default>
+            <summary>Windows which cannot be resized smaller than this will float. 0 to disable.</summary>
+        </key>
+
         <!-- Focus Shifting -->
         <key type="as" name="focus-left">
             <default><![CDATA[['<Super>Left','<Super>KP_Left']]]></default>

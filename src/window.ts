@@ -246,6 +246,14 @@ export class ShellWindow {
         const allows_resize = max_width > min_width && max_height > min_height;
         if (!allows_resize) return false;
 
+        // Some windows have a very big minimum size, leaving insufficient space for neighbouring windows.
+        // Exclude these oversized windows. Some examples are Steam and Winboat at certain scalings.
+        const oversized_window_width = this.ext.settings.oversized_window_width();
+        const oversized_window_height = this.ext.settings.oversized_window_height();
+        const is_oversized = (oversized_window_width > 0 && min_width > oversized_window_width)
+            && (oversized_window_height > 0 && min_height > oversized_window_height);
+        if (is_oversized) return false;
+
         let wm_class = this.meta.get_wm_class();
         if (wm_class !== null && !wm_class.trim().length) {
             wm_class = this.name();

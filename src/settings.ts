@@ -47,6 +47,8 @@ const LOG_LEVEL = 'log-level';
 const MOUSE_CURSOR_FOLLOWS_ACTIVE_WINDOW = 'mouse-cursor-follows-active-window';
 const MOUSE_CURSOR_FOCUS_LOCATION = 'mouse-cursor-focus-location';
 const MAX_WINDOW_WIDTH = 'max-window-width';
+const OVERSIZED_WINDOW_WIDTH = 'oversized-window-width';
+const OVERSIZED_WINDOW_HEIGHT = 'oversized-window-height';
 const NEED_OVERRIDES_SETUP = 'need-overrides-setup';
 
 export const extSettings = gio_settings_from_schema('org.gnome.shell.extensions.shatter-shell');
@@ -146,6 +148,14 @@ export class ExtensionSettings {
         return this.ext.get_uint(MAX_WINDOW_WIDTH);
     }
 
+    oversized_window_width(): number {
+        return this.ext.get_uint(OVERSIZED_WINDOW_WIDTH);
+    }
+
+    oversized_window_height(): number {
+        return this.ext.get_uint(OVERSIZED_WINDOW_HEIGHT);
+    }
+
     need_overrides_setup(): boolean {
         return this.ext.get_boolean(NEED_OVERRIDES_SETUP);
     }
@@ -218,6 +228,14 @@ export class ExtensionSettings {
 
     set_max_window_width(set: number) {
         this.ext.set_uint(MAX_WINDOW_WIDTH, set);
+    }
+
+    set_oversized_window_width(set: number) {
+        this.ext.set_uint(OVERSIZED_WINDOW_WIDTH, set);
+    }
+
+    set_oversized_window_height(set: number) {
+        this.ext.set_uint(OVERSIZED_WINDOW_HEIGHT, set);
     }
 
     set_need_overrides_setup(set: boolean) {
