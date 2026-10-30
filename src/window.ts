@@ -127,9 +127,6 @@ export class ShellWindow {
                 this.meta.connect('workspace-changed', () => this.workspace_changed()),
                 this.meta.connect('raised', () => this.window_raised()),
 
-                this.meta.connect('notify::fullscreen', () => this.reconsider_tiling()),
-                this.meta.connect('notify::maximized-horizontally', () => this.reconsider_tiling()),
-                this.meta.connect('notify::maximized-vertically', () => this.reconsider_tiling()),
                 this.meta.connect('notify::resizeable', () => this.reconsider_tiling()),
                 this.meta.connect('notify::skip-taskbar', () => this.reconsider_tiling()),
                 this.meta.connect('notify::window-type', () => this.reconsider_tiling()),
@@ -227,20 +224,32 @@ export class ShellWindow {
         return this.meta.maximized_vertically && !this.meta.maximized_horizontally;
     }
 
+    /**
+     * Whether this window is tilable.
+     *
+     * The returned value is not expected to change often.
+     * Temporary properties like minimized, maximized, and fullscreen are
+     * not included here.
+     */
     is_tilable(): boolean {
         if (this.ext.contains_tag(this.entity, Tags.Floating)) return false;
+
+        // Quake-style terminals such as Tilix's quake mode.
+        if (this.meta.get_role() === 'quake') return false;
+
+        const [max_known, max_width, max_height] = this.meta.get_max_size();
+        const [min_known, min_width, min_height] = this.meta.get_min_size();
+
+        const unknown_sizes = !max_known && !min_known;
+        if (unknown_sizes) return false; // probably a non-standard window from Wine or something
+
+        const allows_resize = max_width > min_width && max_height > min_height;
+        if (!allows_resize) return false;
 
         let wm_class = this.meta.get_wm_class();
         if (wm_class !== null && !wm_class.trim().length) {
             wm_class = this.name();
         }
-
-        // Quake-style terminals such as Tilix's quake mode.
-        if (this.meta.get_role() === 'quake') return false;
-
-        // Note: `allows_resize` is also false if maximized or fullscreen.
-        if (!this.meta.allows_resize()) return false;
-        if (!this.meta.allows_move()) return false;
 
         // Blacklist any windows that happen to leak through our filter
         // Windows that are tagged ForceTile are considered tilable despite exemption
