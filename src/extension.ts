@@ -276,7 +276,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
             for (const window of this.tab_list(Meta.TabList.NORMAL, null)) {
                 const string = window.window_app.get_id();
-                wins.push([window.entity, window.title(), window.name(this), string ? string : '']);
+                wins.push([window.entity, window.title(), window.name(), string ? string : '']);
             }
 
             return wins;
@@ -502,7 +502,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         for (const [, window] of this.windows.iter()) {
             this.disconnect_tilable_window_signals(window);
             window.bind_window_events();
-            if (window.is_tilable(this)) {
+            if (window.is_tilable()) {
                 this.connect_tilable_window_signals(window);
             }
         }
@@ -564,7 +564,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                 let wmclass = win.meta.get_wm_class();
                 if (wmclass != null) {
                     if (!wmclass.length) {
-                        wmclass = win.name(this);
+                        wmclass = win.name();
                     }
                     if (wmclass.length) {
                         this.conf.add_app_exception(wmclass);
@@ -918,7 +918,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
         this.show_border_on_focused();
 
-        if (this.auto_tiler && win.is_tilable(this) && this.prev_focused[0] !== null) {
+        if (this.auto_tiler && win.is_tilable() && this.prev_focused[0] !== null) {
             const prev = this.windows.get(this.prev_focused[0]);
             const is_attached = this.auto_tiler.attached.contains(this.prev_focused[0]);
 
@@ -927,7 +927,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                 && prev !== win
                 && is_attached
                 && prev.actor_exists()
-                && prev.name(this) !== win.name(this)
+                && prev.name() !== win.name()
                 && prev.workspace_id() === win.workspace_id()
             ) {
                 if (prev.rect().contains_rect(win.rect())) {
@@ -945,7 +945,7 @@ export class Ext extends Ecs.System<ExtEvent> {
             let msg = `focused Window(${win.entity}) {\n`
                 + `  class: "${win.meta.get_wm_class()}",\n`
                 + `  monitor: ${win.monitor_id()},\n`
-                + `  name: ${win.name(this)},\n`
+                + `  name: ${win.name()},\n`
                 + `  rect: ${fmtRect(win.rect())},\n`
                 + `  workspace: ${win.workspace_id()},\n`
                 + `  stack: ${win.stack},\n`;
@@ -1037,7 +1037,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     /** Unmaximize any maximized windows on the same workspace. */
     unmaximize_workspace(win: Window.ShellWindow) {
         if (this.auto_tiler) {
-            if (!win.is_tilable(this)) {
+            if (!win.is_tilable()) {
                 return;
             }
 
@@ -1102,7 +1102,7 @@ export class Ext extends Ecs.System<ExtEvent> {
             win.grab = false;
         }
 
-        if (null === win || !win.is_tilable(this)) {
+        if (null === win || !win.is_tilable()) {
             this.unset_grab_op();
             return;
         }
@@ -1253,7 +1253,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         if (win) {
             win.grab = true;
 
-            if (win.is_tilable(this)) {
+            if (win.is_tilable()) {
                 const entity = win.entity;
                 const rect = win.rect();
 
@@ -1522,7 +1522,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                 return false;
             });
 
-            if (win.is_tilable(this)) {
+            if (win.is_tilable()) {
                 this.connect_tilable_window_signals(win);
             }
         }
@@ -1540,7 +1540,7 @@ export class Ext extends Ecs.System<ExtEvent> {
             if (!prev_id || id[0] != prev_id[0] || id[1] != prev_id[1]) {
                 win.ignore_detach = true;
                 this.monitors.insert(win.entity, id);
-                if (win.is_tilable(this)) {
+                if (win.is_tilable()) {
                     this.auto_tiler.detach_window(this, win.entity);
                     this.auto_tiler.attach_to_workspace(this, win, id);
                 }
@@ -1953,7 +1953,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     // Snaps all windows to the window grid
     snap_windows() {
         for (const window of this.windows.values()) {
-            if (window.is_tilable(this)) this.tiler.snap(this, window);
+            if (window.is_tilable()) this.tiler.snap(this, window);
         }
     }
 
@@ -1992,7 +1992,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
         for (const [entity, window] of this.windows.iter()) {
             const attachment = at.attached.get(entity);
-            if (window.is_tilable(this)) {
+            if (window.is_tilable()) {
                 if (!attachment) {
                     at.auto_tile(this, window, this.init);
                 }
@@ -2049,7 +2049,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         if (this.button?.icon) this.button.icon.gicon = this.button_auto_on_icon;
 
         for (const window of this.windows.values()) {
-            if (window.is_tilable(this)) {
+            if (window.is_tilable()) {
                 const actor = window.meta.get_compositor_private<Meta.WindowActor | null>();
                 if (actor) {
                     if (!window.meta.minimized) {
@@ -2387,7 +2387,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                 });
             };
 
-            if (this.auto_tiler && !win.meta.minimized && win.is_tilable(this)) {
+            if (this.auto_tiler && !win.meta.minimized && win.is_tilable()) {
                 const id = actor.connect('first-frame', () => {
                     this.auto_tiler?.auto_tile(this, win, this.init);
                     grab_focus();
@@ -2404,7 +2404,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     * windows_at_pointer(cursor: Mtk.Rectangle, monitor: MonitorID, workspace: WorkspaceID) {
         for (const entity of this.monitors.find(m => m[0] == monitor && m[1] == workspace)) {
             const window = this.windows.with(entity, (window) => {
-                return window.is_tilable(this) && window.rect().contains_rect(cursor) ? window : null;
+                return window.is_tilable() && window.rect().contains_rect(cursor) ? window : null;
             });
 
             if (window) yield window;

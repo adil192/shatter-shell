@@ -575,7 +575,7 @@ export class Forest extends Ecs.World {
 
         const window_compare = (entity: Entity) => {
             const window = ext.windows.get(entity);
-            if (window && window.is_tilable(ext)) {
+            if (window && window.is_tilable()) {
                 const rect = window.rect();
                 const size = rect.width * rect.height;
                 if (size > largest_size) {
@@ -925,7 +925,7 @@ function move_window(ext: Ext, window: ShellWindow, rect: Mtk.Rectangle, on_comp
     }
 
     ext.size_signals_block(window);
-    window.move(ext, rect, () => {
+    window.move(rect, () => {
         on_complete();
         ext.size_signals_unblock(window);
     });

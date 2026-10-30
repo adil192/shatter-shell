@@ -682,7 +682,7 @@ export class AutoTiler {
             return Err('tiled window and attach window are the same window');
         }
 
-        if (!onto.is_tilable(ext)) {
+        if (!onto.is_tilable()) {
             return Err('focused window is not tilable');
         }
 

@@ -225,12 +225,12 @@ export class ShellWindow {
         return this.meta.maximized_vertically && !this.meta.maximized_horizontally;
     }
 
-    is_tilable(ext: Ext): boolean {
-        if (ext.contains_tag(this.entity, Tags.Floating)) return false;
+    is_tilable(): boolean {
+        if (this.ext.contains_tag(this.entity, Tags.Floating)) return false;
 
         let wm_class = this.meta.get_wm_class();
         if (wm_class !== null && !wm_class.trim().length) {
-            wm_class = this.name(ext);
+            wm_class = this.name();
         }
 
         // Quake-style terminals such as Tilix's quake mode.
@@ -242,8 +242,8 @@ export class ShellWindow {
 
         // Blacklist any windows that happen to leak through our filter
         // Windows that are tagged ForceTile are considered tilable despite exemption
-        if (wm_class !== null && ext.conf.window_shall_float(wm_class, this.title())) {
-            return ext.contains_tag(this.entity, Tags.ForceTile);
+        if (wm_class !== null && this.ext.conf.window_shall_float(wm_class, this.title())) {
+            return this.ext.contains_tag(this.entity, Tags.ForceTile);
         }
 
         return (
@@ -261,12 +261,12 @@ export class ShellWindow {
         return this.meta.get_transient_for() !== null;
     }
 
-    move(ext: Ext, rect: Mtk.Rectangle, on_complete?: () => void) {
+    move(rect: Mtk.Rectangle, on_complete?: () => void) {
         if (!this.same_workspace() && this.is_maximized()) {
             return;
         }
 
-        const max_width = ext.settings.max_window_width();
+        const max_width = this.ext.settings.max_window_width();
         if (max_width > 0 && rect.width > max_width) {
             rect.x += (rect.width - max_width) / 2;
             rect.width = max_width;
@@ -281,21 +281,21 @@ export class ShellWindow {
             }
             actor.remove_all_transitions();
 
-            ext.movements.insert(this.entity, rect);
+            this.ext.movements.insert(this.entity, rect);
 
-            ext.register({ tag: 'window_move', window: this });
-            if (on_complete) ext.register_fn(on_complete);
+            this.ext.register({ tag: 'window_move', window: this });
+            if (on_complete) this.ext.register_fn(on_complete);
             if (meta.appears_focused) {
                 this.update_border_layout();
-                ext.show_border_on_focused();
+                this.ext.show_border_on_focused();
             } else {
                 this.hide_border();
             }
         }
     }
 
-    name(ext: Ext): string {
-        return ext.names.get_or(this.entity, () => 'unknown');
+    name(): string {
+        return this.ext.names.get_or(this.entity, () => 'unknown');
     }
 
     private on_style_changed() {
@@ -307,17 +307,17 @@ export class ShellWindow {
         return this.meta.get_frame_rect();
     }
 
-    swap(ext: Ext, other: ShellWindow): void {
+    swap(other: ShellWindow): void {
         const ar = this.rect().copy();
         const br = other.rect().copy();
 
-        other.move(ext, ar);
-        this.move(ext, br, () => place_pointer_on(this.ext, this.meta));
+        other.move(ar);
+        this.move(br, () => place_pointer_on(this.ext, this.meta));
     }
 
     title(): string {
         const title = this.meta.get_title();
-        return title ? title : this.name(this.ext);
+        return title ? title : this.name();
     }
 
     /**
@@ -546,7 +546,7 @@ export class ShellWindow {
 
     private reconsider_tiling() {
         this.ext.disconnect_tilable_window_signals(this);
-        if (this.is_tilable(this.ext)) {
+        if (this.is_tilable()) {
             this.ext.connect_tilable_window_signals(this);
             if (!this.meta.minimized) {
                 this.ext.auto_tiler?.auto_tile(this.ext, this, this.ext.init);

@@ -211,7 +211,7 @@ export class Tiler {
             ext.register_fn(() => win.request_activate(true));
         };
 
-        if (ext.auto_tiler && win.is_tilable(ext)) {
+        if (ext.auto_tiler && win.is_tilable()) {
             if (this.queue.length === 2) return;
             this.queue.send(() => {
                 const focused = ext.get_focused_window();
@@ -789,7 +789,7 @@ export class Tiler {
                         } else {
                             ext.size_signals_block(meta_swap);
 
-                            meta_swap.move(ext, meta.rect(), () => {
+                            meta_swap.move(meta.rect(), () => {
                                 ext.size_signals_unblock(meta_swap);
                             });
                         }
@@ -803,7 +803,7 @@ export class Tiler {
                     const meta_entity = this.window;
                     const overlay = ext.overlay;
                     const movement = new Mtk.Rectangle({ x: overlay.x, y: overlay.y, width: overlay.width, height: overlay.height });
-                    meta.move(ext, movement, () => {
+                    meta.move(movement, () => {
                         ext.size_signals_unblock(meta);
                         ext.add_tag(meta_entity, Tags.Tiled);
                     });
@@ -837,7 +837,7 @@ export class Tiler {
         const rows = Math.floor(mon_geom.height / ext.row_size);
         this.change(rect, monitor_rect(mon_geom, columns, rows), 0, 0, 0, 0);
 
-        win.move(ext, rect);
+        win.move(rect);
 
         ext.snapped.insert(win.entity, true);
     }
