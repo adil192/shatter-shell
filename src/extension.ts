@@ -2036,14 +2036,14 @@ export class Ext extends Ecs.System<ExtEvent> {
 
         const original = this.active_workspace();
 
-        const tiler = new auto_tiler.AutoTiler(
+        const at = new auto_tiler.AutoTiler(
             new Forest.Forest()
                 .connect_on_attach(this.on_tile_attach.bind(this))
                 .connect_on_detach(this.on_tile_detach.bind(this)),
             this.register_storage(),
         );
 
-        this.auto_tiler = tiler;
+        this.auto_tiler = at;
 
         this.settings.set_tile_by_default(true);
         if (this.button?.icon) this.button.icon.gicon = this.button_auto_on_icon;
@@ -2052,9 +2052,7 @@ export class Ext extends Ecs.System<ExtEvent> {
             if (window.is_tilable()) {
                 const actor = window.meta.get_compositor_private<Meta.WindowActor | null>();
                 if (actor) {
-                    if (!window.meta.minimized) {
-                        tiler.auto_tile(this, window, true);
-                    }
+                    at.auto_tile(this, window, true);
                 }
             }
         }
@@ -2387,7 +2385,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                 });
             };
 
-            if (this.auto_tiler && !win.meta.minimized && win.is_tilable()) {
+            if (this.auto_tiler && win.is_tilable()) {
                 const id = actor.connect('first-frame', () => {
                     this.auto_tiler?.auto_tile(this, win, this.init);
                     grab_focus();

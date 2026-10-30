@@ -686,10 +686,6 @@ export class AutoTiler {
             return Err('focused window is not tilable');
         }
 
-        if (onto.meta.minimized) {
-            return Err('previous window was minimized');
-        }
-
         if (!this.attached.contains(onto.entity)) {
             return Err('focused window is not attached');
         }

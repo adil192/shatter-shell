@@ -128,6 +128,7 @@ export class ShellWindow {
                 this.meta.connect('notify::fullscreen', () => this.reconsider_tiling()),
                 this.meta.connect('notify::maximized-horizontally', () => this.reconsider_tiling()),
                 this.meta.connect('notify::maximized-vertically', () => this.reconsider_tiling()),
+                this.meta.connect('notify::minimized', () => this.reconsider_tiling()),
                 this.meta.connect('notify::resizeable', () => this.reconsider_tiling()),
                 this.meta.connect('notify::skip-taskbar', () => this.reconsider_tiling()),
                 this.meta.connect('notify::window-type', () => this.reconsider_tiling()),
@@ -239,6 +240,7 @@ export class ShellWindow {
         // Note: `allows_resize` is also false if maximized or fullscreen.
         if (!this.meta.allows_resize()) return false;
         if (!this.meta.allows_move()) return false;
+        if (this.meta.minimized) return false;
 
         // Blacklist any windows that happen to leak through our filter
         // Windows that are tagged ForceTile are considered tilable despite exemption
@@ -558,12 +560,10 @@ export class ShellWindow {
 
         if (is_tilable) {
             this.ext.connect_tilable_window_signals(this);
-            if (!this.meta.minimized) {
-                this.ext.auto_tiler?.auto_tile(this.ext, this, this.ext.init);
-            }
+            this.ext.auto_tiler?.auto_tile(this.ext, this, this.ext.init);
         } else {
             this.ext.disconnect_tilable_window_signals(this);
-            if (this.is_maximized() || this.meta.is_fullscreen()) {
+            if (!this.meta.minimized && (this.is_maximized() || this.meta.is_fullscreen())) {
                 // Retain tiled position for when the window is unmaximized.
             } else {
                 // Untile window
