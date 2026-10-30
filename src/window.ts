@@ -243,7 +243,7 @@ export class ShellWindow {
         const unknown_sizes = !max_known && !min_known;
         if (unknown_sizes) return false; // probably a non-standard window from Wine or something
 
-        const allows_resize = max_width > min_width && max_height > min_height;
+        const allows_resize = !max_known || (max_width > min_width && max_height > min_height);
         if (!allows_resize) return false;
 
         // Some windows have a very big minimum size, leaving insufficient space for neighbouring windows.
