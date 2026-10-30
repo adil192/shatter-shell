@@ -251,7 +251,7 @@ export class ShellWindow {
         const oversized_window_width = this.ext.settings.oversized_window_width();
         const oversized_window_height = this.ext.settings.oversized_window_height();
         const is_oversized = (oversized_window_width > 0 && min_width > oversized_window_width)
-            && (oversized_window_height > 0 && min_height > oversized_window_height);
+            || (oversized_window_height > 0 && min_height > oversized_window_height);
         if (is_oversized) return false;
 
         let wm_class = this.meta.get_wm_class();
