@@ -240,19 +240,20 @@ export class ShellWindow {
         const [max_known, max_width, max_height] = this.meta.get_max_size();
         const [min_known, min_width, min_height] = this.meta.get_min_size();
 
-        const unknown_sizes = !max_known && !min_known;
-        if (unknown_sizes) return false; // probably a non-standard window from Wine or something
+        if (max_known && min_known) {
+            const allows_resize = max_width > min_width && max_height > min_height;
+            if (!allows_resize) return false;
+        }
 
-        const allows_resize = !max_known || (max_width > min_width && max_height > min_height);
-        if (!allows_resize) return false;
-
-        // Some windows have a very big minimum size, leaving insufficient space for neighbouring windows.
-        // Exclude these oversized windows. Some examples are Steam and Winboat at certain scalings.
-        const oversized_window_width = this.ext.settings.oversized_window_width();
-        const oversized_window_height = this.ext.settings.oversized_window_height();
-        const is_oversized = (oversized_window_width > 0 && min_width > oversized_window_width)
-            || (oversized_window_height > 0 && min_height > oversized_window_height);
-        if (is_oversized) return false;
+        if (min_known) {
+            // Some windows have a very big minimum size, leaving insufficient space for neighbouring windows.
+            // Exclude these oversized windows. Some examples are Steam and Winboat at certain scalings.
+            const oversized_window_width = this.ext.settings.oversized_window_width();
+            const oversized_window_height = this.ext.settings.oversized_window_height();
+            const is_oversized = (oversized_window_width > 0 && min_width > oversized_window_width)
+                || (oversized_window_height > 0 && min_height > oversized_window_height);
+            if (is_oversized) return false;
+        }
 
         let wm_class = this.meta.get_wm_class();
         if (wm_class !== null && !wm_class.trim().length) {
