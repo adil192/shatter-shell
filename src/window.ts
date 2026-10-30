@@ -232,6 +232,7 @@ export class ShellWindow {
      * not included here.
      */
     is_tilable(): boolean {
+        if (this.ext.contains_tag(this.entity, Tags.ForceTile)) return true;
         if (this.ext.contains_tag(this.entity, Tags.Floating)) return false;
 
         // Quake-style terminals such as Tilix's quake mode.
@@ -260,12 +261,6 @@ export class ShellWindow {
             wm_class = this.name();
         }
 
-        // Blacklist any windows that happen to leak through our filter
-        // Windows that are tagged ForceTile are considered tilable despite exemption
-        if (wm_class !== null && this.ext.conf.window_shall_float(wm_class, this.title())) {
-            return this.ext.contains_tag(this.entity, Tags.ForceTile);
-        }
-
         return (
             // Only normal windows will be considered for tiling
             this.meta.window_type == Meta.WindowType.NORMAL
@@ -274,6 +269,8 @@ export class ShellWindow {
             && !this.is_transient()
             // If a window lacks a class, it's probably a web browser dialog
             && wm_class !== null
+            // Floating window exclusions from config
+            && !this.ext.conf.window_shall_float(wm_class, this.title())
         );
     };
 
