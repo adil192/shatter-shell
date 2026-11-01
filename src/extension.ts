@@ -433,14 +433,9 @@ export class Ext extends Ecs.System<ExtEvent> {
         return window ? window.meta.get_compositor_private<Meta.WindowActor | null>() : null;
     }
 
-    /** Connects a callback signal to a GObject, and records the signal. */
-    connect<T extends GObject.Object, K extends keyof T['$signals']>(
-        object: T,
-        property: K,
-        callback: GObject.SignalCallback<typeof object, T['$signals'][K]>,
-    ): SignalID {
-        // @ts-expect-error Types are messed up currently, we need to get rid of these Ext.connect* methods
-        const signal = object.connect(property, callback);
+    /** Connects a callback signal to a GObject or EventEmitter, and records the signal in {@link signals}. */
+    connect_object<T extends GObject.Object | Misc.signals.EventEmitter>(object: T, connect: (object: T) => SignalID): SignalID {
+        const signal = connect(object);
         const entry = this.signals.get(object);
         if (entry) {
             entry.push(signal);
@@ -450,22 +445,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         return signal;
     }
 
-    /** Connects a callback signal to an EventEmitter, and records the signal. */
-    connect_emitter<T extends Misc.signals.EventEmitter<S>, S extends Misc.signals.SignalMap<S>, Name extends keyof S>(
-        object: T,
-        name: Name,
-        callback: (self: T, ...args: S[Name]) => boolean | void,
-    ): SignalID {
-        const signal = object.connect(name, callback);
-        const entry = this.signals.get(object);
-        if (entry) {
-            entry.push(signal);
-        } else {
-            this.signals.set(object, [signal]);
-        }
-        return signal;
-    }
-
+    /** Connects to a window signal and records it in {@link window_signals} and {@link tilable_window_signals}. */
     connect_meta(win: Window.ShellWindow, signal: keyof Meta.Window.SignalSignatures, callback: () => void): number {
         const id = win.meta.connect(signal, () => {
             if (win.actor_exists()) callback();
@@ -1679,20 +1659,20 @@ export class Ext extends Ecs.System<ExtEvent> {
         for (const [, ws] of iter_workspaces(workspace_manager)) {
             let index = workspaceID(ws.index());
 
-            this.connect(ws, 'notify::workspace-index', () => {
+            this.connect_object(ws, () => ws.connect('notify::workspace-index', () => {
                 if (ws !== null) {
                     const new_index = workspaceID(ws.index());
                     this.on_workspace_index_changed(index, new_index);
                     index = new_index;
                 }
-            });
+            }));
         }
 
-        this.connect(display, 'workareas-changed', () => {
+        this.connect_object(display, () => display.connect('workareas-changed', () => {
             this.update_display_configuration(true);
-        });
+        }));
 
-        this.size_changed_signal = this.connect(wim, 'size-change', (_, actor, event) => {
+        this.size_changed_signal = this.connect_object(wim, () => wim.connect('size-change', (_, actor, event) => {
             if (this.auto_tiler) {
                 const win = this.get_window(actor.get_meta_window());
                 if (!win) return;
@@ -1703,9 +1683,9 @@ export class Ext extends Ecs.System<ExtEvent> {
                     this.register(Events.window_event(win, WindowEventType.Fullscreen));
                 }
             }
-        });
+        }));
 
-        this.connect(this.settings.ext, 'changed', (_s, key) => {
+        this.connect_object(this.settings.ext, ext => ext.connect('changed', (_s, key) => {
             switch (key) {
                 case 'active-hint':
                     if (indicator) indicator.toggle_active.setToggleState(this.settings.active_hint());
@@ -1722,18 +1702,18 @@ export class Ext extends Ecs.System<ExtEvent> {
                     this.show_border_on_focused();
                     break;
             }
-        });
+        }));
 
-        this.connect(this.settings.mutter, 'changed::workspaces-only-on-primary', () => {
+        this.connect_object(this.settings.mutter, mutter => mutter.connect('changed::workspaces-only-on-primary', () => {
             this.register(Events.global(GlobalEvent.MonitorsChanged));
-        });
+        }));
 
-        this.connect(layoutManager, 'monitors-changed', () => {
+        // @ts-expect-error GObject.Object.connect types are borked
+        this.connect_object(layoutManager, () => layoutManager.connect('monitors-changed', () => {
             this.register(Events.global(GlobalEvent.MonitorsChanged));
-        });
+        }));
 
-        // @ts-expect-error Typescript doesn't know the sessionMode's signals
-        this.connect_emitter(sessionMode, 'updated', () => {
+        this.connect_object(sessionMode, () => sessionMode.connect('updated', () => {
             if (indicator) {
                 indicator.button.visible = !sessionMode.isLocked;
             }
@@ -1741,27 +1721,25 @@ export class Ext extends Ecs.System<ExtEvent> {
             if (sessionMode.isLocked) {
                 this.exit_modes();
             }
-        });
+        }));
 
-        // @ts-expect-error Typescript doesn't know the overview's signals
-        this.connect_emitter(overview, 'showing', () => {
+        this.connect_object(overview, () => overview.connect('showing', () => {
             this.register(Events.global(GlobalEvent.OverviewShown));
-        });
+        }));
 
-        // @ts-expect-error Typescript does't know the overview's signals
-        this.connect_emitter(overview, 'hiding', () => {
+        this.connect_object(overview, () => overview.connect('hiding', () => {
             const window = this.get_focused_window();
             if (window) {
                 this.on_focused(window);
             }
             this.register(Events.global(GlobalEvent.OverviewHidden));
-        });
+        }));
 
         // We have to connect this signal in an idle_add; otherwise work areas stop being calculated
         this.register_fn(() => {
             if (screenShield?.locked) this.update_display_configuration(false);
 
-            this.connect(display, 'notify::focus-window', () => {
+            this.connect_object(display, () => display.connect('notify::focus-window', () => {
                 // Disallow refocus if a modal window is active
                 if (Main.modalCount !== 0 && modalActorFocusStack.length) {
                     const { actor } = modalActorFocusStack[0]!;
@@ -1817,7 +1795,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                 });
 
                 return false;
-            });
+            }));
 
             const window = this.get_focused_window();
             if (window) {
@@ -1827,54 +1805,51 @@ export class Ext extends Ecs.System<ExtEvent> {
             return false;
         });
 
-        this.connect(display, 'window-created', (_, window) => {
+        this.connect_object(display, () => display.connect('window-created', (_, window) => {
             this.register({ tag: 'window_create', window });
-        });
+        }));
 
-        this.connect(display, 'grab-op-begin', (_display, win, op) => {
+        this.connect_object(display, () => display.connect('grab-op-begin', (_display, win, op) => {
             this.on_grab_start(win, op);
-        });
+        }));
 
-        this.connect(display, 'grab-op-end', (_display, win, op) => {
+        this.connect_object(display, () => display.connect('grab-op-end', (_display, win, op) => {
             this.register_fn(() => this.on_grab_end(win, op));
-        });
+        }));
 
-        // @ts-expect-error Typescript doesn't know the overview's signals
-        this.connect_emitter(overview, 'window-drag-begin', (_, win) => {
+        this.connect_object(overview, () => overview.connect('window-drag-begin', (_, win) => {
             this.on_grab_start(win, 1);
-        });
+        }));
 
-        // @ts-expect-error Typescript doesn't know the overview's signals
-        this.connect_emitter(overview, 'window-drag-end', (_, win) => {
+        this.connect_object(overview, () => overview.connect('window-drag-end', (_, win) => {
             this.register_fn(() => this.on_grab_end(win));
-        });
+        }));
 
-        // @ts-expect-error Typescript doesn't know the overview's signals
-        this.connect_emitter(overview, 'window-drag-cancelled', () => {
+        this.connect_object(overview, () => overview.connect('window-drag-cancelled', () => {
             this.unset_grab_op();
-        });
+        }));
 
-        this.connect(wim, 'switch-workspace', () => {
+        this.connect_object(wim, () => wim.connect('switch-workspace', () => {
             this.hide_all_borders();
-        });
+        }));
 
-        this.connect(workspace_manager, 'active-workspace-changed', () => {
+        this.connect_object(workspace_manager, () => workspace_manager.connect('active-workspace-changed', () => {
             this.on_active_workspace_changed();
-        });
+        }));
 
-        this.connect(workspace_manager, 'workspace-removed', (_, number) => {
+        this.connect_object(workspace_manager, () => workspace_manager.connect('workspace-removed', (_, number) => {
             this.on_workspace_removed(number);
-        });
+        }));
 
-        this.connect(workspace_manager, 'workspace-added', (_, number) => {
+        this.connect_object(workspace_manager, () => workspace_manager.connect('workspace-added', (_, number) => {
             this.on_workspace_added(number);
-        });
+        }));
 
         // Bind show desktop and remove the active hint
-        this.connect(workspace_manager, 'showing-desktop-changed', () => {
+        this.connect_object(workspace_manager, () => workspace_manager.connect('showing-desktop-changed', () => {
             this.hide_all_borders();
             this.prev_focused = [null, null];
-        });
+        }));
 
         St.ThemeContext.get_for_stage(global.stage).connect('notify::scale-factor', () => this.update_scale());
 
