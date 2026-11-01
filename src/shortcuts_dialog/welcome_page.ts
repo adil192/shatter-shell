@@ -71,7 +71,10 @@ export const WelcomePage = GObject.registerClass({
         this.close_button.label = 'Close';
         this.close_button.add_css_class('suggested-action');
         this.close_button.add_css_class('pill');
-        this.close_button.connect('clicked', () => this.emit('quit'));
+        this.close_button.connect('clicked',
+            // @ts-expect-error `emit` uses Gtk.Box.SignalSignatures type instead of ours
+            () => this.emit('quit'),
+        );
         buttons_box.append(this.close_button);
     }
 
@@ -187,6 +190,7 @@ or click below to close this dialog.
         }
 
         extSettings.set_boolean('need-overrides-setup', false);
+        // @ts-expect-error `emit` uses Gtk.Box.SignalSignatures type instead of ours
         this.emit('quit');
     }
 });

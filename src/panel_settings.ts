@@ -306,9 +306,7 @@ function color_selector(ext: Ext, menu: PopupMenu) {
     color_button.connect('button-press-event', () => {
         const path = get_current_path() + '/color_dialog/main.js';
         const resp = GLib.spawn_command_line_async(`gjs --module "${path}"`);
-        if (!resp) {
-            return null;
-        }
+        if (!resp) return;
 
         // clean up and focus on the color dialog
         GLib.timeout_add(GLib.PRIORITY_LOW, 300, () => {

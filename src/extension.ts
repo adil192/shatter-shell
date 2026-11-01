@@ -46,8 +46,10 @@ import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 const {
     layoutManager,
     loadTheme,
+    modalActorFocusStack,
     overview,
     panel,
+    screenShield,
     setThemeStylesheet,
 } = Main;
 import type { Misc } from '@girs/gnome-shell';
@@ -59,16 +61,7 @@ import { clampRect, fmtRect } from './rectangle.js';
 import { Log } from './log.js';
 const { monitorID, workspaceID } = Lib;
 
-const screenShield = Main.screenShield as ScreenShield;
-const sessionMode = Main.sessionMode as GObject.Object & { $signals: { updated: () => void }; isLocked: boolean };
-const modalActorFocusStack = Main.modalActorFocusStack as {
-    actor: Clutter.Actor;
-    grab: Clutter.Grab;
-    destroyId: number;
-    prevFocus: Clutter.Actor | null;
-    prevFocusDestroyId: number | undefined;
-    actionMode: Shell.ActionMode;
-}[];
+const sessionMode = Main.sessionMode as typeof Main.sessionMode & { isLocked: boolean };
 
 enum Style {
     Light = 'light',
@@ -446,7 +439,8 @@ export class Ext extends Ecs.System<ExtEvent> {
         property: K,
         callback: GObject.SignalCallback<typeof object, T['$signals'][K]>,
     ): SignalID {
-        const signal = object.connect(property as string, callback);
+        // @ts-expect-error Types are messed up currently, we need to get rid of these Ext.connect* methods
+        const signal = object.connect(property, callback);
         const entry = this.signals.get(object);
         if (entry) {
             entry.push(signal);
@@ -755,7 +749,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     injections_add() {
         // eslint-disable-next-line @typescript-eslint/unbound-method
         const screen_unlock_fn = ScreenShield.prototype['deactivate'];
-        this.injections.screen_unlock = { object: ScreenShield.prototype, method: 'deactivate', func: screen_unlock_fn };
+        this.injections.screen_unlock = { object: ScreenShield.prototype as ScreenShield, method: 'deactivate', func: screen_unlock_fn };
         ScreenShield.prototype['deactivate'] = (animate: boolean) => {
             screen_unlock_fn.apply(screenShield, [animate]);
             this.update_display_configuration(true);
@@ -1734,12 +1728,12 @@ export class Ext extends Ecs.System<ExtEvent> {
             this.register(Events.global(GlobalEvent.MonitorsChanged));
         });
 
-        // @ts-expect-error Typescript doesn't know LayoutManager supports 'monitors-changed' signal
         this.connect(layoutManager, 'monitors-changed', () => {
             this.register(Events.global(GlobalEvent.MonitorsChanged));
         });
 
-        this.connect(sessionMode, 'updated', () => {
+        // @ts-expect-error Typescript doesn't know the sessionMode's signals
+        this.connect_emitter(sessionMode, 'updated', () => {
             if (indicator) {
                 indicator.button.visible = !sessionMode.isLocked;
             }
