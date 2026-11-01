@@ -1,4 +1,4 @@
-@use "_base" with ($headerbar-bg-color: #2e2e32,
+@forward "_base" with ($headerbar-bg-color: #2e2e32,
     $headerbar-fg-color: #ffffff,
     $headerbar-shade-color: rgb(0 0 6 / 36%),
     $warning-bg-color: #cd9309,

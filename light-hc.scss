@@ -1,0 +1,11 @@
+@use 'sass:color';
+
+@use "light";
+
+.shatter-shell-entry:indeterminate {
+    font-style: italic;
+}
+
+.shatter-shell-tab:checked .shatter-shell-tab-inner {
+    border: 1px solid color.scale(light.$headerbar-fg-color, $alpha: -50%);
+}

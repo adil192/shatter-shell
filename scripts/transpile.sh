@@ -23,8 +23,9 @@ echo Compiling into target/...
 use_tsc
 use_sass --no-source-map \
     light.scss:target/light.css \
+    light-hc.scss:target/light-hc.css \
     dark.scss:target/dark.css \
-    highcontrast.scss:target/highcontrast.css
+    dark-hc.scss:target/dark-hc.css
 
 echo Packing into _build/...
 rm -rf _build && mkdir _build

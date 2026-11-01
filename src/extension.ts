@@ -64,19 +64,24 @@ const { monitorID, workspaceID } = Lib;
 const sessionMode = Main.sessionMode as typeof Main.sessionMode & { isLocked: boolean };
 
 enum Style {
-    Light = 'light',
-    Dark = 'dark',
-    HighContrast = 'highcontrast',
+    light = 'light',
+    /** Light with high contrast */
+    lightHc = 'lightHc',
+    dark = 'dark',
+    /** Dark with high contrast */
+    darkHc = 'darkHc',
 }
 const STYLESHEET_PATHS = {
     light: stylesheet_path('light'),
+    lightHc: stylesheet_path('light-hc'),
     dark: stylesheet_path('dark'),
-    highcontrast: stylesheet_path('highcontrast'),
+    darkHc: stylesheet_path('dark-hc'),
 } as const;
 const STYLESHEETS = {
     light: Gio.File.new_for_path(STYLESHEET_PATHS.light),
+    lightHc: Gio.File.new_for_path(STYLESHEET_PATHS.lightHc),
     dark: Gio.File.new_for_path(STYLESHEET_PATHS.dark),
-    highcontrast: Gio.File.new_for_path(STYLESHEET_PATHS.highcontrast),
+    darkHc: Gio.File.new_for_path(STYLESHEET_PATHS.darkHc),
 } as const;
 
 interface Display {
@@ -122,7 +127,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     column_size: number = 32;
 
     /** The currently-loaded theme variant */
-    current_style: Style = Style.Dark;
+    current_style: Style = Style.dark;
 
     /** Set when the display configuration has been triggered for execution */
     displays_updating: SignalID | null = null;
@@ -1345,11 +1350,11 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     reload_theme() {
-        this.current_style = this.settings.get_is_dark()
-            ? Style.Dark
-            : this.settings.get_is_high_contrast()
-                ? Style.HighContrast
-                : Style.Light;
+        if (this.settings.get_is_dark()) {
+            this.current_style = this.settings.get_is_high_contrast() ? Style.darkHc : Style.dark;
+        } else {
+            this.current_style = this.settings.get_is_high_contrast() ? Style.lightHc : Style.light;
+        }
     }
 
     /** Handle window maximization notifications */

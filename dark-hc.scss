@@ -1,0 +1,11 @@
+@use 'sass:color';
+
+@use "dark";
+
+.shatter-shell-entry:indeterminate {
+    font-style: italic;
+}
+
+.shatter-shell-tab:checked .shatter-shell-tab-inner {
+    border: 1px solid color.scale(dark.$headerbar-fg-color, $alpha: -50%);
+}
