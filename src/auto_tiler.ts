@@ -190,7 +190,7 @@ export class AutoTiler {
             }
         }
 
-        this.attach_to_monitor(ext, win, id, ext.settings.smart_gaps());
+        this.attach_to_monitor(ext, win, id, ext.settings.get_smart_gaps());
     }
 
     /** Automatically tiles a window into the window tree.
@@ -243,7 +243,7 @@ export class AutoTiler {
 
             if (reflow_fork) {
                 const fork = reflow_fork[1];
-                if (fork.is_toplevel && ext.settings.smart_gaps() && fork.right === null) {
+                if (fork.is_toplevel && ext.settings.get_smart_gaps() && fork.right === null) {
                     const rect = ext.monitor_work_area(fork.monitor);
                     fork.set_area(rect);
                     fork.smart_gapped = true;
@@ -354,7 +354,7 @@ export class AutoTiler {
             if (attach_to) {
                 this.attach_to_window(ext, attach_to, win, { auto: 0 });
             } else {
-                this.attach_to_monitor(ext, win, [monitor, workspace], ext.settings.smart_gaps());
+                this.attach_to_monitor(ext, win, [monitor, workspace], ext.settings.get_smart_gaps());
             }
         };
 
@@ -391,7 +391,7 @@ export class AutoTiler {
 
         if (windowless) {
             this.detach_window(ext, win.entity);
-            this.attach_to_monitor(ext, win, [monitor, workspace], ext.settings.smart_gaps());
+            this.attach_to_monitor(ext, win, [monitor, workspace], ext.settings.get_smart_gaps());
         } else if (attach_to) {
             this.place_or_stack(ext, win, attach_to, cursor);
         } else {

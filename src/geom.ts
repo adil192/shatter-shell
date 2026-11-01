@@ -94,7 +94,7 @@ export function nearest_side(ext: Ext, origin: [number, number], rect: Mtk.Recta
 
     if (top_distance < nearest[0]) nearest = [top_distance, Side.TOP];
     if (bottom_distance < nearest[0]) nearest = [bottom_distance, Side.BOTTOM];
-    if (ext.settings.stacking_with_mouse() && center_distance < nearest[0]) nearest = [center_distance, Side.CENTER];
+    if (ext.settings.get_stacking_with_mouse() && center_distance < nearest[0]) nearest = [center_distance, Side.CENTER];
 
     return nearest;
 }

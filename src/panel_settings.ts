@@ -33,7 +33,7 @@ export class Indicator {
         ext.button = this.button = new PanelMenu.Button(0.5, _('Shatter Shell Settings')) as
             PanelMenu.Button & { icon: St.Icon | null };
         this.button.icon = new St.Icon({
-            gicon: ext.settings.tile_by_default() ? ext.button_auto_on_icon : ext.button_auto_off_icon,
+            gicon: ext.settings.get_tile_by_default() ? ext.button_auto_on_icon : ext.button_auto_off_icon,
             style_class: 'system-status-icon',
         });
 
@@ -43,11 +43,11 @@ export class Indicator {
 
         this.toggle_tiled = tiled(ext);
 
-        this.toggle_active = toggle(_('Show active hint'), ext.settings.active_hint(), (toggle) => {
+        this.toggle_active = toggle(_('Show active hint'), ext.settings.get_active_hint(), (toggle) => {
             ext.settings.set_active_hint(toggle.state);
         });
 
-        this.entry_gaps = number_entry(_('Gaps'), ext.settings.gap_inner(), (value) => {
+        this.entry_gaps = number_entry(_('Gaps'), ext.settings.get_gap_inner(), (value) => {
             ext.settings.set_gap_inner(value);
             ext.settings.set_gap_outer(value);
         });
@@ -55,7 +55,7 @@ export class Indicator {
         this.border_radius = number_entry(
             _('Active border radius'),
             {
-                value: ext.settings.active_hint_border_radius(),
+                value: ext.settings.get_active_hint_border_radius(),
                 min: 0,
                 max: 30,
             },
@@ -283,7 +283,7 @@ function color_selector(ext: Ext, menu: PopupMenu) {
     const color_selector_item = new PopupMenuItem(_('Active hint color'));
     const color_button = new St.Button();
     const settings = ext.settings;
-    const hint_color_rgba = settings.hint_color_rgba();
+    const hint_color_rgba = settings.get_hint_color_rgba();
 
     // TODO, find a way to expand the button text, :)
     color_button.label = '           '; // blank for now
@@ -291,7 +291,7 @@ function color_selector(ext: Ext, menu: PopupMenu) {
 
     settings.ext.connect('changed', (_, key) => {
         if (key === 'hint-color-rgba') {
-            const hint_color_rgba = settings.hint_color_rgba();
+            const hint_color_rgba = settings.get_hint_color_rgba();
             color_button.set_style(`background-color: ${hint_color_rgba}; border: 2px solid lightgray; border-radius: 2px`);
         }
     });

@@ -609,7 +609,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     find_monitor_to_retach(width: number, height: number): [MonitorID, Display] {
-        if (!this.settings.workspaces_only_on_primary()) {
+        if (!this.settings.get_workspaces_only_on_primary()) {
             for (const [index, display] of this.displays[1]) {
                 if (display.area.width == width && display.area.height == height) {
                     return [index, display];
@@ -744,13 +744,13 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     load_settings() {
-        this.set_gap_inner(this.settings.gap_inner());
-        this.set_gap_outer(this.settings.gap_outer());
+        this.set_gap_inner(this.settings.get_gap_inner());
+        this.set_gap_outer(this.settings.get_gap_outer());
         this.gap_inner_prev = this.gap_inner;
         this.gap_outer_prev = this.gap_outer;
 
-        this.column_size = this.settings.column_size() * this.dpi;
-        this.row_size = this.settings.row_size() * this.dpi;
+        this.column_size = this.settings.get_column_size() * this.dpi;
+        this.row_size = this.settings.get_row_size() * this.dpi;
     }
 
     monitor_work_area(monitor: MonitorID): Mtk.Rectangle {
@@ -948,7 +948,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     on_tile_detach(win: Entity) {
-        if (!this.settings.untile_reset_windows()) return;
+        if (!this.settings.get_untile_reset_windows()) return;
         this.windows.with(win, (window) => {
             if (window.prev_rect && !window.ignore_detach) {
                 this.register(Events.window_move(this, window, window.prev_rect));
@@ -986,7 +986,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     on_gap_inner() {
-        const current = this.settings.gap_inner();
+        const current = this.settings.get_gap_inner();
         this.set_gap_inner(current);
         const prev_gap = this.gap_inner_prev / 4 / this.dpi;
 
@@ -1036,7 +1036,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     on_gap_outer() {
-        const current = this.settings.gap_outer();
+        const current = this.settings.get_gap_outer();
         this.set_gap_outer(current);
 
         const prev_gap = this.gap_outer_prev / 4 / this.dpi;
@@ -1177,7 +1177,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                     Log.error(`no fork entity found`);
                 }
             }
-        } else if (this.settings.snap_to_grid()) {
+        } else if (this.settings.get_snap_to_grid()) {
             this.tiler.snap(this, win);
         }
     }
@@ -1383,7 +1383,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     /** Handle window minimization notifications */
     on_minimize(win: Window.ShellWindow) {
-        if (this.get_focused_window() == win && this.settings.active_hint()) {
+        if (this.get_focused_window() == win && this.settings.get_active_hint()) {
             if (win.meta.minimized) {
                 win.hide_border();
             } else {
@@ -1472,7 +1472,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     on_smart_gap() {
         if (this.auto_tiler) {
-            const smart_gaps = this.settings.smart_gaps();
+            const smart_gaps = this.settings.get_smart_gaps();
             for (const [entity, [mon]] of this.auto_tiler.forest.toplevel.values()) {
                 const node = this.auto_tiler.forest.forks.get(entity);
                 if (node?.right === null) {
@@ -1688,7 +1688,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         this.connect_object(this.settings.ext, ext => ext.connect('changed', (_s, key) => {
             switch (key) {
                 case 'active-hint':
-                    if (indicator) indicator.toggle_active.setToggleState(this.settings.active_hint());
+                    if (indicator) indicator.toggle_active.setToggleState(this.settings.get_active_hint());
                     this.show_border_on_focused();
                     break;
                 case 'gap-inner':
@@ -1855,7 +1855,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
         // Modes
 
-        if (this.settings.tile_by_default() && !this.auto_tiler) {
+        if (this.settings.get_tile_by_default() && !this.auto_tiler) {
             this.auto_tiler = new auto_tiler.AutoTiler(
                 new Forest.Forest()
                     .connect_on_attach(this.on_tile_attach.bind(this))
@@ -1973,7 +1973,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     toggle_tiling() {
-        if (this.settings.tile_by_default()) {
+        if (this.settings.get_tile_by_default()) {
             this.auto_tile_off();
         } else {
             this.auto_tile_on();
@@ -1993,7 +1993,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
             if (this.button?.icon) this.button.icon.gicon = this.button_auto_off_icon;
 
-            if (this.settings.active_hint()) {
+            if (this.settings.get_active_hint()) {
                 this.show_border_on_focused();
             }
         }
@@ -2048,7 +2048,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     should_ignore_workspace(monitor: MonitorID): boolean {
-        return this.settings.workspaces_only_on_primary() && monitor !== global.display.get_primary_monitor();
+        return this.settings.get_workspaces_only_on_primary() && monitor !== global.display.get_primary_monitor();
     }
 
     unset_grab_op() {
@@ -2129,7 +2129,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
                 f.smart_gapped = false;
                 f.set_area(area.copy());
-                this.auto_tiler.update_toplevel(this, f, f.monitor, this.settings.smart_gaps());
+                this.auto_tiler.update_toplevel(this, f, f.monitor, this.settings.get_smart_gaps());
             }
         };
 
@@ -2454,12 +2454,12 @@ export default class ShatterShellExtension extends Extension {
         }
 
         ext.keybindings.enable(ext.keybindings.global).enable(ext.keybindings.window_focus);
-        if (ext.settings.need_overrides_setup()) {
+        if (ext.settings.get_need_overrides_setup()) {
             const path = get_current_path() + '/shortcuts_dialog/main.js';
             GLib.spawn_command_line_async(`gjs --module "${path}" -- --need-overrides-setup`);
         }
 
-        if (ext.settings.tile_by_default()) {
+        if (ext.settings.get_tile_by_default()) {
             ext.auto_tile_on();
         }
     }

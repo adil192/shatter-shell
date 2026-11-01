@@ -103,7 +103,7 @@ export class ShellWindow {
 
             move_mouse = move_mouse
                 && Main.modalCount === 0
-                && this.ext.settings.mouse_cursor_follows_active_window()
+                && this.ext.settings.get_mouse_cursor_follows_active_window()
                 && !pointer_already_on_window(this.meta)
                 && pointer_in_work_area();
             if (move_mouse) {
@@ -168,7 +168,7 @@ export class ShellWindow {
         const overlay_alpha_uint8 = 77;
 
         const settings = this.ext.settings;
-        const hint_color_rgba = settings.hint_color_rgba();
+        const hint_color_rgba = settings.get_hint_color_rgba();
         let [valid, overlay_color] = Cogl.Color.from_string(hint_color_rgba);
 
         if (!valid || utils.is_dark(overlay_color)) {
@@ -204,7 +204,7 @@ export class ShellWindow {
     /** Window is maximized, 0 gapped, or smart gapped */
     private is_max_screen(): boolean {
         return this.is_maximized()
-            || this.ext.settings.gap_inner() === 0
+            || this.ext.settings.get_gap_inner() === 0
             || this.smart_gapped;
     }
 
@@ -249,8 +249,8 @@ export class ShellWindow {
         if (min_known) {
             // Some windows have a very big minimum size, leaving insufficient space for neighbouring windows.
             // Exclude these oversized windows. Some examples are Steam and Winboat at certain scalings.
-            const oversized_window_width = this.ext.settings.oversized_window_width();
-            const oversized_window_height = this.ext.settings.oversized_window_height();
+            const oversized_window_width = this.ext.settings.get_oversized_window_width();
+            const oversized_window_height = this.ext.settings.get_oversized_window_height();
             const is_oversized = (oversized_window_width > 0 && min_width > oversized_window_width)
                 || (oversized_window_height > 0 && min_height > oversized_window_height);
             if (is_oversized) return false;
@@ -283,7 +283,7 @@ export class ShellWindow {
             return;
         }
 
-        const max_width = this.ext.settings.max_window_width();
+        const max_width = this.ext.settings.get_max_window_width();
         if (max_width > 0 && rect.width > max_width) {
             rect.x += (rect.width - max_width) / 2;
             rect.width = max_width;
@@ -357,7 +357,7 @@ export class ShellWindow {
 
         this.restack();
         this.update_border_style();
-        if (this.ext.settings.active_hint()) {
+        if (this.ext.settings.get_active_hint()) {
             const border = this.border;
 
             const permitted = () => {
@@ -554,8 +554,8 @@ export class ShellWindow {
 
     update_border_style() {
         const { settings } = this.ext;
-        const hint_color_rgba = settings.hint_color_rgba();
-        const radius_value = settings.active_hint_border_radius();
+        const hint_color_rgba = settings.get_hint_color_rgba();
+        const radius_value = settings.get_active_hint_border_radius();
         if (this.border) {
             this.border.set_style(`border-color: ${hint_color_rgba}; border-radius: ${radius_value}px;`);
         }
@@ -610,7 +610,7 @@ function place_pointer_on(ext: Ext, win: Meta.Window) {
     let x = rect.x;
     let y = rect.y;
 
-    const key = Object.keys(focus.FocusPosition)[ext.settings.mouse_cursor_focus_location()];
+    const key = Object.keys(focus.FocusPosition)[ext.settings.get_mouse_cursor_focus_location()];
     const pointer_position_ = focus.FocusPosition[key as keyof typeof focus.FocusPosition];
 
     switch (pointer_position_) {

@@ -25,7 +25,7 @@ export default class ShatterShellPreferences extends ExtensionPreferences {
                 const row = new Adw.SwitchRow({
                     title: 'Allow stacking with mouse',
                     subtitle: 'Drag a window over another to stack them',
-                    active: ext.stacking_with_mouse(),
+                    active: ext.get_stacking_with_mouse(),
                 });
                 row.connect('notify::active', (row) => {
                     ext.set_stacking_with_mouse(row.active);
@@ -41,7 +41,7 @@ export default class ShatterShellPreferences extends ExtensionPreferences {
                     adjustment: new Gtk.Adjustment({
                         lower: 0,
                         upper: 9999,
-                        value: ext.max_window_width(),
+                        value: ext.get_max_window_width(),
                         step_increment: 1,
                         page_increment: 100,
                     }),
@@ -61,7 +61,7 @@ export default class ShatterShellPreferences extends ExtensionPreferences {
                 const row = new Adw.SwitchRow({
                     title: 'Snap floating windows to grid',
                     subtitle: 'Move windows in discrete steps',
-                    active: ext.snap_to_grid(),
+                    active: ext.get_snap_to_grid(),
                 });
                 row.connect('notify::active', (row) => {
                     ext.set_snap_to_grid(row.active);
@@ -74,7 +74,7 @@ export default class ShatterShellPreferences extends ExtensionPreferences {
                 const row = new Adw.SwitchRow({
                     title: 'Reset untiled window\'s position',
                     subtitle: 'Restore previous position if tiling is disabled',
-                    active: ext.untile_reset_windows(),
+                    active: ext.get_untile_reset_windows(),
                 });
                 row.connect('notify::active', (row) => {
                     ext.set_untile_reset_windows(row.active);
@@ -88,7 +88,7 @@ export default class ShatterShellPreferences extends ExtensionPreferences {
                     title: 'Log level',
                     subtitle: 'For developers',
                     model: Gtk.StringList.new(Object.values(LogLevel).filter(option => typeof option == 'string')),
-                    selected: ext.log_level(),
+                    selected: ext.get_log_level(),
                 });
                 row.connect('notify::selected', (row) => {
                     ext.set_log_level(row.selected);
@@ -109,7 +109,7 @@ export default class ShatterShellPreferences extends ExtensionPreferences {
                     adjustment: new Gtk.Adjustment({
                         lower: 0,
                         upper: 99,
-                        value: ext.gap_inner(),
+                        value: ext.get_gap_inner(),
                         step_increment: 1,
                         page_increment: 4,
                     }),
@@ -132,7 +132,7 @@ export default class ShatterShellPreferences extends ExtensionPreferences {
                     adjustment: new Gtk.Adjustment({
                         lower: 0,
                         upper: 99,
-                        value: ext.gap_outer(),
+                        value: ext.get_gap_outer(),
                         step_increment: 1,
                         page_increment: 4,
                     }),
@@ -152,7 +152,7 @@ export default class ShatterShellPreferences extends ExtensionPreferences {
                 const row = new Adw.SwitchRow({
                     title: 'Smart gaps',
                     subtitle: 'Remove outer gap when only one window',
-                    active: ext.smart_gaps(),
+                    active: ext.get_smart_gaps(),
                 });
                 row.connect('notify::active', (row) => {
                     ext.set_smart_gaps(row.active);
@@ -170,7 +170,7 @@ export default class ShatterShellPreferences extends ExtensionPreferences {
                 const row = new Adw.SwitchRow({
                     title: 'Mouse cursor follows active window',
                     subtitle: 'Automatically moves your mouse when switching windows',
-                    active: ext.mouse_cursor_follows_active_window(),
+                    active: ext.get_mouse_cursor_follows_active_window(),
                 });
                 row.connect('notify::active', (row) => {
                     ext.set_mouse_cursor_follows_active_window(row.active);
@@ -184,7 +184,7 @@ export default class ShatterShellPreferences extends ExtensionPreferences {
                     title: 'Mouse cursor focus position',
                     subtitle: 'Controls where the mouse moves if the above is enabled',
                     model: Gtk.StringList.new(Object.values(focus.FocusPosition)),
-                    selected: ext.mouse_cursor_focus_location(),
+                    selected: ext.get_mouse_cursor_focus_location(),
                 });
                 row.connect('notify::selected', (row) => {
                     ext.set_mouse_cursor_focus_location(row.selected);
@@ -208,7 +208,7 @@ export default class ShatterShellPreferences extends ExtensionPreferences {
                     adjustment: new Gtk.Adjustment({
                         lower: 0,
                         upper: 9999,
-                        value: ext.oversized_window_width(),
+                        value: ext.get_oversized_window_width(),
                         step_increment: 1,
                         page_increment: 100,
                     }),
@@ -231,7 +231,7 @@ export default class ShatterShellPreferences extends ExtensionPreferences {
                     adjustment: new Gtk.Adjustment({
                         lower: 0,
                         upper: 9999,
-                        value: ext.oversized_window_height(),
+                        value: ext.get_oversized_window_height(),
                         step_increment: 1,
                         page_increment: 100,
                     }),

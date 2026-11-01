@@ -29,216 +29,94 @@ function gio_settings_from_schema(schema: string): Gio.Settings {
     return new Gio.Settings({ settings_schema: schemaObj });
 }
 
-const ACTIVE_HINT = 'active-hint';
-const ACTIVE_HINT_BORDER_RADIUS = 'active-hint-border-radius';
-const STACKING_WITH_MOUSE = 'stacking-with-mouse';
-const COLUMN_SIZE = 'column-size';
-const EDGE_TILING = 'edge-tiling';
-const GAP_INNER = 'gap-inner';
-const GAP_OUTER = 'gap-outer';
-const ROW_SIZE = 'row-size';
-const SMART_GAPS = 'smart-gaps';
-const SNAP_TO_GRID = 'snap-to-grid';
-const TILE_BY_DEFAULT = 'tile-by-default';
-const UNTILE_RESET_WINDOWS = 'untile-reset-windows';
-const HINT_COLOR_RGBA = 'hint-color-rgba';
 export const DEFAULT_HINT_COLOR = 'rgba(53, 132, 228, 1)'; // adwaita blue
-const LOG_LEVEL = 'log-level';
-const MOUSE_CURSOR_FOLLOWS_ACTIVE_WINDOW = 'mouse-cursor-follows-active-window';
-const MOUSE_CURSOR_FOCUS_LOCATION = 'mouse-cursor-focus-location';
-const MAX_WINDOW_WIDTH = 'max-window-width';
-const OVERSIZED_WINDOW_WIDTH = 'oversized-window-width';
-const OVERSIZED_WINDOW_HEIGHT = 'oversized-window-height';
-const NEED_OVERRIDES_SETUP = 'need-overrides-setup';
 
 export const extSettings = gio_settings_from_schema('org.gnome.shell.extensions.shatter-shell');
 
 export class ExtensionSettings {
-    ext = extSettings;
-    int = new Gio.Settings({ schema_id: 'org.gnome.desktop.interface' });
-    mutter = new Gio.Settings({ schema_id: 'org.gnome.mutter' });
-    shell = maybe_gio_settings('org.gnome.shell.extensions.user-theme');
+    readonly ext = extSettings;
+    readonly int = new Gio.Settings({ schema_id: 'org.gnome.desktop.interface' });
+    readonly mutter = new Gio.Settings({ schema_id: 'org.gnome.mutter' });
+    readonly shell = maybe_gio_settings('org.gnome.shell.extensions.user-theme');
 
-    // Getters
+    get_active_hint() { return this.ext.get_boolean('active-hint'); }
+    set_active_hint(value: boolean) { this.ext.set_boolean('active-hint', value); }
 
-    active_hint(): boolean {
-        return this.ext.get_boolean(ACTIVE_HINT);
-    }
+    get_active_hint_border_radius() { return this.ext.get_uint('active-hint-border-radius'); }
+    set_active_hint_border_radius(value: number) { this.ext.set_uint('active-hint-border-radius', value); }
 
-    active_hint_border_radius(): number {
-        return this.ext.get_uint(ACTIVE_HINT_BORDER_RADIUS);
-    }
+    get_stacking_with_mouse(): boolean { return this.ext.get_boolean('stacking-with-mouse'); }
+    set_stacking_with_mouse(value: boolean) { this.ext.set_boolean('stacking-with-mouse', value); }
 
-    stacking_with_mouse(): boolean {
-        return this.ext.get_boolean(STACKING_WITH_MOUSE);
-    }
+    get_column_size() { return this.ext.get_uint('column-size'); }
+    set_column_size(value: number) { this.ext.set_uint('column-size', value); }
 
-    column_size(): number {
-        return this.ext.get_uint(COLUMN_SIZE);
-    }
+    get_gap_inner() { return this.ext.get_uint('gap-inner'); }
+    set_gap_inner(value: number) { this.ext.set_uint('gap-inner', value); }
 
-    dynamic_workspaces(): boolean {
-        return this.mutter.get_boolean('dynamic-workspaces');
-    }
+    get_gap_outer() { return this.ext.get_uint('gap-outer'); }
+    set_gap_outer(value: number) { this.ext.set_uint('gap-outer', value); }
 
-    gap_inner(): number {
-        return this.ext.get_uint(GAP_INNER);
-    }
+    get_hint_color_rgba() { return this.ext.get_string('hint-color-rgba'); }
+    set_hint_color_rgba(value: string) { this.ext.set_string('hint-color-rgba', value); }
 
-    gap_outer(): number {
-        return this.ext.get_uint(GAP_OUTER);
-    }
+    get_row_size() { return this.ext.get_uint('row-size'); }
+    set_row_size(value: number) { this.ext.set_uint('row-size', value); }
 
-    hint_color_rgba(): string {
-        return this.ext.get_string(HINT_COLOR_RGBA);
-    }
+    get_smart_gaps() { return this.ext.get_boolean('smart-gaps'); }
+    set_smart_gaps(value: boolean) { this.ext.set_boolean('smart-gaps', value); }
 
-    theme(): string {
+    get_snap_to_grid() { return this.ext.get_boolean('snap-to-grid'); }
+    set_snap_to_grid(value: boolean) { this.ext.set_boolean('snap-to-grid', value); }
+
+    get_tile_by_default() { return this.ext.get_boolean('tile-by-default'); }
+    set_tile_by_default(value: boolean) { this.ext.set_boolean('tile-by-default', value); }
+
+    get_untile_reset_windows() { return this.ext.get_boolean('untile-reset-windows'); }
+    set_untile_reset_windows(value: boolean) { this.ext.set_boolean('untile-reset-windows', value); }
+
+    get_log_level(): LogLevel { return this.ext.get_uint('log-level'); }
+    set_log_level(value: LogLevel) { this.ext.set_uint('log-level', value); }
+
+    get_mouse_cursor_follows_active_window() { return this.ext.get_boolean('mouse-cursor-follows-active-window'); }
+    set_mouse_cursor_follows_active_window(value: boolean) { this.ext.set_boolean('mouse-cursor-follows-active-window', value); }
+
+    get_mouse_cursor_focus_location() { return this.ext.get_uint('mouse-cursor-focus-location'); }
+    set_mouse_cursor_focus_location(value: number) { this.ext.set_uint('mouse-cursor-focus-location', value); }
+
+    get_max_window_width() { return this.ext.get_uint('max-window-width'); }
+    set_max_window_width(value: number) { this.ext.set_uint('max-window-width', value); }
+
+    get_oversized_window_width() { return this.ext.get_uint('oversized-window-width'); }
+    set_oversized_window_width(value: number) { this.ext.set_uint('oversized-window-width', value); }
+
+    get_oversized_window_height() { return this.ext.get_uint('oversized-window-height'); }
+    set_oversized_window_height(value: number) { this.ext.set_uint('oversized-window-height', value); }
+
+    get_need_overrides_setup() { return this.ext.get_boolean('need-overrides-setup'); }
+    set_need_overrides_setup(value: boolean) { this.ext.set_boolean('need-overrides-setup', value); }
+
+    // External
+
+    // TODO: Use real dark mode and high contrast settings rather than the gtk theme
+    theme() {
         return this.shell
             ? this.shell.get_string('name')
             : this.int.get_string('gtk-theme');
     }
 
-    is_dark(): boolean {
+    is_dark() {
         const theme = this.theme().toLowerCase();
         return DARK.some(dark => theme.includes(dark));
     }
 
-    is_high_contrast(): boolean {
+    is_high_contrast() {
         return this.theme().toLowerCase() === 'highcontrast';
     }
 
-    row_size(): number {
-        return this.ext.get_uint(ROW_SIZE);
-    }
+    get_dynamic_workspaces() { return this.mutter.get_boolean('dynamic-workspaces'); }
 
-    smart_gaps(): boolean {
-        return this.ext.get_boolean(SMART_GAPS);
-    }
+    get_workspaces_only_on_primary() { return this.mutter.get_boolean('workspaces-only-on-primary'); }
 
-    snap_to_grid(): boolean {
-        return this.ext.get_boolean(SNAP_TO_GRID);
-    }
-
-    tile_by_default(): boolean {
-        return this.ext.get_boolean(TILE_BY_DEFAULT);
-    }
-
-    untile_reset_windows(): boolean {
-        return this.ext.get_boolean(UNTILE_RESET_WINDOWS);
-    }
-
-    workspaces_only_on_primary(): boolean {
-        return this.mutter.get_boolean('workspaces-only-on-primary');
-    }
-
-    log_level(): LogLevel {
-        return this.ext.get_uint(LOG_LEVEL);
-    }
-
-    mouse_cursor_follows_active_window(): boolean {
-        return this.ext.get_boolean(MOUSE_CURSOR_FOLLOWS_ACTIVE_WINDOW);
-    }
-
-    mouse_cursor_focus_location(): number {
-        return this.ext.get_uint(MOUSE_CURSOR_FOCUS_LOCATION);
-    }
-
-    max_window_width(): number {
-        return this.ext.get_uint(MAX_WINDOW_WIDTH);
-    }
-
-    oversized_window_width(): number {
-        return this.ext.get_uint(OVERSIZED_WINDOW_WIDTH);
-    }
-
-    oversized_window_height(): number {
-        return this.ext.get_uint(OVERSIZED_WINDOW_HEIGHT);
-    }
-
-    need_overrides_setup(): boolean {
-        return this.ext.get_boolean(NEED_OVERRIDES_SETUP);
-    }
-
-    // Setters
-
-    set_active_hint(set: boolean) {
-        this.ext.set_boolean(ACTIVE_HINT, set);
-    }
-
-    set_active_hint_border_radius(set: number) {
-        this.ext.set_uint(ACTIVE_HINT_BORDER_RADIUS, set);
-    }
-
-    set_stacking_with_mouse(set: boolean) {
-        this.ext.set_boolean(STACKING_WITH_MOUSE, set);
-    }
-
-    set_column_size(size: number) {
-        this.ext.set_uint(COLUMN_SIZE, size);
-    }
-
-    set_edge_tiling(enable: boolean) {
-        this.mutter?.set_boolean(EDGE_TILING, enable);
-    }
-
-    set_gap_inner(gap: number) {
-        this.ext.set_uint(GAP_INNER, gap);
-    }
-
-    set_gap_outer(gap: number) {
-        this.ext.set_uint(GAP_OUTER, gap);
-    }
-
-    set_hint_color_rgba(color: string) {
-        this.ext.set_string(HINT_COLOR_RGBA, color);
-    }
-
-    set_row_size(size: number) {
-        this.ext.set_uint(ROW_SIZE, size);
-    }
-
-    set_smart_gaps(set: boolean) {
-        this.ext.set_boolean(SMART_GAPS, set);
-    }
-
-    set_snap_to_grid(set: boolean) {
-        this.ext.set_boolean(SNAP_TO_GRID, set);
-    }
-
-    set_tile_by_default(set: boolean) {
-        this.ext.set_boolean(TILE_BY_DEFAULT, set);
-    }
-
-    set_untile_reset_windows(set: boolean) {
-        this.ext.set_boolean(UNTILE_RESET_WINDOWS, set);
-    }
-
-    set_log_level(set: LogLevel) {
-        this.ext.set_uint(LOG_LEVEL, set);
-    }
-
-    set_mouse_cursor_follows_active_window(set: boolean) {
-        this.ext.set_boolean(MOUSE_CURSOR_FOLLOWS_ACTIVE_WINDOW, set);
-    }
-
-    set_mouse_cursor_focus_location(set: number) {
-        this.ext.set_uint(MOUSE_CURSOR_FOCUS_LOCATION, set);
-    }
-
-    set_max_window_width(set: number) {
-        this.ext.set_uint(MAX_WINDOW_WIDTH, set);
-    }
-
-    set_oversized_window_width(set: number) {
-        this.ext.set_uint(OVERSIZED_WINDOW_WIDTH, set);
-    }
-
-    set_oversized_window_height(set: number) {
-        this.ext.set_uint(OVERSIZED_WINDOW_HEIGHT, set);
-    }
-
-    set_need_overrides_setup(set: boolean) {
-        this.ext.set_boolean(NEED_OVERRIDES_SETUP, set);
-    }
+    set_edge_tiling(value: boolean) { this.mutter.set_boolean('edge-tiling', value); }
 }
