@@ -241,15 +241,12 @@ export class Ext extends Ecs.System<ExtEvent> {
 
         this.conf.reload_sync();
 
-        this.settings.int.connect('changed::gtk-theme', () => {
+        this.settings.desktop_interface.connect('changed::color-scheme', () => {
             this.register(Events.global(GlobalEvent.GtkThemeChanged));
         });
-
-        if (this.settings.shell) {
-            this.settings.shell.connect('changed::name', () => {
-                this.register(Events.global(GlobalEvent.GtkShellChanged));
-            });
-        }
+        this.settings.a11y_interface.connect('changed::high-contrast', () => {
+            this.register(Events.global(GlobalEvent.GtkThemeChanged));
+        });
 
         this.dbus.FocusUp = () => this.focus_up();
         this.dbus.FocusDown = () => this.focus_down();
@@ -1348,9 +1345,9 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     reload_theme() {
-        this.current_style = this.settings.is_dark()
+        this.current_style = this.settings.get_is_dark()
             ? Style.Dark
-            : this.settings.is_high_contrast()
+            : this.settings.get_is_high_contrast()
                 ? Style.HighContrast
                 : Style.Light;
     }

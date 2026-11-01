@@ -1,16 +1,7 @@
+import GDesktopEnums from 'gi://GDesktopEnums';
 import Gio from 'gi://Gio';
 import { get_current_path } from './paths.js';
 import { type LogLevel } from './log_level.js';
-
-const DARK = ['dark', 'adapta', 'plata', 'dracula'];
-
-function maybe_gio_settings(schema_id: string): Gio.Settings | null {
-    try {
-        return new Gio.Settings({ schema_id });
-    } catch {
-        return null;
-    }
-}
 
 function gio_settings_from_schema(schema: string): Gio.Settings {
     const GioSSS = Gio.SettingsSchemaSource;
@@ -35,9 +26,9 @@ export const extSettings = gio_settings_from_schema('org.gnome.shell.extensions.
 
 export class ExtensionSettings {
     readonly ext = extSettings;
-    readonly int = new Gio.Settings({ schema_id: 'org.gnome.desktop.interface' });
+    readonly desktop_interface = new Gio.Settings({ schema_id: 'org.gnome.desktop.interface' });
+    readonly a11y_interface = new Gio.Settings({ schema_id: 'org.gnome.desktop.a11y.interface' });
     readonly mutter = new Gio.Settings({ schema_id: 'org.gnome.mutter' });
-    readonly shell = maybe_gio_settings('org.gnome.shell.extensions.user-theme');
 
     get_active_hint() { return this.ext.get_boolean('active-hint'); }
     set_active_hint(value: boolean) { this.ext.set_boolean('active-hint', value); }
@@ -98,21 +89,12 @@ export class ExtensionSettings {
 
     // External
 
-    // TODO: Use real dark mode and high contrast settings rather than the gtk theme
-    theme() {
-        return this.shell
-            ? this.shell.get_string('name')
-            : this.int.get_string('gtk-theme');
+    get_is_dark() {
+        const colorScheme: GDesktopEnums.ColorScheme = this.desktop_interface.get_enum('color-scheme');
+        return colorScheme == GDesktopEnums.ColorScheme.PREFER_DARK;
     }
 
-    is_dark() {
-        const theme = this.theme().toLowerCase();
-        return DARK.some(dark => theme.includes(dark));
-    }
-
-    is_high_contrast() {
-        return this.theme().toLowerCase() === 'highcontrast';
-    }
+    get_is_high_contrast() { return this.a11y_interface.get_boolean('high-contrast'); }
 
     get_dynamic_workspaces() { return this.mutter.get_boolean('dynamic-workspaces'); }
 
