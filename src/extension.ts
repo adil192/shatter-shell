@@ -18,7 +18,6 @@ import * as movement from './movement.js';
 import * as stack from './stack.js';
 import * as add_exception from './dialog_add_exception.js';
 import * as exec from './executor.js';
-import * as dbus_service from './dbus_service.js';
 import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';
 import type { Entity } from './ecs.js';
 import type { ExtEvent } from './events.js';
@@ -108,9 +107,6 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     /** An overlay which shows a preview of where a window will be moved */
     overlay = new St.BoxLayout({ style_class: 'shatter-shell-overlay', visible: false });
-
-    /** DBus */
-    dbus: dbus_service.Service = new dbus_service.Service();
 
     // State
 
@@ -252,37 +248,6 @@ export class Ext extends Ecs.System<ExtEvent> {
         this.settings.a11y_interface.connect('changed::high-contrast', () => {
             this.register(Events.global(GlobalEvent.GtkThemeChanged));
         });
-
-        this.dbus.FocusUp = () => this.focus_up();
-        this.dbus.FocusDown = () => this.focus_down();
-        this.dbus.FocusLeft = () => this.focus_left();
-        this.dbus.FocusRight = () => this.focus_right();
-
-        this.dbus.WindowFocus = (entity: Entity) => {
-            const window = this.windows.get(entity);
-            if (window) {
-                window.request_activate();
-                this.on_focused(window);
-            }
-        };
-
-        this.dbus.WindowList = () => {
-            const wins: Array<[Entity, string, string, string]> = [];
-
-            for (const window of this.tab_list(Meta.TabList.NORMAL, null)) {
-                const string = window.window_app.get_id();
-                wins.push([window.entity, window.title(), window.name(), string ? string : '']);
-            }
-
-            return wins;
-        };
-
-        this.dbus.WindowQuit = (entity: Entity) => {
-            const window = this.windows.get(entity);
-            if (window) {
-                window.meta.delete(global.get_current_time());
-            }
-        };
     }
 
     // System interface
