@@ -39,3 +39,12 @@ jobs:
 
       - name: Run lints
         run: make CUSTOM_ESLINT_ARGS="--cache-strategy content" lint
+
+      - name: Shexli lints
+        uses: stuarthayhurst/shexli-github-action@v1
+        with:
+          path: _build/
+          # EGO-P-007: Unnecessary files: False positive on our dialogs
+          # EGO-P-005: Bundled binaries: False positive on schema xml
+          # EGO-M-004: Invalid shell version: Shexli hasn't updated for GNOME 51 yet
+          ignored-checks: 'EGO-P-007 EGO-P-005 EGO-M-004'
