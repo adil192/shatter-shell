@@ -39,8 +39,7 @@ interface GlobalEventMessage {
 }
 
 export enum GlobalEvent {
-    GtkShellChanged,
-    GtkThemeChanged,
+    GnomeThemeChanged,
     MonitorsChanged,
     OverviewShown,
     OverviewHidden,

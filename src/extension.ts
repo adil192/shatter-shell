@@ -236,9 +236,6 @@ export class Ext extends Ecs.System<ExtEvent> {
         this.extension = extension;
 
         this.load_settings();
-        this.reload_theme();
-
-        this.register_fn(() => load_theme(this.current_style));
 
         this.conf.reload_sync();
     }
@@ -351,12 +348,8 @@ export class Ext extends Ecs.System<ExtEvent> {
             /** Stateless global events */
             case 'global':
                 switch (event.event) {
-                    case GlobalEvent.GtkShellChanged:
-                        this.on_gtk_shell_changed();
-                        break;
-
-                    case GlobalEvent.GtkThemeChanged:
-                        this.on_gtk_theme_change();
+                    case GlobalEvent.GnomeThemeChanged:
+                        this.on_gnome_theme_changed();
                         break;
 
                     case GlobalEvent.MonitorsChanged:
@@ -1295,12 +1288,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         }
     }
 
-    on_gtk_shell_changed() {
-        this.reload_theme();
-        load_theme(this.current_style);
-    }
-
-    on_gtk_theme_change() {
+    on_gnome_theme_changed() {
         this.reload_theme();
         load_theme(this.current_style);
     }
@@ -1605,10 +1593,10 @@ export class Ext extends Ecs.System<ExtEvent> {
     /** Begin listening for signals from windows, and add any pre-existing windows. */
     signals_attach() {
         this.connect_object(this.settings.desktop_interface, settings => settings.connect('changed::color-scheme', () => {
-            this.register(Events.global(GlobalEvent.GtkThemeChanged));
+            this.register(Events.global(GlobalEvent.GnomeThemeChanged));
         }));
         this.connect_object(this.settings.a11y_interface, settings => settings.connect('changed::high-contrast', () => {
-            this.register(Events.global(GlobalEvent.GtkThemeChanged));
+            this.register(Events.global(GlobalEvent.GnomeThemeChanged));
         }));
 
         this.tiler.queue.start(100, (movement) => {
@@ -2399,6 +2387,9 @@ export default class ShatterShellExtension extends Extension {
         } else {
             ext.extension = this;
         }
+
+        ext.reload_theme();
+        ext.register_fn(() => load_theme(ext!.current_style));
 
         if (ext.was_locked) {
             ext.was_locked = false;
