@@ -437,7 +437,7 @@ export class Ext extends Ecs.System<ExtEvent> {
             this.disconnect_tilable_window_signals(window);
             window.bind_window_events();
             window.was_tilable = false;
-            window.reconsider_tiling();
+            window.reconsider_tiling(false);
         }
     }
 
@@ -1442,20 +1442,20 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     on_window_create(window: Meta.Window, actor: Meta.WindowActor) {
         const win = this.get_window(window);
-        if (win) {
-            const entity = win.entity;
-            actor.connect('destroy', () => {
-                if (win.border) {
-                    win.border.destroy();
-                    win.border = null;
-                }
+        if (!win) return;
 
-                this.on_destroy(entity);
+        actor.connect('destroy', () => {
+            if (win.border) {
+                win.border.destroy();
+                win.border = null;
+            }
 
-                return false;
-            });
-            win.reconsider_tiling();
-        }
+            this.on_destroy(win.entity);
+
+            return false;
+        });
+
+        win.reconsider_tiling(false);
     }
 
     on_workspace_added(_number: number) {

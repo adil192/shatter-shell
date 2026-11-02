@@ -560,7 +560,7 @@ export class ShellWindow {
     }
 
     was_tilable: boolean = false;
-    reconsider_tiling() {
+    reconsider_tiling(update_auto_tiler: boolean = true) {
         const is_tilable = this.is_tilable();
         if (this.was_tilable == is_tilable) return;
         this.was_tilable = is_tilable;
@@ -568,7 +568,7 @@ export class ShellWindow {
         if (is_tilable) {
             this.ext.connect_tilable_window_signals(this);
             if (!this.meta.minimized) {
-                this.ext.auto_tiler?.auto_tile(this.ext, this, this.ext.init);
+                if (update_auto_tiler) this.ext.auto_tiler?.auto_tile(this.ext, this, this.ext.init);
             }
         } else {
             this.ext.disconnect_tilable_window_signals(this);
@@ -576,7 +576,7 @@ export class ShellWindow {
                 // Retain tiled position for when the window is unmaximized.
             } else {
                 // Untile window
-                this.ext.auto_tiler?.detach_window(this.ext, this.entity);
+                if (update_auto_tiler) this.ext.auto_tiler?.detach_window(this.ext, this.entity);
             }
         }
     }
