@@ -1,4 +1,4 @@
-#!/usr/bin/gjs --module
+#!@GJS@ -m
 
 import GLib from 'gi://GLib';
 import GObject from 'gi://GObject';

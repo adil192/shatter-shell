@@ -1,4 +1,4 @@
-#!/usr/bin/gjs --module
+#!@GJS@ -m
 
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
