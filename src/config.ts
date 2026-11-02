@@ -175,7 +175,7 @@ export class Config {
             const file = Config.gio_file();
             if (!file.ok) return file;
 
-            const [buffer] = await file.value.load_contents_async(null);
+            const buffer = await _read_file(file.value);
 
             const decoder = new TextDecoder('utf-8');
             const json = decoder.decode(buffer);
@@ -247,4 +247,26 @@ function set_to_json<T>(_key: string, value: T | Set<T>): T | T[] {
 function swap_remove<T>(array: Array<T>, index: number): T | undefined {
     array[index] = array[array.length - 1]!;
     return array.pop();
+}
+
+/**
+ * Promisified version of {@link Gio.File.load_contents_async}.
+ *
+ * GLib normally promisifies this itself, but that isn't available from a gjs dialog module.
+ */
+function _read_file(file: Gio.File): Promise<Uint8Array> {
+    return new Promise<Uint8Array>((resolve, reject) => {
+        try {
+            file.load_contents_async(null, (_, res) => {
+                try {
+                    const [, buffer] = file.load_contents_finish(res);
+                    resolve(buffer);
+                } catch (e) {
+                    reject(e);
+                }
+            });
+        } catch (e) {
+            reject(e);
+        }
+    });
 }
