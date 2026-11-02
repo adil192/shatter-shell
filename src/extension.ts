@@ -1863,6 +1863,18 @@ export class Ext extends Ecs.System<ExtEvent> {
         }
         this.timeouts.clear();
 
+        this.unset_grab_op();
+
+        if (this.displays_updating !== null) {
+            GLib.source_remove(this.displays_updating);
+            this.displays_updating = null;
+        }
+
+        if (this.workareas_update !== null) {
+            GLib.source_remove(this.workareas_update);
+            this.workareas_update = null;
+        }
+
         this.tiler.queue.stop();
     }
 
