@@ -75,8 +75,6 @@ export class ShellWindow {
 
         this.known_workspace = this.workspace_id();
 
-        this.was_tilable = this.is_tilable();
-
         this.bind_window_events();
         this.bind_hint_events();
 
@@ -561,7 +559,7 @@ export class ShellWindow {
         }
     }
 
-    was_tilable: boolean;
+    was_tilable: boolean = false;
     reconsider_tiling() {
         const is_tilable = this.is_tilable();
         if (this.was_tilable == is_tilable) return;

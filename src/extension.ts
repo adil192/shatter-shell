@@ -436,10 +436,8 @@ export class Ext extends Ecs.System<ExtEvent> {
         for (const [, window] of this.windows.iter()) {
             this.disconnect_tilable_window_signals(window);
             window.bind_window_events();
-            if (window.is_tilable()) {
-                window.was_tilable = true;
-                this.connect_tilable_window_signals(window);
-            }
+            window.was_tilable = false;
+            window.reconsider_tiling();
         }
     }
 
@@ -1456,10 +1454,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
                 return false;
             });
-
-            if (win.is_tilable()) {
-                this.connect_tilable_window_signals(win);
-            }
+            win.reconsider_tiling();
         }
     }
 

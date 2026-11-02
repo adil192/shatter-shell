@@ -497,8 +497,7 @@ export class AutoTiler {
         const focused = ext.get_focused_window();
         if (!focused) return;
 
-        const was_tilable = focused.is_tilable();
-        if (was_tilable) {
+        if (focused.was_tilable) {
             ext.delete_tag(focused.entity, Tags.ForceTile);
             const fork_entity = this.attached.get(focused.entity);
             if (fork_entity) {
@@ -510,7 +509,6 @@ export class AutoTiler {
             ext.add_tag(focused.entity, Tags.ForceTile);
             this.auto_tile(ext, focused, false);
         }
-        focused.was_tilable = was_tilable;
         focused.reconsider_tiling();
 
         ext.register_fn(() => focused.request_activate(true));
