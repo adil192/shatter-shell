@@ -237,17 +237,15 @@ function println(message: string) {
 }
 
 /** Initialize GTK and start the application */
-function main() {
+async function main() {
+    const config = new Config.Config();
+    await config.reload();
+
     const application = new Adw.Application({
         application_id: WM_CLASS_ID,
     });
-    // eslint-disable-next-line @typescript-eslint/no-misused-promises
-    application.connect('activate', async () => {
-        const config = new Config.Config();
-        await config.reload();
-        new App(application, config);
-    });
-    return application.run(null);
+    application.connect('activate', () => new App(application, config));
+    return application.runAsync([]);
 }
 
-main();
+await main();
