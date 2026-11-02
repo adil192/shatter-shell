@@ -54,7 +54,7 @@ export class OnceExecutor<X, T extends Iterable<X, void>> {
 
         this.#source = GLib.timeout_add(GLib.PRIORITY_DEFAULT, delay, () => {
             const next = iterator.next().value ?? undefined;
-            if (next == undefined) {
+            if (typeof next === 'undefined') {
                 if (then) then();
                 return GLib.SOURCE_REMOVE;
             } else {
@@ -97,7 +97,7 @@ export class ChannelExecutor<X> {
 
         this.#source = GLib.timeout_add(GLib.PRIORITY_DEFAULT, delay, () => {
             const next = this.#channel.shift();
-            if (next == undefined) {
+            if (typeof next === 'undefined') {
                 return GLib.SOURCE_CONTINUE;
             } else {
                 return apply(next);
