@@ -765,6 +765,8 @@ export class Ext extends Ecs.System<ExtEvent> {
 
         window.destroying = true;
 
+        window.destroy_border();
+
         // Disconnect all signals on this window
         this.window_signals.take_with(win, (signals) => {
             for (const signal of signals) {
@@ -910,6 +912,12 @@ export class Ext extends Ecs.System<ExtEvent> {
     hide_all_borders() {
         for (const win of this.windows.values()) {
             win.hide_border();
+        }
+    }
+
+    destroy_all_borders() {
+        for (const win of this.windows.values()) {
+            win.destroy_border();
         }
     }
 
@@ -1424,16 +1432,8 @@ export class Ext extends Ecs.System<ExtEvent> {
         if (!win) return;
 
         this.connect_object(actor, actor => actor.connect('destroy', () => {
-            if (win.border) {
-                win.border.destroy();
-                win.border = null;
-            }
-
             this.on_destroy(win.entity);
-
             this.signals.delete(actor);
-
-            return false;
         }));
 
         win.reconsider_tiling(false);
@@ -2446,7 +2446,7 @@ export default class ShatterShellExtension extends Extension {
             this.ext.injections_remove();
             this.ext.signals_remove();
             this.ext.exit_modes();
-            this.ext.hide_all_borders();
+            this.ext.destroy_all_borders();
 
             layoutManager.removeChrome(this.ext.overlay);
 
