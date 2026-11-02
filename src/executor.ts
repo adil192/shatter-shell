@@ -66,7 +66,10 @@ export class OnceExecutor<X, T extends Iterable<X, void>> {
     }
 
     stop() {
-        if (this.#signal !== null) GLib.source_remove(this.#signal);
+        if (this.#signal !== null) {
+            GLib.source_remove(this.#signal);
+            this.#signal = null;
+        }
     }
 }
 
@@ -98,6 +101,9 @@ export class ChannelExecutor<X> {
     }
 
     stop() {
-        if (this.#signal !== null) GLib.source_remove(this.#signal);
+        if (this.#signal !== null) {
+            GLib.source_remove(this.#signal);
+            this.#signal = null;
+        }
     }
 }

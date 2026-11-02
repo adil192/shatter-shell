@@ -2053,7 +2053,10 @@ export class Ext extends Ecs.System<ExtEvent> {
 
         if (!displays_ready() || !primary_display_ready(this)) {
             if (this.displays_updating !== null) return;
-            if (this.workareas_update !== null) GLib.source_remove(this.workareas_update);
+            if (this.workareas_update !== null) {
+                GLib.source_remove(this.workareas_update);
+                this.workareas_update = null;
+            }
 
             this.workareas_update = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 500, () => {
                 this.register_fn(() => {
@@ -2165,7 +2168,10 @@ export class Ext extends Ecs.System<ExtEvent> {
             return;
         }
 
-        if (this.displays_updating !== null) GLib.source_remove(this.displays_updating);
+        if (this.displays_updating !== null) {
+            GLib.source_remove(this.displays_updating);
+            this.displays_updating = null;
+        }
 
         if (this.workareas_update !== null) {
             GLib.source_remove(this.workareas_update);
