@@ -1423,7 +1423,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         const win = this.get_window(window);
         if (!win) return;
 
-        actor.connect('destroy', () => {
+        this.connect_object(actor, actor => actor.connect('destroy', () => {
             if (win.border) {
                 win.border.destroy();
                 win.border = null;
@@ -1431,8 +1431,10 @@ export class Ext extends Ecs.System<ExtEvent> {
 
             this.on_destroy(win.entity);
 
+            this.signals.delete(actor);
+
             return false;
-        });
+        }));
 
         win.reconsider_tiling(false);
     }
