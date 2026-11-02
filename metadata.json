@@ -1,7 +1,7 @@
 {
     "name": "Shatter Shell",
     "uuid": "shatter-shell@adilhanney.com",
-    "version-name": "2.6.1",
+    "version-name": "2.6.2",
     "version": 1,
     "settings-schema": "org.gnome.shell.extensions.shatter-shell",
     "url": "https://github.com/adil192/shatter-shell/",
