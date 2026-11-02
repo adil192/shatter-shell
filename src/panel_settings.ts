@@ -68,9 +68,9 @@ export class Indicator {
         bm.addMenuItem(floating_window_exceptions(ext, bm));
         bm.addMenuItem(more_settings(ext, bm));
 
-        bm.addMenuItem(menu_separator(''));
+        bm.addMenuItem(new PopupSeparatorMenuItem());
         bm.addMenuItem(shortcuts(bm));
-        bm.addMenuItem(menu_separator(''));
+        bm.addMenuItem(new PopupSeparatorMenuItem());
 
         bm.addMenuItem(this.toggle_active);
         bm.addMenuItem(this.border_radius);
@@ -84,10 +84,6 @@ export class Indicator {
     destroy() {
         this.button.destroy();
     }
-}
-
-function menu_separator(text: string) {
-    return new PopupSeparatorMenuItem(text);
 }
 
 function floating_window_exceptions(ext: Ext, menu: PopupMenu) {
@@ -213,16 +209,12 @@ function number_entry(
         }
     });
 
-    const create_icon = (icon_name: string) => {
-        return new St.Icon({ icon_name, icon_size: 16 });
-    };
-
-    entry.set_primary_icon(create_icon('value-decrease'));
+    entry.set_primary_icon(new St.Icon({ icon_name: 'value-decrease', icon_size: 16 }));
     entry.connect('primary-icon-clicked', () => {
         text.set_text(String(clamp(parseInt(text.get_text()) - 1, min, max)));
     });
 
-    entry.set_secondary_icon(create_icon('value-increase'));
+    entry.set_secondary_icon(new St.Icon({ icon_name: 'value-increase', icon_size: 16 }));
     entry.connect('secondary-icon-clicked', () => {
         text.set_text(String(clamp(parseInt(text.get_text()) + 1, min, max)));
     });
