@@ -117,7 +117,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     button_auto_on_icon: Gio.Icon | null = null;
     button_auto_off_icon: Gio.Icon | null = null;
 
-    conf: Config.Config = new Config.Config();
+    readonly conf: Config.Config;
 
     /** Column sizes in snap-to-grid */
     column_size: number = 32;
@@ -234,13 +234,13 @@ export class Ext extends Ecs.System<ExtEvent> {
     /** Calculates window placements when tiling and focus-switching */
     tiler: Tiling.Tiler = new Tiling.Tiler(this);
 
-    constructor(extension: ShatterShellExtension) {
+    constructor(extension: ShatterShellExtension, conf: Config.Config) {
         super(new Executor.GLibExecutor());
         this.extension = extension;
 
         this.load_settings();
 
-        this.conf.reload_sync();
+        this.conf = conf;
     }
 
     // System interface
@@ -2405,12 +2405,16 @@ let ext: Ext | null = null;
 let indicator: Indicator | null = null;
 
 export default class ShatterShellExtension extends Extension {
-    enable() {
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises
+    async enable() {
         Log.settings = this.getSettings();
         Log.info('enable');
 
         if (!ext) {
-            ext = new Ext(this);
+            const config = new Config.Config();
+            await config.reload();
+
+            ext = new Ext(this, config);
 
             ext.register_fn(() => {
                 if (ext?.auto_tiler) ext.snap_windows();

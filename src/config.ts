@@ -99,20 +99,8 @@ export class Config {
         if (!config.ok) {
             return log(`error loading conf: ${config.why}`);
         }
-        this.load_from(config.value);
-    }
-
-    reload_sync() {
-        const config = Config.read_file_sync();
-        if (!config.ok) {
-            return log(`error loading conf: ${config.why}`);
-        }
-        this.load_from(config.value);
-    }
-
-    private load_from(config: Config) {
-        this.float = config.float;
-        this.log_on_focus = config.log_on_focus;
+        this.float = config.value.float;
+        this.log_on_focus = config.value.log_on_focus;
     }
 
     rule_disabled(rule: FloatRule): boolean {
@@ -188,23 +176,6 @@ export class Config {
             if (!file.ok) return file;
 
             const [buffer] = await file.value.load_contents_async(null);
-
-            const decoder = new TextDecoder('utf-8');
-            const json = decoder.decode(buffer);
-
-            const config = Config.from_json(json);
-            return Ok(config);
-        } catch (why) {
-            return Err(`failed to read shatter-shell config: ${why}`);
-        }
-    }
-
-    private static read_file_sync(): Result<Config, string> {
-        try {
-            const file = Config.gio_file();
-            if (!file.ok) return file;
-
-            const [, buffer] = file.value.load_contents(null);
 
             const decoder = new TextDecoder('utf-8');
             const json = decoder.decode(buffer);

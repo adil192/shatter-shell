@@ -11,7 +11,7 @@ import Gtk from 'gi://Gtk?version=4.0';
 const SCRIPT_DIR = GLib.path_get_dirname(new Error().stack!.split(':')[0]!.slice(1));
 imports.searchPath.push(SCRIPT_DIR);
 
-import * as config from '../config.js';
+import * as Config from '../config.js';
 
 const WM_CLASS_ID = 'org.gnome.shell.extensions.shatter-shell.exceptions';
 
@@ -157,9 +157,8 @@ class App {
     readonly nav;
     readonly main_page;
     readonly exceptions_page;
-    readonly config = new config.Config();
 
-    constructor(private readonly application: Adw.Application) {
+    constructor(private readonly application: Adw.Application, readonly config: Config.Config) {
         this.main_page = new MainPage(this.event_handler.bind(this));
         this.exceptions_page = new ExceptionsPage(this.event_handler.bind(this));
 
@@ -176,9 +175,7 @@ class App {
             content: this.nav,
         });
 
-        this.config.reload_sync();
-
-        for (const value of config.DEFAULT_FLOAT_RULES.values()) {
+        for (const value of Config.DEFAULT_FLOAT_RULES.values()) {
             const wmtitle = value.title;
             const wmclass = value.class;
 
@@ -244,7 +241,12 @@ function main() {
     const application = new Adw.Application({
         application_id: WM_CLASS_ID,
     });
-    application.connect('activate', () => new App(application));
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises
+    application.connect('activate', async () => {
+        const config = new Config.Config();
+        await config.reload();
+        new App(application, config);
+    });
     return application.run(null);
 }
 
