@@ -1808,7 +1808,9 @@ export class Ext extends Ecs.System<ExtEvent> {
             this.prev_focused = [null, null];
         }));
 
-        St.ThemeContext.get_for_stage(global.stage).connect('notify::scale-factor', () => this.update_scale());
+        this.connect_object(St.ThemeContext.get_for_stage(global.stage), themeContext => themeContext.connect('notify::scale-factor', () => {
+            return this.update_scale();
+        }));
 
         // Modes
 
