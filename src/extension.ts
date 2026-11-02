@@ -171,6 +171,9 @@ export class Ext extends Ecs.System<ExtEvent> {
         screen_unlock?: Injection<ScreenShield, 'deactivate'>;
     } = {};
 
+    /** Misc GLib timeouts that will need to be removed when the extension is `disable`d. */
+    readonly timeouts = new Set<number>();
+
     /** The window that was focused before the last window */
     private prev_focused: [Entity | null, Entity | null] = [null, null];
 
@@ -438,9 +441,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         const debounce_size_event = () => {
             const old = this.size_requests.get(win.meta) ?? 0;
             if (old) {
-                try {
-                    GLib.source_remove(old);
-                } catch { /* empty */ }
+                GLib.source_remove(old);
             }
 
             const new_s = GLib.timeout_add(GLib.PRIORITY_LOW, 150, () => {
@@ -468,9 +469,7 @@ export class Ext extends Ecs.System<ExtEvent> {
             const window_signals = this.window_signals.get(win.entity);
 
             for (const signal of signals) {
-                try {
-                    win.meta.disconnect(signal);
-                } catch { /* empty */ }
+                win.meta.disconnect(signal);
 
                 const i = window_signals?.indexOf(signal) ?? -1;
                 if (i !== -1) {
@@ -547,11 +546,14 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     exception_select() {
-        GLib.timeout_add(GLib.PRIORITY_LOW, 100, () => {
+        const source = GLib.timeout_add(GLib.PRIORITY_LOW, 100, () => {
             this.exception_selecting = true;
             overview.show(ControlsState.WINDOW_PICKER);
+
+            this.timeouts.delete(source);
             return GLib.SOURCE_REMOVE;
         });
+        this.timeouts.add(source);
     }
 
     exit_modes() {
@@ -1200,7 +1202,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
                     if (!this.auto_tiler || !this.grab_op || this.grab_op.entity !== entity) {
                         this.drag_signal = null;
-                        return false;
+                        return GLib.SOURCE_REMOVE;
                     }
 
                     const [cursor, monitor] = this.cursor_status();
@@ -1214,7 +1216,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                     }
 
                     const fork = this.auto_tiler.get_parent_fork(entity);
-                    if (!fork) return true;
+                    if (!fork) return GLib.SOURCE_CONTINUE;
 
                     const windowless = this.auto_tiler.largest_on_workspace(this, monitor, workspace) === null;
 
@@ -1245,7 +1247,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                                 ? [fork.area, false]
                                 : [attach_to.meta.get_frame_rect(), false];
                     } else {
-                        return true;
+                        return GLib.SOURCE_CONTINUE;
                     }
 
                     const result = monitor_attachment ? null : auto_tiler.cursor_placement(this, area, cursor);
@@ -1258,7 +1260,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
                         this.overlay.visible = true;
 
-                        return true;
+                        return GLib.SOURCE_CONTINUE;
                     }
 
                     const { orientation, swap } = result;
@@ -1282,7 +1284,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
                     this.overlay.visible = true;
 
-                    return true;
+                    return GLib.SOURCE_CONTINUE;
                 });
             }
         }
@@ -1559,17 +1561,22 @@ export class Ext extends Ecs.System<ExtEvent> {
     restack() {
         // NOTE: Workaround for GNOME Shell showing our hidden windows on a workspace switch
         let attempts = 0;
-        GLib.timeout_add(GLib.PRIORITY_LOW, 50, () => {
+        const source = GLib.timeout_add(GLib.PRIORITY_LOW, 50, () => {
             if (this.auto_tiler) {
                 for (const container of this.auto_tiler.forest.stacks.values()) {
                     container.restack();
                 }
             }
 
-            const x = attempts;
-            attempts += 1;
-            return x < 10;
+            if (attempts < 10) {
+                ++attempts;
+                return GLib.SOURCE_CONTINUE;
+            } else {
+                this.timeouts.delete(source);
+                return GLib.SOURCE_REMOVE;
+            }
         });
+        this.timeouts.add(source);
     }
 
     set_gap_inner(gap: number) {
@@ -1851,6 +1858,11 @@ export class Ext extends Ecs.System<ExtEvent> {
         }
         this.size_requests.clear();
 
+        for (const tag of this.timeouts) {
+            GLib.source_remove(tag);
+        }
+        this.timeouts.clear();
+
         this.tiler.queue.stop();
     }
 
@@ -1987,14 +1999,16 @@ export class Ext extends Ecs.System<ExtEvent> {
         if (this.movements.is_empty()) {
             return func();
         }
-        GLib.timeout_add(GLib.PRIORITY_DEFAULT, 20, () => {
+        const source = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 20, () => {
             if (this.movements.is_empty()) {
                 func();
+                this.timeouts.delete(source);
                 return GLib.SOURCE_REMOVE;
             } else {
                 return GLib.SOURCE_CONTINUE;
             }
         });
+        this.timeouts.add(source);
     }
 
     should_ignore_workspace(monitor: MonitorID): boolean {
@@ -2064,8 +2078,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                 });
 
                 this.workareas_update = null;
-
-                return false;
+                return GLib.SOURCE_REMOVE;
             });
 
             return;

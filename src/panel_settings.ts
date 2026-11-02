@@ -86,6 +86,16 @@ export class Indicator {
     }
 }
 
+function close_menu_after_300ms(ext: Ext, menu: PopupMenu) {
+    const source = GLib.timeout_add(GLib.PRIORITY_LOW, 300, () => {
+        menu.close();
+        ext.timeouts.delete(source);
+        return GLib.SOURCE_REMOVE;
+    });
+    menu.connect('destroy', () => ext.timeouts.delete(source));
+    ext.timeouts.add(source);
+}
+
 function floating_window_exceptions(ext: Ext, menu: PopupMenu) {
     const widget = new St.BoxLayout({ orientation: Clutter.Orientation.HORIZONTAL, x_expand: true });
     widget.add_child(new St.Label({ text: _('Floating window exceptions'), x_expand: true }));
@@ -95,11 +105,7 @@ function floating_window_exceptions(ext: Ext, menu: PopupMenu) {
     base.add_child(widget);
     base.connect('activate', () => {
         ext.exception_dialog();
-
-        GLib.timeout_add(GLib.PRIORITY_LOW, 300, () => {
-            menu.close();
-            return false;
-        });
+        close_menu_after_300ms(ext, menu);
     });
 
     return base;
@@ -114,11 +120,7 @@ function more_settings(ext: Ext, menu: PopupMenu) {
     base.add_child(widget);
     base.connect('activate', () => {
         ext.extension?.openPreferences();
-
-        GLib.timeout_add(GLib.PRIORITY_LOW, 300, () => {
-            menu.close();
-            return false;
-        });
+        close_menu_after_300ms(ext, menu);
     });
 
     return base;
@@ -300,11 +302,7 @@ function color_selector(ext: Ext, menu: PopupMenu) {
         const resp = GLib.spawn_command_line_async(`gjs --module "${path}"`);
         if (!resp) return;
 
-        // clean up and focus on the color dialog
-        GLib.timeout_add(GLib.PRIORITY_LOW, 300, () => {
-            menu.close();
-            return false;
-        });
+        close_menu_after_300ms(ext, menu);
     });
 
     return color_selector_item;
