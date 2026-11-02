@@ -241,13 +241,6 @@ export class Ext extends Ecs.System<ExtEvent> {
         this.register_fn(() => load_theme(this.current_style));
 
         this.conf.reload_sync();
-
-        this.settings.desktop_interface.connect('changed::color-scheme', () => {
-            this.register(Events.global(GlobalEvent.GtkThemeChanged));
-        });
-        this.settings.a11y_interface.connect('changed::high-contrast', () => {
-            this.register(Events.global(GlobalEvent.GtkThemeChanged));
-        });
     }
 
     // System interface
@@ -1616,6 +1609,13 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     /** Begin listening for signals from windows, and add any pre-existing windows. */
     signals_attach() {
+        this.connect_object(this.settings.desktop_interface, settings => settings.connect('changed::color-scheme', () => {
+            this.register(Events.global(GlobalEvent.GtkThemeChanged));
+        }));
+        this.connect_object(this.settings.a11y_interface, settings => settings.connect('changed::high-contrast', () => {
+            this.register(Events.global(GlobalEvent.GtkThemeChanged));
+        }));
+
         this.tiler.queue.start(100, (movement) => {
             movement();
             return true;
