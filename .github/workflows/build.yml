@@ -41,7 +41,7 @@ jobs:
         run: make CUSTOM_ESLINT_ARGS="--cache-strategy content" lint
 
       - name: Shexli lints
-        uses: stuarthayhurst/shexli-github-action@v1
+        uses: stuarthayhurst/shexli-github-action@81c25e448506a299c12162e78db901a3b0f1109f
         with:
           path: _build/
           # EGO-P-007: Unnecessary files: False positive on our dialogs
