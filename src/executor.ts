@@ -35,9 +35,13 @@ export class GLibExecutor<T> implements Executor<T> {
     }
 }
 
+/**
+ * An executor that polls iterable periodically.
+ * Quits polling when the iterable is exhausted.
+ */
 export class OnceExecutor<X, T extends Iterable<X, void>> {
     #iterable: T;
-    #signal: SignalID | null = null;
+    #source: SignalID | null = null;
 
     constructor(iterable: T) {
         this.#iterable = iterable;
@@ -48,35 +52,33 @@ export class OnceExecutor<X, T extends Iterable<X, void>> {
 
         const iterator = this.#iterable[Symbol.iterator]();
 
-        this.#signal = GLib.timeout_add(GLib.PRIORITY_DEFAULT, delay, () => {
-            const next: X | undefined = iterator.next().value ?? undefined;
-
+        this.#source = GLib.timeout_add(GLib.PRIORITY_DEFAULT, delay, () => {
+            const next = iterator.next().value ?? undefined;
             if (next == undefined) {
-                if (then)
-                    GLib.timeout_add(GLib.PRIORITY_DEFAULT, delay, () => {
-                        then();
-                        return false;
-                    });
-
-                return false;
+                if (then) then();
+                return GLib.SOURCE_REMOVE;
+            } else {
+                return apply(next);
             }
-
-            return apply(next);
         });
     }
 
     stop() {
-        if (this.#signal !== null) {
-            GLib.source_remove(this.#signal);
-            this.#signal = null;
+        if (this.#source !== null) {
+            GLib.source_remove(this.#source);
+            this.#source = null;
         }
     }
 }
 
+/**
+ * An executor that polls #channel periodically.
+ * Continues polling even if #channel is empty.
+ */
 export class ChannelExecutor<X> {
     #channel: Array<X> = [];
 
-    #signal: number | null = null;
+    #source: number | null = null;
 
     clear() {
         this.#channel.splice(0);
@@ -93,17 +95,20 @@ export class ChannelExecutor<X> {
     start(delay: number, apply: (v: X) => boolean) {
         this.stop();
 
-        this.#signal = GLib.timeout_add(GLib.PRIORITY_DEFAULT, delay, () => {
-            const e = this.#channel.shift();
-
-            return typeof e === 'undefined' ? true : apply(e);
+        this.#source = GLib.timeout_add(GLib.PRIORITY_DEFAULT, delay, () => {
+            const next = this.#channel.shift();
+            if (next == undefined) {
+                return GLib.SOURCE_CONTINUE;
+            } else {
+                return apply(next);
+            }
         });
     }
 
     stop() {
-        if (this.#signal !== null) {
-            GLib.source_remove(this.#signal);
-            this.#signal = null;
+        if (this.#source !== null) {
+            GLib.source_remove(this.#source);
+            this.#source = null;
         }
     }
 }
