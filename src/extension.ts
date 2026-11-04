@@ -44,12 +44,10 @@ const { cursor_rect, is_keyboard_op, is_resize_op, is_move_op } = Lib;
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 const {
     layoutManager,
-    loadTheme,
     modalActorFocusStack,
     overview,
     panel,
     screenShield,
-    setThemeStylesheet,
 } = Main;
 import type { Misc } from '@girs/gnome-shell';
 import { ScreenShield } from 'resource:///org/gnome/shell/ui/screenShield.js';
@@ -2495,7 +2493,7 @@ function stylesheet_path(name: string) {
     return get_current_path() + '/' + name + '.css';
 }
 
-// Supplements the loaded theme with the extension's theme.
+/** Supplements the loaded theme with the extension's theme. */
 function load_theme(style: Style): string | null {
     try {
         const theme_context = St.ThemeContext.get_for_stage(global.stage);
@@ -2505,12 +2503,10 @@ function load_theme(style: Style): string | null {
         const shatter_stylesheet_path = STYLESHEET_PATHS[style];
 
         if (existing_theme) {
-            /* Must unload stylesheets, or else the previously loaded
-             * stylesheets will persist when loadTheme() is called
-             * (found in source code of imports.ui.main).
-             */
-            for (const s of Object.values(Style)) {
-                existing_theme.unload_stylesheet(STYLESHEETS[s]);
+            /** Must unload stylesheets, or else the previously loaded
+             * stylesheets will persist when {@link Main.loadTheme} is called. */
+            for (const style of Object.values(Style)) {
+                existing_theme.unload_stylesheet(STYLESHEETS[style]);
             }
 
             // Merge theme update with shatter shell styling
@@ -2520,8 +2516,8 @@ function load_theme(style: Style): string | null {
             theme_context.set_theme(existing_theme);
         } else {
             // User does not have a theme loaded, so use shatter styling + default
-            setThemeStylesheet(shatter_stylesheet_path);
-            loadTheme();
+            Main.setThemeStylesheet(shatter_stylesheet_path);
+            Main.loadTheme();
         }
 
         return shatter_stylesheet_path;
