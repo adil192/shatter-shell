@@ -89,26 +89,26 @@ export class ShellWindow {
 
     /** Activates a window, and moves the mouse pointer. */
     request_activate(move_mouse: boolean = true): void {
-        try {
-            // Quit if window is destroying/destroyed.
-            if (!this.actor_exists()) return;
+        // Quit if window is destroying/destroyed.
+        if (!this.actor_exists()) return;
 
-            // Quit if window has override-redirect set.
-            if (this.meta.is_override_redirect()) return;
+        // Quit if window has override-redirect set.
+        if (this.meta.is_override_redirect()) return;
 
-            const workspace = this.meta.get_workspace() as Meta.Workspace | null;
-            workspace?.activate_with_focus(this.meta, global.get_current_time());
+        const workspace = this.meta.get_workspace() as Meta.Workspace | null;
+        workspace?.activate_with_focus(this.meta, global.get_current_time());
 
-            move_mouse = move_mouse
-                && Main.modalCount === 0
-                && this.ext.settings.get_mouse_cursor_follows_active_window()
-                && !pointer_already_on_window(this.meta)
-                && pointer_in_work_area();
-            if (move_mouse) {
+        move_mouse = move_mouse
+            && Main.modalCount === 0
+            && this.ext.settings.get_mouse_cursor_follows_active_window()
+            && !pointer_already_on_window(this.meta)
+            && pointer_in_work_area();
+        if (move_mouse) {
+            try {
                 place_pointer_on(this.ext, this.meta);
+            } catch (error) {
+                Log.error(`failed to place pointer on window: ${error}`);
             }
-        } catch (error) {
-            Log.error(`failed to activate window: ${error}`);
         }
     }
 

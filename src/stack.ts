@@ -437,10 +437,9 @@ export class Stack {
         }
 
         for (const b of this.buttons.values()) {
-            try {
-                b.destroy();
-            } catch { /* empty */ }
+            b.destroy();
         }
+        this.buttons.truncate(0);
 
         if (this.widgets) {
             const tabs = this.widgets.tabs;

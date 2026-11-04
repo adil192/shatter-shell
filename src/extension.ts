@@ -1850,9 +1850,7 @@ export class Ext extends Ecs.System<ExtEvent> {
             const win = this.windows.get(entity);
             if (!win) return;
             for (const signal of signals) {
-                try {
-                    win.meta.disconnect(signal);
-                } catch { /* empty */ }
+                win.meta.disconnect(signal);
             }
         });
         this.tilable_window_signals.clear();
@@ -2290,66 +2288,54 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     /** Fetches the window entity which is associated with the metacity window metadata. */
     window_entity(meta: Meta.Window): Entity | null {
-        let id: number;
-        try {
-            id = meta.get_stable_sequence();
-        } catch {
-            return null;
-        }
+        const id = meta.get_stable_sequence();
 
         // Locate the window entity with the matching ID
         let entity = this.ids.find(comp => comp == id).next().value ?? undefined;
+        if (entity) return entity;
 
         // If not found, create a new entity with a ShellWindow component.
-        if (!entity) {
-            const actor = meta.get_compositor_private<Meta.WindowActor | null>();
-            if (!actor) return null;
+        const actor = meta.get_compositor_private<Meta.WindowActor | null>();
+        if (!actor) return null;
 
-            let window_app: Shell.App;
-            let name: string;
-            try {
-                window_app = Window.window_tracker.get_window_app(meta);
-                name = window_app.get_name().replace(/&/g, '&amp;');
-            } catch {
-                return null;
-            }
-
-            // Only permit normal, dialog, and modal dialogs
-            const window_type = meta.get_window_type();
-            if (window_type !== Meta.WindowType.NORMAL
-                && window_type !== Meta.WindowType.DIALOG
-                && window_type !== Meta.WindowType.MODAL_DIALOG) {
-                return null;
-            }
-
-            entity = this.create_entity();
-
-            this.ids.insert(entity, id);
-            this.names.insert(entity, name);
-
-            const win = new Window.ShellWindow(entity, meta, window_app, this);
-
-            this.windows.insert(entity, win);
-            this.monitors.insert(entity, [win.monitor_id(), win.workspace_id()]);
-
-            const grab_focus = () => {
-                this.when_movements_empty(() => {
-                    this.windows.with(entity!, (window) => {
-                        this.register_fn(() => window.request_activate(false));
-                    });
-                });
-            };
-
-            if (this.auto_tiler && !win.meta.minimized && win.is_tilable()) {
-                const id = actor.connect('first-frame', () => {
-                    this.auto_tiler?.auto_tile(this, win, this.init);
-                    grab_focus();
-                    actor.disconnect(id);
-                });
-            } else {
-                grab_focus();
-            }
+        // Only permit normal, dialog, and modal dialogs
+        const window_type = meta.get_window_type();
+        if (window_type !== Meta.WindowType.NORMAL
+            && window_type !== Meta.WindowType.DIALOG
+            && window_type !== Meta.WindowType.MODAL_DIALOG) {
+            return null;
         }
+
+        const window_app = Window.window_tracker.get_window_app(meta) as Shell.App | null;
+        if (!window_app) return null;
+        const name = window_app.get_name().replace(/&/g, '&amp;');
+
+        entity = this.create_entity();
+        this.ids.insert(entity, id);
+        this.names.insert(entity, name);
+
+        const win = new Window.ShellWindow(entity, meta, window_app, this);
+        this.windows.insert(entity, win);
+        this.monitors.insert(entity, [win.monitor_id(), win.workspace_id()]);
+
+        const grab_focus = () => {
+            this.when_movements_empty(() => {
+                this.windows.with(entity, (window) => {
+                    this.register_fn(() => window.request_activate(false));
+                });
+            });
+        };
+
+        if (this.auto_tiler && !win.meta.minimized && win.is_tilable()) {
+            const id = actor.connect('first-frame', () => {
+                this.auto_tiler?.auto_tile(this, win, this.init);
+                grab_focus();
+                actor.disconnect(id);
+            });
+        } else {
+            grab_focus();
+        }
+
         return entity;
     }
 
