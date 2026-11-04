@@ -21,7 +21,6 @@ import * as exec from './executor.js';
 import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';
 import type { Entity } from './ecs.js';
 import type { ExtEvent } from './events.js';
-import type { Indicator } from './panel_settings.js';
 
 import { Fork } from './fork.js';
 
@@ -93,8 +92,6 @@ interface Injection<T extends object, K extends keyof T = keyof T> {
 }
 
 export class Ext extends Ecs.System<ExtEvent> {
-    extension: ShatterShellExtension | null;
-
     /** Mechanism for managing keybindings */
     keybindings: Keybindings.Keybindings = new Keybindings.Keybindings(this);
 
@@ -114,8 +111,6 @@ export class Ext extends Ecs.System<ExtEvent> {
     button: typeof PanelSettings.Indicator.prototype.button | null = null;
     button_auto_on_icon: Gio.Icon | null = null;
     button_auto_off_icon: Gio.Icon | null = null;
-
-    readonly conf: Config.Config;
 
     /** Column sizes in snap-to-grid */
     column_size: number = 32;
@@ -178,8 +173,6 @@ export class Ext extends Ecs.System<ExtEvent> {
     /** Initially set to true when the extension is initializing */
     init: boolean = true;
 
-    was_locked: boolean = false;
-
     /** Set when a window is being moved by the mouse */
     moved_by_mouse: boolean = false;
 
@@ -232,13 +225,9 @@ export class Ext extends Ecs.System<ExtEvent> {
     /** Calculates window placements when tiling and focus-switching */
     tiler: Tiling.Tiler = new Tiling.Tiler(this);
 
-    constructor(extension: ShatterShellExtension, conf: Config.Config) {
+    constructor(readonly extension: ShatterShellExtension, readonly conf: Config.Config) {
         super(new Executor.GLibExecutor());
-        this.extension = extension;
-
         this.load_settings();
-
-        this.conf = conf;
     }
 
     // System interface
@@ -776,6 +765,8 @@ export class Ext extends Ecs.System<ExtEvent> {
 
         window.destroying = true;
 
+        window.destroy_border();
+
         // Disconnect all signals on this window
         this.window_signals.take_with(win, (signals) => {
             for (const signal of signals) {
@@ -839,7 +830,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
         // Update the active tab in the stack.
         if (null !== this.auto_tiler && null !== win.stack) {
-            ext?.auto_tiler?.forest.stacks.get(win.stack)?.activate(win.entity);
+            this.auto_tiler?.forest.stacks.get(win.stack)?.activate(win.entity);
         }
 
         this.unmaximize_workspace(win);
@@ -921,6 +912,12 @@ export class Ext extends Ecs.System<ExtEvent> {
     hide_all_borders() {
         for (const win of this.windows.values()) {
             win.hide_border();
+        }
+    }
+
+    destroy_all_borders() {
+        for (const win of this.windows.values()) {
+            win.destroy_border();
         }
     }
 
@@ -1434,16 +1431,10 @@ export class Ext extends Ecs.System<ExtEvent> {
         const win = this.get_window(window);
         if (!win) return;
 
-        actor.connect('destroy', () => {
-            if (win.border) {
-                win.border.destroy();
-                win.border = null;
-            }
-
+        this.connect_object(actor, actor => actor.connect('destroy', () => {
             this.on_destroy(win.entity);
-
-            return false;
-        });
+            this.signals.delete(actor);
+        }));
 
         win.reconsider_tiling(false);
     }
@@ -1647,7 +1638,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         this.connect_object(this.settings.ext, ext => ext.connect('changed', (_s, key) => {
             switch (key) {
                 case 'active-hint':
-                    if (indicator) indicator.toggle_active.setToggleState(this.settings.get_active_hint());
+                    this.extension.indicator?.toggle_active.setToggleState(this.settings.get_active_hint());
                     this.show_border_on_focused();
                     break;
                 case 'gap-inner':
@@ -1673,8 +1664,9 @@ export class Ext extends Ecs.System<ExtEvent> {
         }));
 
         this.connect_object(sessionMode, () => sessionMode.connect('updated', () => {
-            if (indicator) {
-                indicator.button.visible = !sessionMode.isLocked;
+            if (this.extension.indicator) {
+                // TODO: Is this even needed?
+                this.extension.indicator.button.visible = !sessionMode.isLocked;
             }
 
             if (sessionMode.isLocked) {
@@ -1965,7 +1957,7 @@ export class Ext extends Ecs.System<ExtEvent> {
             this.auto_tiler = null;
             this.settings.set_tile_by_default(false);
 
-            if (indicator) indicator.toggle_tiled.setToggleState(false);
+            this.extension.indicator?.toggle_tiled.setToggleState(false);
 
             if (this.button?.icon) this.button.icon.gicon = this.button_auto_off_icon;
 
@@ -1978,7 +1970,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     auto_tile_on() {
         this.settings.set_edge_tiling(false);
 
-        if (indicator) indicator.toggle_tiled.setToggleState(true);
+        this.extension.indicator?.toggle_tiled.setToggleState(true);
 
         const original = this.active_workspace();
 
@@ -2389,45 +2381,37 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 }
 
-let ext: Ext | null = null;
-let indicator: Indicator | null = null;
-
 export default class ShatterShellExtension extends Extension {
+    declare disabled: boolean;
+    declare ext?: Ext;
+    declare indicator?: PanelSettings.Indicator;
+
     // eslint-disable-next-line @typescript-eslint/no-misused-promises
     async enable() {
+        this.disabled = false;
         Log.settings = this.getSettings();
         Log.info('enable');
 
-        if (!ext) {
-            const config = new Config.Config();
-            await config.reload();
+        const config = new Config.Config();
+        await config.reload();
+        if (this.disabled) return; // in case `disable` was called while loading config
 
-            ext = new Ext(this, config);
+        const ext = this.ext = new Ext(this, config);
 
-            ext.register_fn(() => {
-                if (ext?.auto_tiler) ext.snap_windows();
-            });
-        } else {
-            ext.extension = this;
-        }
+        ext.register_fn(() => {
+            if (ext.auto_tiler) ext.snap_windows();
+        });
 
         ext.reload_theme();
-        ext.register_fn(() => load_theme(ext!.current_style));
-
-        if (ext.was_locked) {
-            ext.was_locked = false;
-            return;
-        }
+        ext.register_fn(() => load_theme(ext.current_style));
 
         ext.injections_add();
         ext.signals_attach();
 
         layoutManager.addChrome(ext.overlay);
 
-        if (!indicator) {
-            indicator = new PanelSettings.Indicator(ext);
-            panel.addToStatusArea('shatter-shell', indicator.button);
-        }
+        this.indicator = new PanelSettings.Indicator(ext);
+        panel.addToStatusArea('shatter-shell', this.indicator.button);
 
         ext.keybindings.enable(ext.keybindings.global).enable(ext.keybindings.window_focus);
         if (ext.settings.get_need_overrides_setup()) {
@@ -2441,34 +2425,29 @@ export default class ShatterShellExtension extends Extension {
     }
 
     disable() {
+        this.disabled = true;
         Log.info('disable');
 
-        if (ext) {
-            if (sessionMode.isLocked) {
-                ext.was_locked = true;
-                return;
+        if (this.ext) {
+            this.ext.injections_remove();
+            this.ext.signals_remove();
+            this.ext.exit_modes();
+            this.ext.destroy_all_borders();
+
+            layoutManager.removeChrome(this.ext.overlay);
+
+            this.ext.keybindings.disable(this.ext.keybindings.global).disable(this.ext.keybindings.window_focus);
+
+            if (this.ext.auto_tiler) {
+                this.ext.auto_tiler.destroy(this.ext);
+                this.ext.auto_tiler = null;
             }
-
-            ext.injections_remove();
-            ext.signals_remove();
-            ext.exit_modes();
-            ext.hide_all_borders();
-
-            layoutManager.removeChrome(ext.overlay);
-
-            ext.keybindings.disable(ext.keybindings.global).disable(ext.keybindings.window_focus);
-
-            if (ext.auto_tiler) {
-                ext.auto_tiler.destroy(ext);
-                ext.auto_tiler = null;
-            }
-
-            ext.extension = null;
+            this.ext = undefined;
         }
 
-        if (indicator) {
-            indicator.destroy();
-            indicator = null;
+        if (this.indicator) {
+            this.indicator.destroy();
+            this.indicator = undefined;
         }
 
         Log.settings = null;

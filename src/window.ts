@@ -497,8 +497,12 @@ export class ShellWindow {
     }
 
     hide_border() {
-        const b = this.border;
-        if (b) b.hide();
+        this.border?.hide();
+    }
+
+    destroy_border() {
+        this.border?.destroy();
+        this.border = null;
     }
 
     update_border_layout() {
