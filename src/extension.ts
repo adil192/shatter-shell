@@ -634,7 +634,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     get_focused_window(): Window.ShellWindow | null {
         const meta = display.get_focus_window() as Meta.Window | null;
-        return this.get_window(meta);
+        return meta ? this.get_window(meta) : null;
     }
 
     stack_select(select: (id: number, stack: stack.Stack) => Entity | null | undefined, focus_shift: () => void) {
@@ -658,23 +658,23 @@ export class Ext extends Ecs.System<ExtEvent> {
             return false;
         });
 
-        if (!(switched ?? false)) {
+        if (!switched) {
             focus_shift();
         }
     }
 
-    stack_switch(apply: (stack: node.NodeStack) => boolean) {
+    stack_switch(apply: (stack: node.NodeStack) => boolean): boolean {
+        if (!this.auto_tiler) return false;
+
         const window = this.get_focused_window();
-        if (window) {
-            if (this.auto_tiler) {
-                const node = this.auto_tiler.find_stack(window.entity);
-                return node ? apply(node[1].inner as node.NodeStack) : false;
-            }
-        }
+        if (!window) return false;
+
+        const node = this.auto_tiler.find_stack(window.entity);
+        return node ? apply(node[1].inner as node.NodeStack) : false;
     }
 
     /** Fetches the window component from the entity associated with the metacity window metadata. */
-    get_window(meta: Meta.Window | null): Window.ShellWindow | null {
+    get_window(meta: Meta.Window): Window.ShellWindow | null {
         const entity = this.window_entity(meta);
         return entity ? this.windows.get(entity) : null;
     }
@@ -1630,15 +1630,17 @@ export class Ext extends Ecs.System<ExtEvent> {
         }));
 
         this.size_changed_signal = this.connect_object(wim, () => wim.connect('size-change', (_, actor, event) => {
-            if (this.auto_tiler) {
-                const win = this.get_window(actor.get_meta_window());
-                if (!win) return;
+            if (!this.auto_tiler) return;
 
-                if (event === Meta.SizeChange.MAXIMIZE || event === Meta.SizeChange.UNMAXIMIZE) {
-                    this.register(Events.window_event(win, WindowEventType.Maximize));
-                } else {
-                    this.register(Events.window_event(win, WindowEventType.Fullscreen));
-                }
+            const meta = actor.get_meta_window();
+            if (!meta) return;
+            const win = this.get_window(meta);
+            if (!win) return;
+
+            if (event === Meta.SizeChange.MAXIMIZE || event === Meta.SizeChange.UNMAXIMIZE) {
+                this.register(Events.window_event(win, WindowEventType.Maximize));
+            } else {
+                this.register(Events.window_event(win, WindowEventType.Fullscreen));
             }
         }));
 
@@ -2287,9 +2289,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     /** Fetches the window entity which is associated with the metacity window metadata. */
-    window_entity(meta: Meta.Window | null): Entity | null {
-        if (!meta) return null;
-
+    window_entity(meta: Meta.Window): Entity | null {
         let id: number;
         try {
             id = meta.get_stable_sequence();
