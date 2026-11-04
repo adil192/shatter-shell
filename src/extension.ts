@@ -528,11 +528,13 @@ export class Ext extends Ecs.System<ExtEvent> {
         const ipc = utils.async_process_ipc(['gjs', '--module', path]);
 
         if (ipc) {
+            const decoder = new TextDecoder('utf-8');
+
             const generator: Gio.AsyncReadyCallback<Gio.DataInputStream> = (stdout, res) => {
                 try {
                     const [bytes] = stdout!.read_line_finish(res);
                     if (bytes) {
-                        if (event_handler((imports.byteArray.toString(bytes)).trim())) {
+                        if (event_handler(decoder.decode(bytes).trim())) {
                             ipc.stdout.read_line_async(0, ipc.cancellable, generator);
                         }
                     }
