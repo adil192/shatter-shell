@@ -171,6 +171,8 @@ export class Stack {
 
     private restacker: SignalID = global.display.connect('restacked', () => this.restack());
 
+    private focus_watcher: SignalID = global.display.connect('notify::focus-window', () => this.update_focus());
+
     private tabs_destroy: SignalID;
 
     constructor(ext: Ext, active: Entity, workspace: WorkspaceID, monitor: MonitorID) {
@@ -205,6 +207,7 @@ export class Stack {
         const tab: Tab = { active, entity, signals: [], button: id, button_signal: null };
         this.bind_hint_events(tab);
         this.tabs.push(tab);
+        this.update_focus();
         this.watch_signals(tab, window);
         this.widgets.tabs.add_child(button);
 
@@ -421,6 +424,7 @@ export class Stack {
     /** Disconnects this stack's signal, and destroys its widgets */
     destroy() {
         global.display.disconnect(this.restacker);
+        global.display.disconnect(this.focus_watcher);
         this.active_disconnect();
 
         // Disconnect stack signals from each window, and unhide them.
@@ -513,6 +517,7 @@ export class Stack {
         }
 
         this.tabs.splice(idx, 1);
+        this.update_focus();
     }
 
     /** Removes the tab associated with the entity */
@@ -651,6 +656,17 @@ export class Stack {
 
             this.reset_visibility(permitted);
         });
+    }
+
+    /** Draws the tabs at half opacity unless the stack has the focused window, as libadwaita does with unfocused header bars. */
+    private update_focus() {
+        const focus_window = global.display.focus_window;
+        const focused = this.tabs.some(tab => this.ext.windows.get(tab.entity)?.meta === focus_window);
+
+        for (const tab of this.tabs) {
+            const button = this.buttons.get(tab.button);
+            if (button) button.opacity = focused ? 255 : 128;
+        }
     }
 
     /** Changes visibility of the stack's actors */
