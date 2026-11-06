@@ -805,6 +805,8 @@ export class Ext extends Ecs.System<ExtEvent> {
             }
         }
 
+        const stack_node = this.auto_tiler?.find_stack(win)?.[1].inner;
+
         if (this.auto_tiler) this.auto_tiler.detach_window(this, win);
 
         // If destroyed window belonged to a stack, ensure that the next window
@@ -820,6 +822,18 @@ export class Ext extends Ecs.System<ExtEvent> {
                         this.prev_focused = [null, stack_object.active];
                         this.windows.get(stack_object.active)?.request_activate();
                     }
+                }
+            } else if (
+                !stack_object
+                && prev
+                && this.windows.contains(prev)
+                && stack_node?.kind === node.NodeKind.STACK
+            ) {
+                // The stack dissolved, leaving just this window
+                const remaining = stack_node.entities[0];
+                if (remaining && !Ecs.entity_eq(remaining, win) && !Ecs.entity_eq(remaining, prev)) {
+                    this.prev_focused = [null, remaining];
+                    this.windows.get(remaining)?.request_activate();
                 }
             }
         }
