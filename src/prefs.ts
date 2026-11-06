@@ -10,7 +10,7 @@ import * as focus from './focus.js';
 import { LogLevel } from './log_level.js';
 
 export default class ShatterShellPreferences extends ExtensionPreferences {
-    fillPreferencesWindow(window: Adw.PreferencesWindow) {
+    override fillPreferencesWindow(window: Adw.PreferencesWindow) {
         const ext = new settings.ExtensionSettings();
 
         const page = new Adw.PreferencesPage();
@@ -91,6 +91,7 @@ export default class ShatterShellPreferences extends ExtensionPreferences {
                     selected: ext.get_log_level(),
                 });
                 row.connect('notify::selected', (row) => {
+                    // oxlint-disable-next-line typescript/no-unsafe-enum-assignment
                     ext.set_log_level(row.selected);
                     Settings.sync();
                 });

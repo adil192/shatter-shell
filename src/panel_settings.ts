@@ -30,6 +30,7 @@ export class Indicator {
         ext.button_auto_on_icon = Gio.icon_new_for_string(`${path}/icons/shatter-shell-auto-on-symbolic.svg`);
         ext.button_auto_off_icon = Gio.icon_new_for_string(`${path}/icons/shatter-shell-auto-off-symbolic.svg`);
 
+        // oxlint-disable-next-line typescript/no-unsafe-type-assertion (adding an icon property to the button)
         ext.button = this.button = new PanelMenu.Button(0.5, _('Shatter Shell Settings')) as
             PanelMenu.Button & { icon: St.Icon | null };
         this.button.icon = new St.Icon({
@@ -39,6 +40,7 @@ export class Indicator {
 
         this.button.add_child(this.button.icon);
 
+        // oxlint-disable-next-line typescript/no-unsafe-type-assertion (not PopupDummyMenu)
         const bm = this.button.menu as PopupMenu;
 
         this.toggle_tiled = tiled(ext);

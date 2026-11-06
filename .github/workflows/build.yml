@@ -23,7 +23,6 @@ jobs:
             ~/.npm
             target
             schemas/gschemas.compiled
-            .eslintcache
             *.tsbuildinfo
           key: ${{ runner.os }}-shatter-${{ hashFiles('metadata.json') }}-${{ hashFiles('**/package.json') }}
           restore-keys: |
@@ -43,7 +42,7 @@ jobs:
           archive: false
 
       - name: Run lints
-        run: make CUSTOM_ESLINT_ARGS="--cache-strategy content" lint
+        run: make lint
 
       - name: Shexli lints
         uses: stuarthayhurst/shexli-github-action@81c25e448506a299c12162e78db901a3b0f1109f

@@ -7,10 +7,12 @@ import { LogLevel } from './log_level.js';
  * Shatter Shell is a chatty program so this class applies a user-controlled
  * {@link LogLevel} filter.
  */
+// oxlint-disable-next-line typescript/no-extraneous-class (Better organized as a static class)
 export class Log {
     static settings: Gio.Settings | null;
 
     static log_level(): LogLevel {
+        // oxlint-disable-next-line typescript/no-unsafe-enum-assignment
         return this.settings?.get_uint('log-level') ?? LogLevel.OFF;
     }
 

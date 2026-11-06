@@ -298,7 +298,7 @@ export class AutoTiler {
         return false;
     }
 
-    find_stack(entity: Entity): [Fork, node.Node, boolean] | null {
+    find_stack(entity: Entity): [Fork, node.Node<node.NodeStack>, boolean] | null {
         const att = this.attached.get(entity);
         if (att) {
             const fork = this.forest.forks.get(att);
@@ -381,11 +381,9 @@ export class AutoTiler {
         if (attach_to === null) {
             if (fork.left.inner.kind === NodeKind.WINDOW && fork.right?.inner.kind === NodeKind.WINDOW) {
                 const attaching = fork.left.is_window(win.entity) ? fork.right.inner.entity : fork.left.inner.entity;
-
                 attach_to = ext.windows.get(attaching);
             } else if (!windowless) {
                 this.tile(ext, fork, fork.area);
-                return true;
             }
         }
 
@@ -542,9 +540,9 @@ export class AutoTiler {
     }
 
     unstack(ext: Ext, fork: Fork, win: ShellWindow, toggled: boolean = false) {
-        const stack_toggle = (fork: Fork, branch: node.Node) => {
+        const stack_toggle = (fork: Fork, branch: node.Node<node.NodeStack>) => {
             // If the stack contains 1 item, unstack it
-            const stack = branch.inner as node.NodeStack;
+            const stack = branch.inner;
             if (stack.entities.length === 1) {
                 win.stack = null;
                 this.forest.stacks.remove(stack.idx)?.destroy();

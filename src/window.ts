@@ -182,6 +182,7 @@ export class ShellWindow {
     }
 
     icon(size: number) {
+        // oxlint-disable-next-line typescript/no-unsafe-type-assertion (Inferred manually from gnome-shell code)
         let icon = this.window_app.create_icon_texture(size) as St.Icon | null;
 
         if (!icon) {
@@ -608,8 +609,10 @@ function place_pointer_on(ext: Ext, win: Meta.Window) {
     let x = rect.x;
     let y = rect.y;
 
-    const key = Object.keys(focus.FocusPosition)[ext.settings.get_mouse_cursor_focus_location()];
-    const pointer_position_ = focus.FocusPosition[key as keyof typeof focus.FocusPosition];
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion
+    const keys = Object.keys(focus.FocusPosition) as (keyof typeof focus.FocusPosition)[];
+    const key = keys[ext.settings.get_mouse_cursor_focus_location()]!;
+    const pointer_position_ = focus.FocusPosition[key];
 
     switch (pointer_position_) {
         case focus.FocusPosition.TopLeft:

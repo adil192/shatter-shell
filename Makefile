@@ -23,7 +23,7 @@ COMPILE_SCHEMAS = true
 all: compile
 
 clean:
-	rm -rf _build schemas/gschemas.compiled target .eslintcache tsconfig.tsbuildinfo $(UUID)_*.zip
+	rm -rf _build schemas/gschemas.compiled target tsconfig.tsbuildinfo $(UUID)_*.zip
 
 compile: _build/extension.js
 _build/extension.js: node_modules/.package-lock.json $(SOURCES) scripts/transpile.sh
@@ -60,4 +60,4 @@ $(UUID)_$(VERSION_NAME).zip: compile
 	cd _build && zip -qr "../$(UUID)_$(VERSION_NAME).zip" .
 
 lint: node_modules/.package-lock.json $(SOURCES)
-	npx eslint --cache $(CUSTOM_ESLINT_ARGS)
+	npx oxlint

@@ -66,6 +66,7 @@ export class ExtensionSettings {
     get_untile_reset_windows() { return this.ext.get_boolean('untile-reset-windows'); }
     set_untile_reset_windows(value: boolean) { this.ext.set_boolean('untile-reset-windows', value); }
 
+    // oxlint-disable-next-line typescript/no-unsafe-enum-assignment
     get_log_level(): LogLevel { return this.ext.get_uint('log-level'); }
     set_log_level(value: LogLevel) { this.ext.set_uint('log-level', value); }
 
@@ -90,6 +91,7 @@ export class ExtensionSettings {
     // External
 
     get_is_dark() {
+        // oxlint-disable-next-line typescript/no-unsafe-enum-assignment
         const colorScheme: GDesktopEnums.ColorScheme = this.desktop_interface.get_enum('color-scheme');
         return colorScheme == GDesktopEnums.ColorScheme.PREFER_DARK;
     }

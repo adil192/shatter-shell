@@ -188,7 +188,7 @@ export class Node<T extends NodeADT = NodeADT> {
     }
 
     /** Check if the entity exists as a child of this stack */
-    is_in_stack(entity: Entity): boolean {
+    is_in_stack(entity: Entity): this is Node<T> & { inner: NodeStack } {
         if (this.inner.kind === NodeKind.STACK) {
             for (const compare of this.inner.entities) {
                 if (Ecs.entity_eq(entity, compare)) return true;

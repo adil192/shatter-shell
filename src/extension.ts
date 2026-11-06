@@ -58,7 +58,7 @@ import { clampRect, fmtRect } from './rectangle.js';
 import { Log } from './log.js';
 const { monitorID, workspaceID } = Lib;
 
-const sessionMode = Main.sessionMode as typeof Main.sessionMode & { isLocked: boolean };
+const sessionMode = Main.sessionMode as typeof Main.sessionMode & { isLocked?: boolean };
 
 enum Style {
     light = 'light',
@@ -249,7 +249,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     /** Executes an event on the system */
-    run(event: ExtEvent) {
+    override run(event: ExtEvent) {
         switch (event.tag) {
             case 'callback':
                 event.callback();
@@ -670,7 +670,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         if (!window) return false;
 
         const node = this.auto_tiler.find_stack(window.entity);
-        return node ? apply(node[1].inner as node.NodeStack) : false;
+        return node ? apply(node[1].inner) : false;
     }
 
     /** Fetches the window component from the entity associated with the metacity window metadata. */
@@ -680,9 +680,13 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     injections_add() {
-        // eslint-disable-next-line @typescript-eslint/unbound-method
         const screen_unlock_fn = ScreenShield.prototype['deactivate'];
-        this.injections.screen_unlock = { object: ScreenShield.prototype as ScreenShield, method: 'deactivate', func: screen_unlock_fn };
+        this.injections.screen_unlock = {
+            // oxlint-disable-next-line typescript/no-unsafe-type-assertion
+            object: ScreenShield.prototype as ScreenShield,
+            method: 'deactivate',
+            func: screen_unlock_fn
+        };
         ScreenShield.prototype['deactivate'] = (animate: boolean) => {
             screen_unlock_fn.apply(screenShield, [animate]);
             this.update_display_configuration(true);
@@ -1374,7 +1378,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                             if (stack) {
                                 const stack_info = tiler.find_stack(stack.active);
                                 if (stack_info) {
-                                    const node = stack_info[1].inner as node.NodeStack;
+                                    const node: node.NodeStack = stack_info[1].inner;
 
                                     win.stack = attachment;
                                     node.entities.push(win.entity);
@@ -1752,8 +1756,6 @@ export class Ext extends Ecs.System<ExtEvent> {
                         refocus_tiled_window();
                     }
                 });
-
-                return false;
             }));
 
             const window = this.get_focused_window();
@@ -2068,7 +2070,6 @@ export class Ext extends Ecs.System<ExtEvent> {
 
         function displays_ready(): boolean {
             const monitors = global.display.get_n_monitors();
-
             if (monitors === 0) return false;
 
             for (let i = 0; i < monitors; i += 1) {
@@ -2393,8 +2394,8 @@ let ext: Ext | null = null;
 let indicator: Indicator | null = null;
 
 export default class ShatterShellExtension extends Extension {
-    // eslint-disable-next-line @typescript-eslint/no-misused-promises
-    async enable() {
+    // oxlint-disable-next-line typescript/no-misused-promises typescript/strict-void-return max-statements
+    override async enable() {
         Log.settings = this.getSettings();
         Log.info('enable');
 
@@ -2440,7 +2441,7 @@ export default class ShatterShellExtension extends Extension {
         }
     }
 
-    disable() {
+    override disable() {
         Log.info('disable');
 
         if (ext) {

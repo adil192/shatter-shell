@@ -277,7 +277,7 @@ export class Fork {
 
             const blocked = [];
 
-            forest.toplevel.set(forest.string_reps.get(this.entity) as string, [this.entity, [monitor, workspace]]);
+            forest.toplevel.set(forest.string_reps.get(this.entity)!, [this.entity, [monitor, workspace]]);
 
             for (const child of forest.iter(this.entity)) {
                 switch (child.inner.kind) {

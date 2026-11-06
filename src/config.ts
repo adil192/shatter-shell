@@ -164,6 +164,7 @@ export class Config {
 
     static from_json(json: string): Config {
         try {
+            // oxlint-disable-next-line typescript/no-unsafe-type-assertion
             return JSON.parse(json) as Config;
         } catch {
             return new Config();

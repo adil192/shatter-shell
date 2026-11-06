@@ -80,10 +80,6 @@ export class Forest extends Ecs.World {
     /** Likewise for detachments */
     on_detach: (child: Entity) => void = () => { };
 
-    constructor() {
-        super();
-    }
-
     measure(ext: Ext, fork: Fork.Fork, area: Mtk.Rectangle) {
         fork.measure(this, ext, area, this.on_record());
     }
@@ -309,13 +305,13 @@ export class Forest extends Ecs.World {
                     return this._attach(onto_entity, new_entity, this.on_attach, entity, fork, null);
                 }
             } else if (fork.left.is_in_stack(onto_entity)) {
-                const stack = fork.left.inner as Node.NodeStack;
+                const stack = fork.left.inner;
                 return this.attach_stack(ext, stack, fork, new_entity, stack_from_left);
             } else if (fork.right) {
                 if (fork.right.is_window(onto_entity)) {
                     return fork_and_place_on_right(entity, fork, fork.right);
                 } else if (fork.right.is_in_stack(onto_entity)) {
-                    const stack = fork.right.inner as Node.NodeStack;
+                    const stack = fork.right.inner;
                     return this.attach_stack(ext, stack, fork, new_entity, stack_from_left);
                 }
             }
@@ -336,7 +332,7 @@ export class Forest extends Ecs.World {
     }
 
     /** Creates a new fork entity in the world */
-    create_entity(): Entity {
+    override create_entity(): Entity {
         const entity = super.create_entity();
         this.string_reps.insert(entity, `${entity}`);
         return entity;
@@ -369,7 +365,7 @@ export class Forest extends Ecs.World {
     }
 
     /** Deletes a fork entity from the world, performing any cleanup necessary */
-    delete_entity(entity: Entity) {
+    override delete_entity(entity: Entity) {
         const fork = this.forks.remove(entity);
         if (fork && fork.is_toplevel) {
             const id = this.string_reps.get(entity);
@@ -413,13 +409,13 @@ export class Forest extends Ecs.World {
             reflow_fork = [fork_entity, fork];
             stack_detach = true;
 
-            this.remove_from_stack(ext, fork.left.inner as Node.NodeStack, window, () => {
+            this.remove_from_stack(ext, fork.left.inner, window, () => {
                 if (fork.right) {
                     fork.left = fork.right;
                     fork.right = null;
                     if (parent) {
                         const pfork = this.reassign_child_to_parent(fork_entity, parent, fork.left);
-                        if (!pfork) return null;
+                        if (!pfork) return;
                         reflow_fork = [parent, pfork];
                     }
                 } else {
@@ -449,7 +445,7 @@ export class Forest extends Ecs.World {
                 reflow_fork = [fork_entity, fork];
                 stack_detach = true;
 
-                this.remove_from_stack(ext, fork.right.inner as Node.NodeStack, window, () => {
+                this.remove_from_stack(ext, fork.right.inner, window, () => {
                     fork.right = null;
                     this.reassign_to_parent(fork, fork.left);
                 });
@@ -545,7 +541,7 @@ export class Forest extends Ecs.World {
     /** Walks the tree starting at a given fork entity. */
     * iter(entity: Entity) {
         let fork = this.forks.get(entity);
-        const forks = new Array<Fork.Fork>(2);
+        const forks = Array.from<Fork.Fork>({ length: 2 });
 
         while (fork) {
             {
@@ -745,8 +741,8 @@ export class Forest extends Ecs.World {
 
     /** Resizes a fork in the direction that a movement requests */
     private resize_fork_(ext: Ext, child_e: Entity, crect: Mtk.Rectangle, mov: movement.Movement, shrunk: boolean) {
-        let parent = this.parents.get(child_e),
-            child: Fork.Fork = this.forks.get(child_e) as Fork.Fork;
+        let parent = this.parents.get(child_e);
+        let child = this.forks.get(child_e)!;
 
         if (!parent) {
             child.measure(this, ext, child.area, this.on_record());
@@ -760,7 +756,7 @@ export class Forest extends Ecs.World {
             length: number;
 
         while (parent !== null) {
-            child = this.forks.get(parent) as Fork.Fork;
+            child = this.forks.get(parent)!;
             is_left = child.left.is_fork(child_e);
 
             if (child.area.contains_rect(crect)) {

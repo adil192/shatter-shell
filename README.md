@@ -97,7 +97,7 @@ Then open the "Keyboard Shortcuts" page in GNOME Settings and click the "Reset A
 Please install the following as dependencies when developing:
 
 - `make`
-- [`Node.js`](https://nodejs.org/en/)
+- [`Node.js`](https://nodejs.org/en/) (22.18 or newer)
 - [`dart-sass`](https://sass-lang.com/install/) (optional, for faster builds)
 - `mutter-devkit` (optional, for testing)
 

@@ -9,7 +9,6 @@ import * as exec from './executor.js';
 import type { Entity } from './ecs.js';
 import type { Ext } from './extension.js';
 import type { NodeStack } from './node.js';
-import { AutoTiler } from './auto_tiler.js';
 import { Fork } from './fork.js';
 import { Tags } from './tags.js';
 
@@ -247,7 +246,7 @@ export class Tiler {
 
     move_alongside_stack(
         ext: Ext,
-        [fork, branch, is_left]: [Fork, Node.Node, boolean],
+        [fork, branch, is_left]: [Fork, Node.Node<NodeStack>, boolean],
         focused: window.ShellWindow,
         direction: Direction,
     ) {
@@ -289,7 +288,7 @@ export class Tiler {
 
         if (!ext.auto_tiler) return;
 
-        const inner = branch.inner as NodeStack;
+        const inner = branch.inner;
         Node.stack_remove(ext.auto_tiler.forest, inner, focused.entity);
         ext.auto_tiler.detach_window(ext, focused.entity);
 
@@ -305,9 +304,7 @@ export class Tiler {
                 right = branch;
             }
 
-            const inner = branch.inner as NodeStack;
-
-            new_fork = this.unstack_from_fork(ext, inner, focused, fork, left, right, is_left);
+            new_fork = this.unstack_from_fork(ext, branch.inner, focused, fork, left, right, is_left);
         } else if (reverse) {
             fork.right = Node.Node.window(focused.entity);
         } else {
@@ -324,14 +321,14 @@ export class Tiler {
 
     move_from_stack(
         ext: Ext,
-        [fork, branch, is_left]: [Fork, Node.Node, boolean],
+        [fork, branch, is_left]: [Fork, Node.Node<NodeStack>, boolean],
         focused: window.ShellWindow,
         direction: Direction,
         force_detach: boolean = false,
     ) {
         if (!ext.auto_tiler) return;
 
-        const inner = branch.inner as NodeStack;
+        const inner = branch.inner;
 
         if (inner.entities.length === 1) {
             ext.auto_tiler.toggle_stacking(ext);
@@ -455,11 +452,11 @@ export class Tiler {
                 const resize = (mov: Mtk.Rectangle, func: (m: Mtk.Rectangle, a: Mtk.Rectangle, mov: Mtk.Rectangle) => boolean) => {
                     if (func(toparea, crect, mov) || crect.equal(grab_op.rect)) return;
 
-                    (ext.auto_tiler as AutoTiler).forest.resize(
+                    ext.auto_tiler!.forest.resize(
                         ext,
                         entity,
                         fork,
-                        this.window as Entity,
+                        this.window!,
                         grab_op.operation(crect),
                         crect,
                     );
@@ -551,7 +548,7 @@ export class Tiler {
                 const stack_info = at.find_stack(move_to.entity);
                 if (stack_info) {
                     const [stack_fork, branch] = stack_info;
-                    const stack = branch.inner as NodeStack;
+                    const stack = branch.inner;
 
                     const placement = { auto: 0 } as const;
 

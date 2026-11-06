@@ -45,11 +45,6 @@ function stack_widgets_new(): StackWidgets {
     return { tabs };
 }
 
-interface TabButton extends St.Button {
-    set_title: (title: string) => void;
-    set_active: (style: TabActive) => void;
-}
-
 const TabButton = GObject.registerClass(
     {
         Signals: { activate: {} },
@@ -58,7 +53,7 @@ const TabButton = GObject.registerClass(
         declare _title: St.Label;
         declare _settings: Settings.ExtensionSettings;
 
-        _init(window: ShellWindow, settings: Settings.ExtensionSettings) {
+        override _init(window: ShellWindow, settings: Settings.ExtensionSettings) {
             this._settings = settings;
 
             const icon = window.icon(Math.floor(TAB_HEIGHT_UNSCALED * 0.4));
@@ -158,7 +153,7 @@ export class Stack {
 
     workspace: WorkspaceID;
 
-    buttons: a.Arena<TabButton> = new Arena();
+    buttons: a.Arena<typeof TabButton.prototype> = new Arena();
 
     tab_height: number;
     tab_separation: number;

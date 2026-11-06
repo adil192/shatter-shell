@@ -2,7 +2,7 @@ import * as Ecs from './ecs.js';
 import GLib from 'gi://GLib';
 
 export interface Executor<T> {
-    wake<S extends Ecs.System<T>>(system: S, event: T): void;
+    wake(system: Ecs.System<T>, event: T): void;
 }
 
 /** Glib-based event executor */
@@ -16,7 +16,7 @@ export class GLibExecutor<T> implements Executor<T> {
      * - The signal will continue executing for as long as there are events remaining in the queue.
      * - Events are handled within batches, yielding between each new set of events.
      */
-    wake<S extends Ecs.System<T>>(system: S, event: T): void {
+    wake(system: Ecs.System<T>, event: T): void {
         this.#events.unshift(event);
 
         if (this.#event_loop) return;

@@ -152,7 +152,7 @@ export const WelcomePage = GObject.registerClass({
 Something went wrong. Please try again or make a bug report with the following logs:
 `;
             for (const error of errors) {
-                label += error as string + '\n';
+                label += error + '\n';
             }
             this.logs.label = label;
             this.logs.add_css_class('monospace');
