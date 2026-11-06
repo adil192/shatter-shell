@@ -50,6 +50,12 @@ Tasks for a tester to verify when approving a patch. Use complex window layouts 
 - [ ] Windows can be moved out of a stack.
 - [ ] Windows inside and outside of a stack can be swapped multiple times and in both directions.
 - [ ] Moving the last window out of a stack works as expected.
+- [ ] Toggling stacking on a lone window still gives it a tab bar, so that other windows can be moved into it.
+- [ ] Inserting a workspace before a stack (at the start with the move-to-workspace shortcut, or anywhere by dragging to a gap in the overview) keeps its tabs, the surrounding split layout, and any minimized windows minimized.
+- [ ] After inserting a workspace, the tab bar shows on the workspace that the stack moved to and not on the new one, and moving or closing tabs there still works.
+- [ ] Using the move-to-workspace shortcut on a tab on the first workspace moves only that tab to the new workspace.
+- [ ] Quickly switching tabs and then closing or moving one never leaves a window that only appears in the overview and workspace animations.
+- [ ] Moving the last window off a workspace never leaves another workspace's window drawn on the current one, where it can be seen but not used. Check by entering an empty workspace afterwards.
 - [ ] Stacks can be resized with the keyboard.
 - [ ] Stacks can be resized with the mouse.
 - [ ] Only the tab bar of the stack with the focused window looks focused.

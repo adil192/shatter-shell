@@ -421,6 +421,8 @@ export class Tiler {
                 detach(Clutter.Orientation.VERTICAL, true);
                 break;
         }
+
+        ext.auto_tiler.dissolve_single_stack(ext, inner);
     }
 
     move_auto_(
