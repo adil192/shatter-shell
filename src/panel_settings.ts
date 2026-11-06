@@ -1,8 +1,8 @@
-import type { Ext } from './extension.js';
-
 import Clutter from 'gi://Clutter';
+import Gio from 'gi://Gio';
+import GLib from 'gi://GLib';
 import St from 'gi://St';
-
+import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
 import {
     PopupBaseMenuItem,
     PopupMenuItem,
@@ -10,9 +10,9 @@ import {
     PopupSeparatorMenuItem,
     PopupMenu,
 } from 'resource:///org/gnome/shell/ui/popupMenu.js';
-import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
-import Gio from 'gi://Gio';
-import GLib from 'gi://GLib';
+
+import type { Ext } from './extension.js';
+
 import { get_current_path } from './paths.js';
 // import * as Settings from './settings.js';
 
@@ -31,8 +31,9 @@ export class Indicator {
         ext.button_auto_off_icon = Gio.icon_new_for_string(`${path}/icons/shatter-shell-auto-off-symbolic.svg`);
 
         // oxlint-disable-next-line typescript/no-unsafe-type-assertion (adding an icon property to the button)
-        ext.button = this.button = new PanelMenu.Button(0.5, _('Shatter Shell Settings')) as
-            PanelMenu.Button & { icon: St.Icon | null };
+        ext.button = this.button = new PanelMenu.Button(0.5, _('Shatter Shell Settings')) as PanelMenu.Button & {
+            icon: St.Icon | null;
+        };
         this.button.icon = new St.Icon({
             gicon: ext.settings.get_tile_by_default() ? ext.button_auto_on_icon : ext.button_auto_off_icon,
             style_class: 'system-status-icon',
@@ -45,11 +46,11 @@ export class Indicator {
 
         this.toggle_tiled = tiled(ext);
 
-        this.toggle_active = toggle(_('Show active hint'), ext.settings.get_active_hint(), (toggle) => {
+        this.toggle_active = toggle(_('Show active hint'), ext.settings.get_active_hint(), toggle => {
             ext.settings.set_active_hint(toggle.state);
         });
 
-        this.entry_gaps = number_entry(_('Gaps'), ext.settings.get_gap_inner(), (value) => {
+        this.entry_gaps = number_entry(_('Gaps'), ext.settings.get_gap_inner(), value => {
             ext.settings.set_gap_inner(value);
             ext.settings.set_gap_outer(value);
         });
@@ -61,7 +62,7 @@ export class Indicator {
                 min: 0,
                 max: 30,
             },
-            (value) => {
+            value => {
                 ext.settings.set_active_hint_border_radius(value);
             },
         );
@@ -175,9 +176,7 @@ function number_entry(
     valueOrOptions: number | { value: number; min: number; max: number },
     callback: (a: number) => void,
 ) {
-    let value: number,
-        min: number,
-        max: number;
+    let value: number, min: number, max: number;
     if (typeof valueOrOptions === 'number') value = valueOrOptions;
     else ({ value, min, max } = valueOrOptions);
 
@@ -199,14 +198,14 @@ function number_entry(
     entry.connect('key-release-event', (_, event) => {
         const symbol = event.get_key_symbol();
 
-        const number: number | null
-            = symbol == 65293 // enter key
+        const number: number | null =
+            symbol == 65293 // enter key
                 ? parse_number(text.text)
                 : symbol == 65361 // left key
-                    ? clamp(parse_number(text.text) - 1, min, max)
-                    : symbol == 65363 // right key
-                        ? clamp(parse_number(text.text) + 1, min, max)
-                        : null;
+                  ? clamp(parse_number(text.text) - 1, min, max)
+                  : symbol == 65363 // right key
+                    ? clamp(parse_number(text.text) + 1, min, max)
+                    : null;
 
         if (number !== null) {
             text.set_text(String(number));
@@ -288,7 +287,9 @@ function color_selector(ext: Ext, menu: PopupMenu) {
     settings.ext.connect('changed', (_, key) => {
         if (key === 'hint-color-rgba') {
             const hint_color_rgba = settings.get_hint_color_rgba();
-            color_button.set_style(`background-color: ${hint_color_rgba}; border: 2px solid lightgray; border-radius: 2px`);
+            color_button.set_style(
+                `background-color: ${hint_color_rgba}; border: 2px solid lightgray; border-radius: 2px`,
+            );
         }
     });
 

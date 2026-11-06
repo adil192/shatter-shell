@@ -15,7 +15,7 @@ INSTALLNAME = $(UUID)
 
 SOURCES = src/*.ts src/*/*.ts *.scss icons/*.svg schemas/*.gschema.xml metadata.json README.md
 
-.PHONY: all clean compile debug listen install local-install uninstall zip-file lint
+.PHONY: all clean compile debug listen install local-install uninstall zip-file lint fmt fmt-check
 
 # We no longer call `glib-compile-schemas`. This flag now controls whether the .gschemas.xml file is included in _build.
 COMPILE_SCHEMAS = true
@@ -59,5 +59,11 @@ zip-file: $(UUID)_$(VERSION_NAME).zip
 $(UUID)_$(VERSION_NAME).zip: compile
 	cd _build && zip -qr "../$(UUID)_$(VERSION_NAME).zip" .
 
-lint: node_modules/.package-lock.json $(SOURCES)
+lint: node_modules/.package-lock.json
 	npx oxlint
+
+fmt: node_modules/.package-lock.json
+	npx oxfmt
+
+fmt-check: node_modules/.package-lock.json
+	npx oxfmt --check

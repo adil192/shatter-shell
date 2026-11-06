@@ -1,9 +1,9 @@
 {
     "name": "shatter-shell",
-    "main": "src/extension.ts",
-    "type": "module",
     "private": true,
+    "type": "module",
     "sideEffects": false,
+    "main": "src/extension.ts",
     "devDependencies": {
         "@girs/adw-1": "^5.6.0",
         "@girs/giounix-2.0": "^5.6.0",
@@ -13,6 +13,7 @@
         "@girs/gtk-4.0": "^5.6.0",
         "@girs/meta-18": "^5.6.0",
         "@girs/mtk-18": "^5.6.0",
+        "oxfmt": "^0.75.0",
         "oxlint": "^1.90.0",
         "oxlint-tsgolint": "^7.0.2005",
         "sass": "^1.107.1",

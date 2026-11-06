@@ -1,20 +1,22 @@
+import type { Entity } from './ecs.js';
+import type { Ext } from './extension.js';
+
+import * as focus from './focus.js';
 import * as lib from './lib.js';
 import { Tags } from './tags.js';
 import * as utils from './utils.js';
-import type { Entity } from './ecs.js';
-import type { Ext } from './extension.js';
-import * as focus from './focus.js';
 const { monitorID, workspaceID } = lib;
 
 import Cogl from 'gi://Cogl';
+import GLib from 'gi://GLib';
 import Meta from 'gi://Meta';
+import Mtk from 'gi://Mtk';
 import Shell from 'gi://Shell';
 import St from 'gi://St';
-import GLib from 'gi://GLib';
-import Mtk from 'gi://Mtk';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
-import { DEFAULT_HINT_COLOR } from './settings.js';
+
 import { Log } from './log.js';
+import { DEFAULT_HINT_COLOR } from './settings.js';
 
 const wom = global.workspace_manager;
 
@@ -98,7 +100,8 @@ export class ShellWindow {
         const workspace = this.meta.get_workspace() as Meta.Workspace | null;
         workspace?.activate_with_focus(this.meta, global.get_current_time());
 
-        move_mouse = move_mouse
+        move_mouse =
+            move_mouse
             && Main.modalCount === 0
             && this.ext.settings.get_mouse_cursor_follows_active_window()
             && !pointer_already_on_window(this.meta)
@@ -202,9 +205,7 @@ export class ShellWindow {
 
     /** Window is maximized, 0 gapped, or smart gapped */
     private is_max_screen(): boolean {
-        return this.is_maximized()
-            || this.ext.settings.get_gap_inner() === 0
-            || this.smart_gapped;
+        return this.is_maximized() || this.ext.settings.get_gap_inner() === 0 || this.smart_gapped;
     }
 
     is_single_max_screen(): boolean {
@@ -250,7 +251,8 @@ export class ShellWindow {
             // Exclude these oversized windows. Some examples are Steam and Winboat at certain scalings.
             const oversized_window_width = this.ext.settings.get_oversized_window_width();
             const oversized_window_height = this.ext.settings.get_oversized_window_height();
-            const is_oversized = (oversized_window_width > 0 && min_width > oversized_window_width)
+            const is_oversized =
+                (oversized_window_width > 0 && min_width > oversized_window_width)
                 || (oversized_window_height > 0 && min_height > oversized_window_height);
             if (is_oversized) return false;
         }
@@ -271,7 +273,7 @@ export class ShellWindow {
             // Floating window exclusions from config
             && !this.ext.conf.window_shall_float(wm_class, this.title())
         );
-    };
+    }
 
     is_transient(): boolean {
         return this.meta.get_transient_for() !== null;
@@ -507,9 +509,7 @@ export class ShellWindow {
 
         const border = this.border;
         if (border) {
-            const borderSize = (this.is_max_screen() || this.is_snap_edge())
-                ? 0
-                : this.border_size;
+            const borderSize = this.is_max_screen() || this.is_snap_edge() ? 0 : this.border_size;
 
             const stack_number = this.stack;
             let dimensions: [number, number, number, number] | null = null;

@@ -2,23 +2,23 @@ import Clutter from 'gi://Clutter';
 import Meta from 'gi://Meta';
 import Mtk from 'gi://Mtk';
 
-import * as ecs from './ecs.js';
-import * as lib from './lib.js';
-import * as node from './node.js';
-import { Result, Ok, Err } from './result.js';
-import { Stack } from './stack.js';
-import * as geom from './geom.js';
-import * as tiling from './tiling.js';
-
 import type { Entity } from './ecs.js';
 import type { Ext } from './extension.js';
 import type { Forest, MoveBy, MoveByCursor } from './forest.js';
 import type { Fork } from './fork.js';
 import type { ShellWindow } from './window.js';
 
+import * as ecs from './ecs.js';
+import * as geom from './geom.js';
+import * as lib from './lib.js';
+import * as node from './node.js';
+import { Result, Ok, Err } from './result.js';
+import { Stack } from './stack.js';
+import * as tiling from './tiling.js';
+
 const { NodeKind } = node;
-import { Tags } from './tags.js';
 import { Log } from './log.js';
+import { Tags } from './tags.js';
 
 export class AutoTiler {
     forest: Forest;
@@ -238,7 +238,7 @@ export class AutoTiler {
 
     /** Detaches the window from a tiling branch, if it is attached to one. */
     detach_window(ext: Ext, win: Entity) {
-        this.attached.take_with(win, (prev_fork) => {
+        this.attached.take_with(win, prev_fork => {
             const reflow_fork = this.forest.detach(ext, prev_fork, win);
 
             if (reflow_fork) {
@@ -265,7 +265,11 @@ export class AutoTiler {
             const fork = this.forest.forks.get(fork_entity);
 
             if (fork) {
-                if (fork.left.inner.kind === NodeKind.WINDOW && fork.right && fork.right.inner.kind === NodeKind.WINDOW) {
+                if (
+                    fork.left.inner.kind === NodeKind.WINDOW
+                    && fork.right
+                    && fork.right.inner.kind === NodeKind.WINDOW
+                ) {
                     if (fork.left.is_window(win)) {
                         const sibling = ext.windows.get(fork.right.inner.entity);
                         if (sibling && sibling.rect().contains_rect(cursor)) {
@@ -404,8 +408,8 @@ export class AutoTiler {
 
         const is_sibling = this.windows_are_siblings(win.entity, attach_to.entity);
 
-        const attach_area: Mtk.Rectangle
-            = (win.stack === null && attach_to.stack === null && is_sibling) || (win.stack === null && is_sibling)
+        const attach_area: Mtk.Rectangle =
+            (win.stack === null && attach_to.stack === null && is_sibling) || (win.stack === null && is_sibling)
                 ? fork.area
                 : attach_to.meta.get_frame_rect();
 
@@ -428,14 +432,14 @@ export class AutoTiler {
         };
 
         if (placement) {
-            const direction
-                = placement.orientation === Clutter.Orientation.HORIZONTAL
+            const direction =
+                placement.orientation === Clutter.Orientation.HORIZONTAL
                     ? placement.swap
                         ? Left
                         : Right
                     : placement.swap
-                        ? Up
-                        : Down;
+                      ? Up
+                      : Down;
 
             if (stack) {
                 if (matching_stack) {
@@ -691,7 +695,7 @@ export class AutoTiler {
 
         const fork = this.forest.forks.get(fork_entity);
         if (!fork) {
-            return Err('window\'s fork attachment does not exist');
+            return Err("window's fork attachment does not exist");
         }
 
         if (!fork.right) return Ok(void 0);
@@ -728,16 +732,16 @@ export function cursor_placement(ext: Ext, area: Mtk.Rectangle, cursor: Mtk.Rect
 
     const [, side] = geom.nearest_side(ext, [cursor.x, cursor.y], area);
 
-    const res: [Clutter.Orientation, boolean] | null
-        = side === LEFT
+    const res: [Clutter.Orientation, boolean] | null =
+        side === LEFT
             ? [HORIZONTAL, true]
             : side === RIGHT
-                ? [HORIZONTAL, false]
-                : side === TOP
-                    ? [VERTICAL, true]
-                    : side === BOTTOM
-                        ? [VERTICAL, false]
-                        : null;
+              ? [HORIZONTAL, false]
+              : side === TOP
+                ? [VERTICAL, true]
+                : side === BOTTOM
+                  ? [VERTICAL, false]
+                  : null;
 
     return res ? { orientation: res[0], swap: res[1] } : null;
 }

@@ -1,13 +1,12 @@
 import Adw from 'gi://Adw';
-import Gtk from 'gi://Gtk?version=4.0';
-
 import Gio from 'gi://Gio';
+import Gtk from 'gi://Gtk?version=4.0';
 const Settings = Gio.Settings;
 import { ExtensionPreferences } from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 
-import * as settings from './settings.js';
 import * as focus from './focus.js';
 import { LogLevel } from './log_level.js';
+import * as settings from './settings.js';
 
 export default class ShatterShellPreferences extends ExtensionPreferences {
     override fillPreferencesWindow(window: Adw.PreferencesWindow) {
@@ -27,7 +26,7 @@ export default class ShatterShellPreferences extends ExtensionPreferences {
                     subtitle: 'Drag a window over another to stack them',
                     active: ext.get_stacking_with_mouse(),
                 });
-                row.connect('notify::active', (row) => {
+                row.connect('notify::active', row => {
                     ext.set_stacking_with_mouse(row.active);
                     Settings.sync();
                 });
@@ -49,7 +48,7 @@ export default class ShatterShellPreferences extends ExtensionPreferences {
                     digits: 0,
                     snap_to_ticks: true,
                 });
-                row.connect('notify::value', (row) => {
+                row.connect('notify::value', row => {
                     const value = row.value;
                     ext.set_max_window_width(value);
                     Settings.sync();
@@ -63,7 +62,7 @@ export default class ShatterShellPreferences extends ExtensionPreferences {
                     subtitle: 'Move windows in discrete steps',
                     active: ext.get_snap_to_grid(),
                 });
-                row.connect('notify::active', (row) => {
+                row.connect('notify::active', row => {
                     ext.set_snap_to_grid(row.active);
                     Settings.sync();
                 });
@@ -72,11 +71,11 @@ export default class ShatterShellPreferences extends ExtensionPreferences {
 
             {
                 const row = new Adw.SwitchRow({
-                    title: 'Reset untiled window\'s position',
+                    title: "Reset untiled window's position",
                     subtitle: 'Restore previous position if tiling is disabled',
                     active: ext.get_untile_reset_windows(),
                 });
-                row.connect('notify::active', (row) => {
+                row.connect('notify::active', row => {
                     ext.set_untile_reset_windows(row.active);
                     Settings.sync();
                 });
@@ -90,7 +89,7 @@ export default class ShatterShellPreferences extends ExtensionPreferences {
                     model: Gtk.StringList.new(Object.values(LogLevel).filter(option => typeof option == 'string')),
                     selected: ext.get_log_level(),
                 });
-                row.connect('notify::selected', (row) => {
+                row.connect('notify::selected', row => {
                     // oxlint-disable-next-line typescript/no-unsafe-enum-assignment
                     ext.set_log_level(row.selected);
                     Settings.sync();
@@ -118,7 +117,7 @@ export default class ShatterShellPreferences extends ExtensionPreferences {
                     digits: 0,
                     snap_to_ticks: true,
                 });
-                row.connect('notify::value', (row) => {
+                row.connect('notify::value', row => {
                     const value = row.value;
                     ext.set_gap_inner(value);
                     Settings.sync();
@@ -141,7 +140,7 @@ export default class ShatterShellPreferences extends ExtensionPreferences {
                     digits: 0,
                     snap_to_ticks: true,
                 });
-                row.connect('notify::value', (row) => {
+                row.connect('notify::value', row => {
                     const value = row.value;
                     ext.set_gap_outer(value);
                     Settings.sync();
@@ -155,7 +154,7 @@ export default class ShatterShellPreferences extends ExtensionPreferences {
                     subtitle: 'Remove outer gap when only one window',
                     active: ext.get_smart_gaps(),
                 });
-                row.connect('notify::active', (row) => {
+                row.connect('notify::active', row => {
                     ext.set_smart_gaps(row.active);
                     Settings.sync();
                 });
@@ -173,7 +172,7 @@ export default class ShatterShellPreferences extends ExtensionPreferences {
                     subtitle: 'Automatically moves your mouse when switching windows',
                     active: ext.get_mouse_cursor_follows_active_window(),
                 });
-                row.connect('notify::active', (row) => {
+                row.connect('notify::active', row => {
                     ext.set_mouse_cursor_follows_active_window(row.active);
                     Settings.sync();
                 });
@@ -187,7 +186,7 @@ export default class ShatterShellPreferences extends ExtensionPreferences {
                     model: Gtk.StringList.new(Object.values(focus.FocusPosition)),
                     selected: ext.get_mouse_cursor_focus_location(),
                 });
-                row.connect('notify::selected', (row) => {
+                row.connect('notify::selected', row => {
                     ext.set_mouse_cursor_focus_location(row.selected);
                     Settings.sync();
                 });
@@ -217,7 +216,7 @@ export default class ShatterShellPreferences extends ExtensionPreferences {
                     digits: 0,
                     snap_to_ticks: true,
                 });
-                row.connect('notify::value', (row) => {
+                row.connect('notify::value', row => {
                     const value = row.value;
                     ext.set_oversized_window_width(value);
                     Settings.sync();
@@ -240,7 +239,7 @@ export default class ShatterShellPreferences extends ExtensionPreferences {
                     digits: 0,
                     snap_to_ticks: true,
                 });
-                row.connect('notify::value', (row) => {
+                row.connect('notify::value', row => {
                     const value = row.value;
                     ext.set_oversized_window_height(value);
                     Settings.sync();

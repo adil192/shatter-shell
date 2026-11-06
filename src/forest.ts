@@ -2,19 +2,19 @@ import Clutter from 'gi://Clutter';
 import Meta from 'gi://Meta';
 import Mtk from 'gi://Mtk';
 
+import type { Entity } from './ecs.js';
+import type { Ext } from './extension.js';
+import type { ShellWindow } from './window.js';
+
 import * as arena from './arena.js';
 import * as Ecs from './ecs.js';
-import * as movement from './movement.js';
-import * as Node from './node.js';
 import * as Fork from './fork.js';
 import * as geom from './geom.js';
-
-import type { Entity } from './ecs.js';
-import type { ShellWindow } from './window.js';
-import type { Ext } from './extension.js';
-import { Stack } from './stack.js';
-import { fmtRect } from './rectangle.js';
 import { Log } from './log.js';
+import * as movement from './movement.js';
+import * as Node from './node.js';
+import { fmtRect } from './rectangle.js';
+import { Stack } from './stack.js';
 
 const { Arena } = arena;
 const { Movement } = movement;
@@ -75,10 +75,10 @@ export class Forest extends Ecs.World {
     stacks: arena.Arena<Stack> = new Arena();
 
     /** The callback to execute when a window has been attached to a fork. */
-    on_attach: (parent: Entity, child: Entity) => void = () => { };
+    on_attach: (parent: Entity, child: Entity) => void = () => {};
 
     /** Likewise for detachments */
-    on_detach: (child: Entity) => void = () => { };
+    on_detach: (child: Entity) => void = () => {};
 
     measure(ext: Ext, fork: Fork.Fork, area: Mtk.Rectangle) {
         fork.measure(this, ext, area, this.on_record());
@@ -239,13 +239,13 @@ export class Forest extends Ecs.World {
 
             return fork.is_horizontal()
                 ? [
-                    new Mtk.Rectangle({ y, height, width: width / 2, x: x }),
-                    new Mtk.Rectangle({ y, height, width: width / 2, x: x + width / 2 }),
-                ]
+                      new Mtk.Rectangle({ y, height, width: width / 2, x: x }),
+                      new Mtk.Rectangle({ y, height, width: width / 2, x: x + width / 2 }),
+                  ]
                 : [
-                    new Mtk.Rectangle({ x, width, height: height / 2, y: y }),
-                    new Mtk.Rectangle({ x, width, height: height / 2, y: y + height / 2 }),
-                ];
+                      new Mtk.Rectangle({ x, width, height: height / 2, y: y }),
+                      new Mtk.Rectangle({ x, width, height: height / 2, y: y + height / 2 }),
+                  ];
         }
 
         /** Create a fork and place this new fork on the left branch */
@@ -357,7 +357,7 @@ export class Forest extends Ecs.World {
     create_toplevel(window: Entity, area: Mtk.Rectangle, id: MonitorWorkspaceID): [Entity, Fork.Fork] {
         const [entity, fork] = this.create_fork(Node.Node.window(window), null, area, id[1], id[0]);
 
-        this.string_reps.with(entity, (sid) => {
+        this.string_reps.with(entity, sid => {
             fork.set_toplevel(this, entity, sid, id);
         });
 
@@ -539,7 +539,7 @@ export class Forest extends Ecs.World {
     }
 
     /** Walks the tree starting at a given fork entity. */
-    * iter(entity: Entity) {
+    *iter(entity: Entity) {
         let fork = this.forks.get(entity);
         const forks = Array.from<Fork.Fork>({ length: 2 });
 
@@ -595,7 +595,14 @@ export class Forest extends Ecs.World {
     }
 
     /** Resize a window from a given fork based on a supplied movement. */
-    resize(ext: Ext, fork_e: Entity, fork_c: Fork.Fork, win_e: Entity, movement: movement.Movement, crect: Mtk.Rectangle) {
+    resize(
+        ext: Ext,
+        fork_e: Entity,
+        fork_c: Fork.Fork,
+        win_e: Entity,
+        movement: movement.Movement,
+        crect: Mtk.Rectangle,
+    ) {
         const is_left = fork_c.left.is_window(win_e) || fork_c.left.is_in_stack(win_e);
         if ((movement & Movement.SHRINK) != 0) {
             this.shrink_sibling(ext, fork_e, fork_c, is_left, movement, crect);

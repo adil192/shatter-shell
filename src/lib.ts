@@ -1,5 +1,6 @@
 import Meta from 'gi://Meta';
 import Mtk from 'gi://Mtk';
+
 import { Log } from './log.js';
 
 export function bench<T>(name: string, callback: () => T): T {
@@ -16,7 +17,10 @@ export function bench<T>(name: string, callback: () => T): T {
 export function cursor_rect(): Mtk.Rectangle {
     const [x, y] = global.get_pointer();
     return new Mtk.Rectangle({
-        x, y, width: 1, height: 1,
+        x,
+        y,
+        width: 1,
+        height: 1,
     });
 }
 
@@ -26,8 +30,8 @@ export function is_keyboard_op(op: number): boolean {
 }
 
 export function is_resize_op(op: number): boolean {
-    const window_dir_mask
-        = (Meta.GrabOp.RESIZING_N | Meta.GrabOp.RESIZING_E | Meta.GrabOp.RESIZING_S | Meta.GrabOp.RESIZING_W)
+    const window_dir_mask =
+        (Meta.GrabOp.RESIZING_N | Meta.GrabOp.RESIZING_E | Meta.GrabOp.RESIZING_S | Meta.GrabOp.RESIZING_W)
         & ~Meta.GrabOp.WINDOW_BASE;
     return (
         (op & window_dir_mask) != 0
@@ -44,7 +48,9 @@ export function round_increment(value: number, increment: number): number {
 }
 
 type _CastNumber<Input, Output> = Input extends number
-    ? (Input extends { readonly __type: symbol } ? Input : Output)
+    ? Input extends { readonly __type: symbol }
+        ? Input
+        : Output
     : Input;
 /**
  * Casts Input to Output if Input is a number.

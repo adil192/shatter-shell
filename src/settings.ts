@@ -1,7 +1,8 @@
 import GDesktopEnums from 'gi://GDesktopEnums';
 import Gio from 'gi://Gio';
-import { get_current_path } from './paths.js';
+
 import { type LogLevel } from './log_level.js';
+import { get_current_path } from './paths.js';
 
 function gio_settings_from_schema(schema: string): Gio.Settings {
     const GioSSS = Gio.SettingsSchemaSource;
@@ -24,6 +25,7 @@ export const DEFAULT_HINT_COLOR = 'rgba(53, 132, 228, 1)'; // adwaita blue
 
 export const extSettings = gio_settings_from_schema('org.gnome.shell.extensions.shatter-shell');
 
+// oxfmt-ignore
 export class ExtensionSettings {
     readonly ext = extSettings;
     readonly desktop_interface = new Gio.Settings({ schema_id: 'org.gnome.desktop.interface' });

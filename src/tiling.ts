@@ -1,24 +1,24 @@
-// import * as Ecs from './ecs.js';
-import * as GrabOp from './grab_op.js';
-import * as Lib from './lib.js';
-import * as Node from './node.js';
-import * as window from './window.js';
-import * as geom from './geom.js';
-import * as exec from './executor.js';
-
-import type { Entity } from './ecs.js';
-import type { Ext } from './extension.js';
-import type { NodeStack } from './node.js';
-import { Fork } from './fork.js';
-import { Tags } from './tags.js';
-
 import Clutter from 'gi://Clutter';
 import Meta from 'gi://Meta';
 import Mtk from 'gi://Mtk';
 import St from 'gi://St';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
-import { applyRect, clampRect, diffRect } from './rectangle.js';
+
+import type { Entity } from './ecs.js';
+import type { Ext } from './extension.js';
+import type { NodeStack } from './node.js';
+
+import * as exec from './executor.js';
+import { Fork } from './fork.js';
+import * as geom from './geom.js';
+// import * as Ecs from './ecs.js';
+import * as GrabOp from './grab_op.js';
+import * as Lib from './lib.js';
 import { Log } from './log.js';
+import * as Node from './node.js';
+import { applyRect, clampRect, diffRect } from './rectangle.js';
+import { Tags } from './tags.js';
+import * as window from './window.js';
 const { monitorID } = Lib;
 const { ShellWindow } = window;
 
@@ -85,7 +85,14 @@ export class Tiler {
         return monitor_rect(monitor, columns, rows);
     }
 
-    change(overlay: St.Viewport | Mtk.Rectangle, rect: Mtk.Rectangle, dx: number, dy: number, dw: number, dh: number): Tiler {
+    change(
+        overlay: St.Viewport | Mtk.Rectangle,
+        rect: Mtk.Rectangle,
+        dx: number,
+        dy: number,
+        dw: number,
+        dh: number,
+    ): Tiler {
         const changed = new Mtk.Rectangle({
             x: overlay.x + dx * rect.width,
             y: overlay.y + dy * rect.height,
@@ -238,8 +245,7 @@ export class Tiler {
         } else {
             this.swap_window = null;
             this.rect_by_active_area(ext, (_monitor, rect) => {
-                this.change(ext.overlay, rect, x, y, w, h)
-                    .change(ext.overlay, rect, 0, 0, 0, 0);
+                this.change(ext.overlay, rect, x, y, w, h).change(ext.overlay, rect, 0, 0, 0, 0);
             });
         }
     }
@@ -449,17 +455,13 @@ export class Tiler {
 
                 const crect = grab_op.rect.copy();
 
-                const resize = (mov: Mtk.Rectangle, func: (m: Mtk.Rectangle, a: Mtk.Rectangle, mov: Mtk.Rectangle) => boolean) => {
+                const resize = (
+                    mov: Mtk.Rectangle,
+                    func: (m: Mtk.Rectangle, a: Mtk.Rectangle, mov: Mtk.Rectangle) => boolean,
+                ) => {
                     if (func(toparea, crect, mov) || crect.equal(grab_op.rect)) return;
 
-                    ext.auto_tiler!.forest.resize(
-                        ext,
-                        entity,
-                        fork,
-                        this.window!,
-                        grab_op.operation(crect),
-                        crect,
-                    );
+                    ext.auto_tiler!.forest.resize(ext, entity, fork, this.window!, grab_op.operation(crect), crect);
                     grab_op.rect = crect.copy();
                 };
 
@@ -707,7 +709,7 @@ export class Tiler {
 
     swap_left(ext: Ext) {
         if (this.swap_window) {
-            ext.windows.with(this.swap_window, (window) => {
+            ext.windows.with(this.swap_window, window => {
                 this.swap(ext, ext.focus_selector.left(ext, window));
             });
         } else {
@@ -717,7 +719,7 @@ export class Tiler {
 
     swap_down(ext: Ext) {
         if (this.swap_window) {
-            ext.windows.with(this.swap_window, (window) => {
+            ext.windows.with(this.swap_window, window => {
                 this.swap(ext, ext.focus_selector.down(ext, window));
             });
         } else {
@@ -727,7 +729,7 @@ export class Tiler {
 
     swap_up(ext: Ext) {
         if (this.swap_window) {
-            ext.windows.with(this.swap_window, (window) => {
+            ext.windows.with(this.swap_window, window => {
                 this.swap(ext, ext.focus_selector.up(ext, window));
             });
         } else {
@@ -737,7 +739,7 @@ export class Tiler {
 
     swap_right(ext: Ext) {
         if (this.swap_window) {
-            ext.windows.with(this.swap_window, (window) => {
+            ext.windows.with(this.swap_window, window => {
                 this.swap(ext, ext.focus_selector.right(ext, window));
             });
         } else {
@@ -799,7 +801,12 @@ export class Tiler {
                     ext.size_signals_block(meta);
                     const meta_entity = this.window;
                     const overlay = ext.overlay;
-                    const movement = new Mtk.Rectangle({ x: overlay.x, y: overlay.y, width: overlay.width, height: overlay.height });
+                    const movement = new Mtk.Rectangle({
+                        x: overlay.x,
+                        y: overlay.y,
+                        width: overlay.width,
+                        height: overlay.height,
+                    });
                     meta.move(movement, () => {
                         ext.size_signals_unblock(meta);
                         ext.add_tag(meta_entity, Tags.Tiled);
@@ -840,10 +847,7 @@ export class Tiler {
     }
 }
 
-function locate_monitor(
-    win: window.ShellWindow,
-    direction: Meta.DisplayDirection,
-): [MonitorID, Mtk.Rectangle] | null {
+function locate_monitor(win: window.ShellWindow, direction: Meta.DisplayDirection): [MonitorID, Mtk.Rectangle] | null {
     if (!win.actor_exists()) return null;
 
     const from = win.monitor_id();
@@ -914,7 +918,7 @@ function move_window_or_monitor(
 ): () => window.ShellWindow | MonitorID | null {
     return () => {
         let next_window = method.call(ext.focus_selector, ext, null);
-        next_window = (next_window && next_window.actor_exists()) ? next_window : null;
+        next_window = next_window && next_window.actor_exists() ? next_window : null;
 
         // Check if a display exists between the next window and the focused window.
         const focus = ext.get_focused_window();
@@ -927,9 +931,7 @@ function move_window_or_monitor(
             if (!next_monitor || focus.monitor_id() == next_window.monitor_id()) return next_window;
 
             // If the next window is not contained within the next display, return the display.
-            return next_monitor[1].contains_rect(next_window.rect())
-                ? next_window
-                : next_monitor[0];
+            return next_monitor[1].contains_rect(next_window.rect()) ? next_window : next_monitor[0];
         }
 
         return next_window;

@@ -52,3 +52,6 @@ jobs:
           # EGO-P-005: Bundled binaries: False positive on schema xml
           # EGO-M-004: Invalid shell version: Shexli hasn't updated for GNOME 51 yet
           ignored-checks: 'EGO-P-007 EGO-P-005 EGO-M-004'
+
+      - name: Check formatting
+        run: make fmt-check

@@ -1,7 +1,9 @@
 import GObject from 'gi://GObject';
 import Gtk from 'gi://Gtk?version=4.0';
+
 import { LabelledShortcutLabel } from './shortcut_label.js';
 
+// oxfmt-ignore
 export const AdjustmentModePage = GObject.registerClass(class AdjustmentModePage extends Gtk.Box {
     constructor() {
         super({
@@ -29,6 +31,7 @@ export const AdjustmentModePage = GObject.registerClass(class AdjustmentModePage
     }
 });
 
+// oxfmt-ignore
 const _AdjustmentModeFloating = GObject.registerClass(class _AdjustmentModeFloating extends Gtk.Box {
     constructor() {
         super({
@@ -75,6 +78,7 @@ const _AdjustmentModeFloating = GObject.registerClass(class _AdjustmentModeFloat
     }
 });
 
+// oxfmt-ignore
 const _AdjustmentModeTiled = GObject.registerClass(class _AdjustmentModeTiled extends Gtk.Box {
     constructor() {
         super({

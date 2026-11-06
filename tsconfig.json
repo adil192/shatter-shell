@@ -6,9 +6,7 @@
         "outDir": "./target",
         "rootDir": "./src",
         "forceConsistentCasingInFileNames": true,
-        "lib": [
-            "ES2023"
-        ],
+        "lib": ["ES2023"],
         "skipLibCheck": true,
         "pretty": true,
         "composite": true,
@@ -18,9 +16,7 @@
         "noImplicitOverride": true,
         "noImplicitAny": true,
         "noImplicitReturns": true,
-        "noImplicitThis": true,
+        "noImplicitThis": true
     },
-    "include": [
-        "src/**/*.ts",
-    ]
+    "include": ["src/**/*.ts"]
 }

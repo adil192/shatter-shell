@@ -67,12 +67,12 @@ To get the latest bleeding edge changes, build Shatter Shell from source:
     ```bash
     sudo dnf install make git npm
     ```
-1.  Clone this repo:
+2.  Clone this repo:
     ```bash
     git clone https://github.com/adil192/shatter-shell
     cd shatter-shell
     ```
-2.  Build and install:
+3.  Build and install:
     ```bash
     make local-install
     ```

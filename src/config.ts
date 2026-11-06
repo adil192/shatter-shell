@@ -1,5 +1,6 @@
-import GLib from 'gi://GLib';
 import Gio from 'gi://Gio';
+import GLib from 'gi://GLib';
+
 import { Result, Ok, Err } from './result.js';
 
 const CONF_DIR = GLib.get_user_config_dir() + '/shatter-shell';

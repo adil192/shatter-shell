@@ -1,4 +1,5 @@
 import Gio from 'gi://Gio';
+
 import { LogLevel } from './log_level.js';
 
 /**

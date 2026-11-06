@@ -4,6 +4,7 @@ import Gtk from 'gi://Gtk?version=4.0';
 type Keybinding = string | string[];
 
 /** A shortcut with a title and subtitle. */
+// oxfmt-ignore
 export const LabelledShortcutLabel = GObject.registerClass(class LabelledShortcutLabel extends Gtk.Box {
     constructor(keys: Keybinding, title: string, subtitle?: string) {
         super({
@@ -50,6 +51,7 @@ export const LabelledShortcutLabel = GObject.registerClass(class LabelledShortcu
  * A row of keycaps representing a keyboard shortcut.
  * Styling is inherited from {@link Adw.ShortcutLabel}
  */
+// oxfmt-ignore
 const ShortcutLabel = GObject.registerClass(class ShortcutLabel extends Gtk.Box {
     constructor(keys: Keybinding) {
         super({

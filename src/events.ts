@@ -1,9 +1,9 @@
 import Meta from 'gi://Meta';
 import Mtk from 'gi://Mtk';
 
-import * as Window from './window.js';
-
 import type { Ext } from './extension.js';
+
+import * as Window from './window.js';
 
 /** Events handled by the extension's system. */
 export type ExtEvent = CallbackEvent | WindowMove | CreateWindow | WindowEvent | GlobalEventMessage;

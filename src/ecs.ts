@@ -36,7 +36,7 @@ export class Storage<T> {
     private store: Array<[number, T] | null> = [];
 
     /** Private method for iterating across allocated slots */
-    * _iter(): Generator<[number, [number, T]], void> {
+    *_iter(): Generator<[number, [number, T]], void> {
         let idx = 0;
         for (const slot of this.store) {
             if (slot) yield [idx, slot];
@@ -45,21 +45,21 @@ export class Storage<T> {
     }
 
     /** Iterates across each stored component, and their entities */
-    * iter(): Generator<[Entity, T], void> {
+    *iter(): Generator<[Entity, T], void> {
         for (const [idx, [gen, value]] of this._iter()) {
             yield [entity_new(idx, gen), value];
         }
     }
 
     /** Finds values with the matching component */
-    * find(func: (value: T) => boolean) {
+    *find(func: (value: T) => boolean) {
         for (const [idx, [gen, value]] of this._iter()) {
             if (func(value)) yield entity_new(idx, gen);
         }
     }
 
     /** Iterates across each stored component */
-    * values() {
+    *values() {
         for (const [, [, value]] of this._iter()) {
             yield value;
         }
@@ -188,7 +188,7 @@ export class World {
     }
 
     /** Iterates across entities in the world */
-    * entities() {
+    *entities() {
         for (const entity of this.entities_.values()) {
             if (this.free_slots.indexOf(entity[0]) === -1) yield entity;
         }
@@ -289,5 +289,5 @@ export class System<T> extends World {
     }
 
     /** Executs an event on the system */
-    run(_event: T): void { }
+    run(_event: T): void {}
 }

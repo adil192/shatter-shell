@@ -1,29 +1,30 @@
-import * as Config from './config.js';
-import * as Forest from './forest.js';
-import * as Ecs from './ecs.js';
-import * as Events from './events.js';
-import * as Focus from './focus.js';
-import * as GrabOp from './grab_op.js';
-import * as Keybindings from './keybindings.js';
-import * as Lib from './lib.js';
-import * as PanelSettings from './panel_settings.js';
-import * as Settings from './settings.js';
-import * as Tiling from './tiling.js';
-import * as Window from './window.js';
-import * as auto_tiler from './auto_tiler.js';
-import * as node from './node.js';
-import * as utils from './utils.js';
-import * as Executor from './executor.js';
-import * as movement from './movement.js';
-import * as stack from './stack.js';
-import * as add_exception from './dialog_add_exception.js';
-import * as exec from './executor.js';
 import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';
+
 import type { Entity } from './ecs.js';
 import type { ExtEvent } from './events.js';
 import type { Indicator } from './panel_settings.js';
 
+import * as auto_tiler from './auto_tiler.js';
+import * as Config from './config.js';
+import * as add_exception from './dialog_add_exception.js';
+import * as Ecs from './ecs.js';
+import * as Events from './events.js';
+import * as Executor from './executor.js';
+import * as exec from './executor.js';
+import * as Focus from './focus.js';
+import * as Forest from './forest.js';
 import { Fork } from './fork.js';
+import * as GrabOp from './grab_op.js';
+import * as Keybindings from './keybindings.js';
+import * as Lib from './lib.js';
+import * as movement from './movement.js';
+import * as node from './node.js';
+import * as PanelSettings from './panel_settings.js';
+import * as Settings from './settings.js';
+import * as stack from './stack.js';
+import * as Tiling from './tiling.js';
+import * as utils from './utils.js';
+import * as Window from './window.js';
 
 const display = global.display;
 const wim = global.window_manager;
@@ -32,30 +33,26 @@ const wom = global.workspace_manager;
 const Movement = movement.Movement;
 
 import Clutter from 'gi://Clutter';
-import GLib from 'gi://GLib';
 import Gio from 'gi://Gio';
+import GLib from 'gi://GLib';
 import GObject from 'gi://GObject';
-import Shell from 'gi://Shell';
-import St from 'gi://St';
 import Meta from 'gi://Meta';
 import Mtk from 'gi://Mtk';
+import Shell from 'gi://Shell';
+import St from 'gi://St';
 const { GlobalEvent, WindowEventType } = Events;
 const { cursor_rect, is_keyboard_op, is_resize_op, is_move_op } = Lib;
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
-const {
-    layoutManager,
-    modalActorFocusStack,
-    overview,
-    panel,
-    screenShield,
-} = Main;
+const { layoutManager, modalActorFocusStack, overview, panel, screenShield } = Main;
 import type { Misc } from '@girs/gnome-shell';
-import { ScreenShield } from 'resource:///org/gnome/shell/ui/screenShield.js';
+
 import { ControlsState } from 'resource:///org/gnome/shell/ui/overviewControls.js';
-import { Tags } from './tags.js';
+import { ScreenShield } from 'resource:///org/gnome/shell/ui/screenShield.js';
+
+import { Log } from './log.js';
 import { get_current_path } from './paths.js';
 import { clampRect, fmtRect } from './rectangle.js';
-import { Log } from './log.js';
+import { Tags } from './tags.js';
 const { monitorID, workspaceID } = Lib;
 
 const sessionMode = Main.sessionMode as typeof Main.sessionMode & { isLocked?: boolean };
@@ -388,7 +385,10 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     /** Connects a callback signal to a GObject or EventEmitter, and records the signal in {@link signals}. */
-    connect_object<T extends GObject.Object | Misc.signals.EventEmitter>(object: T, connect: (object: T) => SignalID): SignalID {
+    connect_object<T extends GObject.Object | Misc.signals.EventEmitter>(
+        object: T,
+        connect: (object: T) => SignalID,
+    ): SignalID {
         const signal = connect(object);
         const entry = this.signals.get(object);
         if (entry) {
@@ -463,7 +463,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     disconnect_tilable_window_signals(win: Window.ShellWindow) {
-        this.tilable_window_signals.take_with(win.entity, (signals) => {
+        this.tilable_window_signals.take_with(win.entity, signals => {
             const window_signals = this.window_signals.get(win.entity);
 
             for (const signal of signals) {
@@ -491,7 +491,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                     }
                     if (wmclass.length) {
                         this.conf.add_app_exception(wmclass);
-                    };
+                    }
                 }
                 this.exception_dialog();
             },
@@ -638,7 +638,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     stack_select(select: (id: number, stack: stack.Stack) => Entity | null | undefined, focus_shift: () => void) {
-        const switched = this.stack_switch((stack) => {
+        const switched = this.stack_switch(stack => {
             const stack_con = this.auto_tiler?.forest.stacks.get(stack.idx);
             if (stack_con) {
                 const id = stack_con.active_id;
@@ -685,7 +685,7 @@ export class Ext extends Ecs.System<ExtEvent> {
             // oxlint-disable-next-line typescript/no-unsafe-type-assertion
             object: ScreenShield.prototype as ScreenShield,
             method: 'deactivate',
-            func: screen_unlock_fn
+            func: screen_unlock_fn,
         };
         ScreenShield.prototype['deactivate'] = (animate: boolean) => {
             screen_unlock_fn.apply(screenShield, [animate]);
@@ -781,7 +781,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         window.destroying = true;
 
         // Disconnect all signals on this window
-        this.window_signals.take_with(win, (signals) => {
+        this.window_signals.take_with(win, signals => {
             for (const signal of signals) {
                 window.meta.disconnect(signal);
             }
@@ -792,9 +792,10 @@ export class Ext extends Ecs.System<ExtEvent> {
             if (entity) {
                 const fork = this.auto_tiler.forest.forks.get(entity);
                 if (fork?.right && fork.right.is_window(win)) {
-                    const entity = fork.right.inner.kind === node.NodeKind.STACK
-                        ? fork.right.inner.entities[0]!
-                        : fork.right.inner.entity;
+                    const entity =
+                        fork.right.inner.kind === node.NodeKind.STACK
+                            ? fork.right.inner.entities[0]!
+                            : fork.right.inner.entity;
 
                     this.windows.with(entity, sibling => sibling.request_activate());
                 }
@@ -874,7 +875,8 @@ export class Ext extends Ecs.System<ExtEvent> {
         }
 
         if (this.conf.log_on_focus) {
-            let msg = `focused Window(${win.entity}) {\n`
+            let msg =
+                `focused Window(${win.entity}) {\n`
                 + `  class: "${win.meta.get_wm_class()}",\n`
                 + `  monitor: ${win.monitor_id()},\n`
                 + `  name: ${win.name()},\n`
@@ -893,7 +895,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     on_tile_attach(entity: Entity, window: Entity) {
         if (this.auto_tiler) {
             if (!this.auto_tiler.attached.contains(window)) {
-                this.windows.with(window, (w) => {
+                this.windows.with(window, w => {
                     if (w.prev_rect === null) {
                         w.prev_rect = w.meta.get_frame_rect();
                     }
@@ -906,7 +908,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     on_tile_detach(win: Entity) {
         if (!this.settings.get_untile_reset_windows()) return;
-        this.windows.with(win, (window) => {
+        this.windows.with(win, window => {
             if (window.prev_rect && !window.ignore_detach) {
                 this.register(Events.window_move(this, window, window.prev_rect));
                 window.prev_rect = null;
@@ -977,8 +979,7 @@ export class Ext extends Ecs.System<ExtEvent> {
             const work = win.workspace_id();
 
             for (const [, compare] of this.windows.iter()) {
-                const is_same_space
-                    = compare.monitor_id() === mon && compare.workspace_id() === work;
+                const is_same_space = compare.monitor_id() === mon && compare.workspace_id() === work;
 
                 if (
                     is_same_space
@@ -1225,7 +1226,10 @@ export class Ext extends Ecs.System<ExtEvent> {
                     const windowless = this.auto_tiler.largest_on_workspace(this, monitor, workspace) === null;
 
                     if (attach_to === null) {
-                        if (fork.left.inner.kind === node.NodeKind.WINDOW && fork.right?.inner.kind === node.NodeKind.WINDOW) {
+                        if (
+                            fork.left.inner.kind === node.NodeKind.WINDOW
+                            && fork.right?.inner.kind === node.NodeKind.WINDOW
+                        ) {
                             const attaching = fork.left.is_window(entity)
                                 ? fork.right.inner.entity
                                 : fork.left.inner.entity;
@@ -1245,9 +1249,9 @@ export class Ext extends Ecs.System<ExtEvent> {
                     } else if (attach_to) {
                         const is_sibling = this.auto_tiler.windows_are_siblings(entity, attach_to.entity);
 
-                        [area, monitor_attachment]
-                            = (win.stack === null && attach_to.stack === null && is_sibling)
-                                || (win.stack === null && is_sibling)
+                        [area, monitor_attachment] =
+                            (win.stack === null && attach_to.stack === null && is_sibling)
+                            || (win.stack === null && is_sibling)
                                 ? [fork.area, false]
                                 : [attach_to.meta.get_frame_rect(), false];
                     } else {
@@ -1272,14 +1276,14 @@ export class Ext extends Ecs.System<ExtEvent> {
                     const half_width = area.width / 2;
                     const half_height = area.height / 2;
 
-                    const new_area: [number, number, number, number]
-                        = orientation === Clutter.Orientation.HORIZONTAL
+                    const new_area: [number, number, number, number] =
+                        orientation === Clutter.Orientation.HORIZONTAL
                             ? swap
                                 ? [area.x, area.y, half_width, area.height]
                                 : [area.x + half_width, area.y, half_width, area.height]
                             : swap
-                                ? [area.x, area.y, area.width, half_height]
-                                : [area.x, area.y + half_height, area.width, half_height];
+                              ? [area.x, area.y, area.width, half_height]
+                              : [area.x, area.y + half_height, area.width, half_height];
 
                     this.overlay.x = new_area[0];
                     this.overlay.y = new_area[1];
@@ -1603,14 +1607,18 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     /** Begin listening for signals from windows, and add any pre-existing windows. */
     signals_attach() {
-        this.connect_object(this.settings.desktop_interface, settings => settings.connect('changed::color-scheme', () => {
-            this.register(Events.global(GlobalEvent.GnomeThemeChanged));
-        }));
-        this.connect_object(this.settings.a11y_interface, settings => settings.connect('changed::high-contrast', () => {
-            this.register(Events.global(GlobalEvent.GnomeThemeChanged));
-        }));
+        this.connect_object(this.settings.desktop_interface, settings =>
+            settings.connect('changed::color-scheme', () => {
+                this.register(Events.global(GlobalEvent.GnomeThemeChanged));
+            }),
+        );
+        this.connect_object(this.settings.a11y_interface, settings =>
+            settings.connect('changed::high-contrast', () => {
+                this.register(Events.global(GlobalEvent.GnomeThemeChanged));
+            }),
+        );
 
-        this.tiler.queue.start(100, (movement) => {
+        this.tiler.queue.start(100, movement => {
             movement();
             return true;
         });
@@ -1620,143 +1628,163 @@ export class Ext extends Ecs.System<ExtEvent> {
         for (const [, ws] of iter_workspaces(workspace_manager)) {
             let index = workspaceID(ws.index());
 
-            this.connect_object(ws, () => ws.connect('notify::workspace-index', () => {
-                if (ws !== null) {
-                    const new_index = workspaceID(ws.index());
-                    this.on_workspace_index_changed(index, new_index);
-                    index = new_index;
-                }
-            }));
+            this.connect_object(ws, () =>
+                ws.connect('notify::workspace-index', () => {
+                    if (ws !== null) {
+                        const new_index = workspaceID(ws.index());
+                        this.on_workspace_index_changed(index, new_index);
+                        index = new_index;
+                    }
+                }),
+            );
         }
 
-        this.connect_object(display, () => display.connect('workareas-changed', () => {
-            this.update_display_configuration(true);
-        }));
+        this.connect_object(display, () =>
+            display.connect('workareas-changed', () => {
+                this.update_display_configuration(true);
+            }),
+        );
 
-        this.size_changed_signal = this.connect_object(wim, () => wim.connect('size-change', (_, actor, event) => {
-            if (!this.auto_tiler) return;
+        this.size_changed_signal = this.connect_object(wim, () =>
+            wim.connect('size-change', (_, actor, event) => {
+                if (!this.auto_tiler) return;
 
-            const meta = actor.get_meta_window();
-            if (!meta) return;
-            const win = this.get_window(meta);
-            if (!win) return;
+                const meta = actor.get_meta_window();
+                if (!meta) return;
+                const win = this.get_window(meta);
+                if (!win) return;
 
-            if (event === Meta.SizeChange.MAXIMIZE || event === Meta.SizeChange.UNMAXIMIZE) {
-                this.register(Events.window_event(win, WindowEventType.Maximize));
-            } else {
-                this.register(Events.window_event(win, WindowEventType.Fullscreen));
-            }
-        }));
+                if (event === Meta.SizeChange.MAXIMIZE || event === Meta.SizeChange.UNMAXIMIZE) {
+                    this.register(Events.window_event(win, WindowEventType.Maximize));
+                } else {
+                    this.register(Events.window_event(win, WindowEventType.Fullscreen));
+                }
+            }),
+        );
 
-        this.connect_object(this.settings.ext, ext => ext.connect('changed', (_s, key) => {
-            switch (key) {
-                case 'active-hint':
-                    if (indicator) indicator.toggle_active.setToggleState(this.settings.get_active_hint());
-                    this.show_border_on_focused();
-                    break;
-                case 'gap-inner':
-                    this.on_gap_inner();
-                    break;
-                case 'gap-outer':
-                    this.on_gap_outer();
-                    break;
-                case 'smart-gaps':
-                    this.on_smart_gap();
-                    this.show_border_on_focused();
-                    break;
-            }
-        }));
+        this.connect_object(this.settings.ext, ext =>
+            ext.connect('changed', (_s, key) => {
+                switch (key) {
+                    case 'active-hint':
+                        if (indicator) indicator.toggle_active.setToggleState(this.settings.get_active_hint());
+                        this.show_border_on_focused();
+                        break;
+                    case 'gap-inner':
+                        this.on_gap_inner();
+                        break;
+                    case 'gap-outer':
+                        this.on_gap_outer();
+                        break;
+                    case 'smart-gaps':
+                        this.on_smart_gap();
+                        this.show_border_on_focused();
+                        break;
+                }
+            }),
+        );
 
-        this.connect_object(this.settings.mutter, mutter => mutter.connect('changed::workspaces-only-on-primary', () => {
-            this.register(Events.global(GlobalEvent.MonitorsChanged));
-        }));
+        this.connect_object(this.settings.mutter, mutter =>
+            mutter.connect('changed::workspaces-only-on-primary', () => {
+                this.register(Events.global(GlobalEvent.MonitorsChanged));
+            }),
+        );
 
-        // @ts-expect-error GObject.Object.connect types are borked
-        this.connect_object(layoutManager, () => layoutManager.connect('monitors-changed', () => {
-            this.register(Events.global(GlobalEvent.MonitorsChanged));
-        }));
+        this.connect_object(layoutManager, () =>
+            // @ts-expect-error GObject.Object.connect types are borked
+            layoutManager.connect('monitors-changed', () => {
+                this.register(Events.global(GlobalEvent.MonitorsChanged));
+            }),
+        );
 
-        this.connect_object(sessionMode, () => sessionMode.connect('updated', () => {
-            if (indicator) {
-                indicator.button.visible = !sessionMode.isLocked;
-            }
+        this.connect_object(sessionMode, () =>
+            sessionMode.connect('updated', () => {
+                if (indicator) {
+                    indicator.button.visible = !sessionMode.isLocked;
+                }
 
-            if (sessionMode.isLocked) {
-                this.exit_modes();
-            }
-        }));
+                if (sessionMode.isLocked) {
+                    this.exit_modes();
+                }
+            }),
+        );
 
-        this.connect_object(overview, () => overview.connect('showing', () => {
-            this.register(Events.global(GlobalEvent.OverviewShown));
-        }));
+        this.connect_object(overview, () =>
+            overview.connect('showing', () => {
+                this.register(Events.global(GlobalEvent.OverviewShown));
+            }),
+        );
 
-        this.connect_object(overview, () => overview.connect('hiding', () => {
-            const window = this.get_focused_window();
-            if (window) {
-                this.on_focused(window);
-            }
-            this.register(Events.global(GlobalEvent.OverviewHidden));
-        }));
+        this.connect_object(overview, () =>
+            overview.connect('hiding', () => {
+                const window = this.get_focused_window();
+                if (window) {
+                    this.on_focused(window);
+                }
+                this.register(Events.global(GlobalEvent.OverviewHidden));
+            }),
+        );
 
         // We have to connect this signal in an idle_add; otherwise work areas stop being calculated
         this.register_fn(() => {
             if (screenShield?.locked) this.update_display_configuration(false);
 
-            this.connect_object(display, () => display.connect('notify::focus-window', () => {
-                // Disallow refocus if a modal window is active
-                if (Main.modalCount !== 0 && modalActorFocusStack.length) {
-                    const { actor } = modalActorFocusStack[0]!;
-                    if (!('style_class' in actor)) return;
-                    if (actor.style_class !== 'switcher-popup') return;
-                }
-
-                const refocus_tiled_window = () => {
-                    // Re-focus a window that was unfocused.
-                    let window: Window.ShellWindow | null = null;
-                    const [x, y] = this.prev_focused;
-
-                    if (y) {
-                        window = this.windows.get(y);
+            this.connect_object(display, () =>
+                display.connect('notify::focus-window', () => {
+                    // Disallow refocus if a modal window is active
+                    if (Main.modalCount !== 0 && modalActorFocusStack.length) {
+                        const { actor } = modalActorFocusStack[0]!;
+                        if (!('style_class' in actor)) return;
+                        if (actor.style_class !== 'switcher-popup') return;
                     }
 
-                    if (window === null && x) {
-                        window = this.windows.get(x);
-                    }
+                    const refocus_tiled_window = () => {
+                        // Re-focus a window that was unfocused.
+                        let window: Window.ShellWindow | null = null;
+                        const [x, y] = this.prev_focused;
 
-                    if (window && window.same_monitor() && window.same_workspace() && !window.meta.minimized) {
-                        window.request_activate(false);
-                    } else {
-                        this.hide_all_borders();
-                    }
-                };
-
-                // Delay in case the focused window was not focused yet.
-                // Note: Fixes Intellij IDE windows.
-                this.register_fn(() => {
-                    const meta_window = global.display.get_focus_window() as Meta.Window | null;
-
-                    if (meta_window) {
-                        const shell_window = this.get_window(meta_window);
-
-                        if (shell_window) {
-                            // Avoid re-focusing a window that's already focused.
-                            if (shell_window.entity !== this.prev_focused[1] && !shell_window.meta.minimized) {
-                                this.on_focused(shell_window);
-                            }
-                        } else if (!meta_window.is_override_redirect()) {
-                            // Prevent focusing desktop extension in auto-tiler mode
-                            if (this.auto_tiler && meta_window.window_type === Meta.WindowType.DESKTOP) {
-                                refocus_tiled_window();
-                            } else {
-                                // This section fixes Steam's sub-menus.
-                                meta_window.activate(global.get_current_time());
-                            }
+                        if (y) {
+                            window = this.windows.get(y);
                         }
-                    } else if (this.auto_tiler) {
-                        refocus_tiled_window();
-                    }
-                });
-            }));
+
+                        if (window === null && x) {
+                            window = this.windows.get(x);
+                        }
+
+                        if (window && window.same_monitor() && window.same_workspace() && !window.meta.minimized) {
+                            window.request_activate(false);
+                        } else {
+                            this.hide_all_borders();
+                        }
+                    };
+
+                    // Delay in case the focused window was not focused yet.
+                    // Note: Fixes Intellij IDE windows.
+                    this.register_fn(() => {
+                        const meta_window = global.display.get_focus_window() as Meta.Window | null;
+
+                        if (meta_window) {
+                            const shell_window = this.get_window(meta_window);
+
+                            if (shell_window) {
+                                // Avoid re-focusing a window that's already focused.
+                                if (shell_window.entity !== this.prev_focused[1] && !shell_window.meta.minimized) {
+                                    this.on_focused(shell_window);
+                                }
+                            } else if (!meta_window.is_override_redirect()) {
+                                // Prevent focusing desktop extension in auto-tiler mode
+                                if (this.auto_tiler && meta_window.window_type === Meta.WindowType.DESKTOP) {
+                                    refocus_tiled_window();
+                                } else {
+                                    // This section fixes Steam's sub-menus.
+                                    meta_window.activate(global.get_current_time());
+                                }
+                            }
+                        } else if (this.auto_tiler) {
+                            refocus_tiled_window();
+                        }
+                    });
+                }),
+            );
 
             const window = this.get_focused_window();
             if (window) {
@@ -1766,55 +1794,79 @@ export class Ext extends Ecs.System<ExtEvent> {
             return false;
         });
 
-        this.connect_object(display, () => display.connect('window-created', (_, window) => {
-            this.register({ tag: 'window_create', window });
-        }));
+        this.connect_object(display, () =>
+            display.connect('window-created', (_, window) => {
+                this.register({ tag: 'window_create', window });
+            }),
+        );
 
-        this.connect_object(display, () => display.connect('grab-op-begin', (_display, win, op) => {
-            this.on_grab_start(win, op);
-        }));
+        this.connect_object(display, () =>
+            display.connect('grab-op-begin', (_display, win, op) => {
+                this.on_grab_start(win, op);
+            }),
+        );
 
-        this.connect_object(display, () => display.connect('grab-op-end', (_display, win, op) => {
-            this.register_fn(() => this.on_grab_end(win, op));
-        }));
+        this.connect_object(display, () =>
+            display.connect('grab-op-end', (_display, win, op) => {
+                this.register_fn(() => this.on_grab_end(win, op));
+            }),
+        );
 
-        this.connect_object(overview, () => overview.connect('window-drag-begin', (_, win) => {
-            this.on_grab_start(win, 1);
-        }));
+        this.connect_object(overview, () =>
+            overview.connect('window-drag-begin', (_, win) => {
+                this.on_grab_start(win, 1);
+            }),
+        );
 
-        this.connect_object(overview, () => overview.connect('window-drag-end', (_, win) => {
-            this.register_fn(() => this.on_grab_end(win));
-        }));
+        this.connect_object(overview, () =>
+            overview.connect('window-drag-end', (_, win) => {
+                this.register_fn(() => this.on_grab_end(win));
+            }),
+        );
 
-        this.connect_object(overview, () => overview.connect('window-drag-cancelled', () => {
-            this.unset_grab_op();
-        }));
+        this.connect_object(overview, () =>
+            overview.connect('window-drag-cancelled', () => {
+                this.unset_grab_op();
+            }),
+        );
 
-        this.connect_object(wim, () => wim.connect('switch-workspace', () => {
-            this.hide_all_borders();
-        }));
+        this.connect_object(wim, () =>
+            wim.connect('switch-workspace', () => {
+                this.hide_all_borders();
+            }),
+        );
 
-        this.connect_object(workspace_manager, () => workspace_manager.connect('active-workspace-changed', () => {
-            this.on_active_workspace_changed();
-        }));
+        this.connect_object(workspace_manager, () =>
+            workspace_manager.connect('active-workspace-changed', () => {
+                this.on_active_workspace_changed();
+            }),
+        );
 
-        this.connect_object(workspace_manager, () => workspace_manager.connect('workspace-removed', (_, number) => {
-            this.on_workspace_removed(number);
-        }));
+        this.connect_object(workspace_manager, () =>
+            workspace_manager.connect('workspace-removed', (_, number) => {
+                this.on_workspace_removed(number);
+            }),
+        );
 
-        this.connect_object(workspace_manager, () => workspace_manager.connect('workspace-added', (_, number) => {
-            this.on_workspace_added(number);
-        }));
+        this.connect_object(workspace_manager, () =>
+            workspace_manager.connect('workspace-added', (_, number) => {
+                this.on_workspace_added(number);
+            }),
+        );
 
         // Bind show desktop and remove the active hint
-        this.connect_object(workspace_manager, () => workspace_manager.connect('showing-desktop-changed', () => {
-            this.hide_all_borders();
-            this.prev_focused = [null, null];
-        }));
+        this.connect_object(workspace_manager, () =>
+            workspace_manager.connect('showing-desktop-changed', () => {
+                this.hide_all_borders();
+                this.prev_focused = [null, null];
+            }),
+        );
 
-        this.connect_object(St.ThemeContext.get_for_stage(global.stage), themeContext => themeContext.connect('notify::scale-factor', () => {
-            return this.update_scale();
-        }));
+        this.connect_object(St.ThemeContext.get_for_stage(global.stage), themeContext =>
+            themeContext.connect('notify::scale-factor', () => {
+                return this.update_scale();
+            }),
+        );
 
         // Modes
 
@@ -1923,7 +1975,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         return matched;
     }
 
-    * tiled_windows() {
+    *tiled_windows() {
         for (const entity of this.entities()) {
             if (this.contains_tag(entity, Tags.Tiled)) {
                 yield entity;
@@ -2047,7 +2099,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         this.moved_by_mouse = false;
     }
 
-    update_display_configuration_before() { }
+    update_display_configuration_before() {}
 
     update_display_configuration(workareas_only: boolean) {
         if (!this.auto_tiler || sessionMode.isLocked) return;
@@ -2301,9 +2353,11 @@ export class Ext extends Ecs.System<ExtEvent> {
 
         // Only permit normal, dialog, and modal dialogs
         const window_type = meta.get_window_type();
-        if (window_type !== Meta.WindowType.NORMAL
+        if (
+            window_type !== Meta.WindowType.NORMAL
             && window_type !== Meta.WindowType.DIALOG
-            && window_type !== Meta.WindowType.MODAL_DIALOG) {
+            && window_type !== Meta.WindowType.MODAL_DIALOG
+        ) {
             return null;
         }
 
@@ -2321,7 +2375,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
         const grab_focus = () => {
             this.when_movements_empty(() => {
-                this.windows.with(entity, (window) => {
+                this.windows.with(entity, window => {
                     this.register_fn(() => window.request_activate(false));
                 });
             });
@@ -2341,9 +2395,9 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     /** Returns the tilable window(s) that the mouse pointer is currently hovering above. */
-    * windows_at_pointer(cursor: Mtk.Rectangle, monitor: MonitorID, workspace: WorkspaceID) {
+    *windows_at_pointer(cursor: Mtk.Rectangle, monitor: MonitorID, workspace: WorkspaceID) {
         for (const entity of this.monitors.find(m => m[0] == monitor && m[1] == workspace)) {
-            const window = this.windows.with(entity, (window) => {
+            const window = this.windows.with(entity, window => {
                 return window.is_tilable() && window.rect().contains_rect(cursor) ? window : null;
             });
 

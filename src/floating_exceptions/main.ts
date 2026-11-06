@@ -1,9 +1,9 @@
 #!@GJS@ -m
 
+import Adw from 'gi://Adw';
 import Gio from 'gi://Gio';
 import GioUnix from 'gi://GioUnix';
 import GObject from 'gi://GObject';
-import Adw from 'gi://Adw';
 import Gtk from 'gi://Gtk?version=4.0';
 
 import * as Config from '../config.js';
@@ -49,6 +49,7 @@ function new_system_exceptions_button(): Adw.ActionRow {
     return row;
 }
 
+// oxfmt-ignore
 const MainPage = GObject.registerClass(class MainPage extends Adw.NavigationPage {
     private readonly preferencesGroup;
     private readonly callback;
@@ -111,6 +112,7 @@ const MainPage = GObject.registerClass(class MainPage extends Adw.NavigationPage
     }
 });
 
+// oxfmt-ignore
 const ExceptionsPage = GObject.registerClass(class ExceptionsPage extends Adw.NavigationPage {
     private readonly preferencesGroup;
     private readonly callback;
@@ -153,7 +155,10 @@ class App {
     readonly main_page;
     readonly exceptions_page;
 
-    constructor(private readonly application: Adw.Application, readonly config: Config.Config) {
+    constructor(
+        private readonly application: Adw.Application,
+        readonly config: Config.Config,
+    ) {
         this.main_page = new MainPage(this.event_handler.bind(this));
         this.exceptions_page = new ExceptionsPage(this.event_handler.bind(this));
 
@@ -218,7 +223,7 @@ class App {
                 println('MODIFIED');
                 break;
         }
-    };
+    }
 }
 
 /** We'll use stdout for printing events for the shell to handle */

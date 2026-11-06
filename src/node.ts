@@ -1,10 +1,10 @@
 import Mtk from 'gi://Mtk';
 
-import * as Ecs from './ecs.js';
-
-import type { Forest } from './forest.js';
 import type { Entity } from './ecs.js';
 import type { Ext } from './extension.js';
+import type { Forest } from './forest.js';
+
+import * as Ecs from './ecs.js';
 import { TAB_HEIGHT_UNSCALED, type Stack } from './stack.js';
 import { ShellWindow } from './window.js';
 

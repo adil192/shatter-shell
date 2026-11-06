@@ -1,6 +1,5 @@
-import St from 'gi://St';
 import Clutter from 'gi://Clutter';
-
+import St from 'gi://St';
 import * as ModalDialog from 'resource:///org/gnome/shell/ui/modalDialog.js';
 
 export class AddExceptionDialog {
@@ -37,7 +36,7 @@ export class AddExceptionDialog {
         });
 
         this.dialog.addButton({
-            label: 'This App\'s Windows',
+            label: "This App's Windows",
             action: () => {
                 this.close();
                 this_app();

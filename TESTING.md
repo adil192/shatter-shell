@@ -32,7 +32,7 @@ Tasks for a tester to verify when approving a patch. Use complex window layouts 
 - [ ] Unmaximizing with keyboard (`Super` `M`) re-tiles into place
 - [ ] Maximizing with the mouse covers tiled windows
 - [ ] Unmaximizing with mouse re-tiles into place
-- [ ] Full-screening removes the active hint and full-screens on one display 
+- [ ] Full-screening removes the active hint and full-screens on one display
 - [ ] Unfull-screening adds the active hint and re-tiles into place
 - [ ] Maximizing a YouTube video fills the screen and unmaximizing retiles the browser in place
 - [ ] VIM shortcuts work as direction keys

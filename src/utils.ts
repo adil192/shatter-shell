@@ -24,12 +24,10 @@ export function exists(path: string): boolean {
  */
 export function is_dark(color: Cogl.Color): boolean {
     /// Maps an sRGB component to its linear intensity.
-    const linearize = (c: number) => c <= 0.04045
-        ? c / 12.92
-        : Math.pow((c + 0.055) / 1.055, 2.4);
+    const linearize = (c: number) => (c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4));
 
-    const luminance
-        = 0.2126 * linearize(color.get_red())
+    const luminance =
+        0.2126 * linearize(color.get_red())
         + 0.7152 * linearize(color.get_green())
         + 0.0722 * linearize(color.get_blue());
 

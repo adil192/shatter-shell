@@ -1,9 +1,9 @@
 #!@GJS@ -m
 
+import Gdk from 'gi://Gdk';
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
 import Gtk from 'gi://Gtk?version=4.0';
-import Gdk from 'gi://Gdk';
 
 const EXT_PATH_DEFAULTS = [
     GLib.get_home_dir() + '/.local/share/gnome-shell/extensions/',
@@ -74,7 +74,9 @@ function launch_color_dialog(application: Gtk.Application) {
             const rgba = color_dialog.choose_rgba_finish(result);
             settings.set_string('hint-color-rgba', rgba.to_string());
             Gio.Settings.sync();
-        } catch { /* Dialog dismissed by user */ }
+        } catch {
+            /* Dialog dismissed by user */
+        }
         win.close();
         application.quit();
     });

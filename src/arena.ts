@@ -36,7 +36,7 @@ export class Arena<T> {
         return v;
     }
 
-    * values() {
+    *values() {
         for (const v of this.slots) {
             if (v != null) yield v;
         }

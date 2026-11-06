@@ -11,10 +11,5 @@
         "liberapay": "adil192",
         "paypal": "adilhanney"
     },
-    "shell-version": [
-        "48",
-        "49",
-        "50",
-        "51"
-    ]
+    "shell-version": ["48", "49", "50", "51"]
 }

@@ -1,17 +1,18 @@
 #!@GJS@ -m
 
+import Adw from 'gi://Adw';
 import GLib from 'gi://GLib';
 import GObject from 'gi://GObject';
 import Gtk from 'gi://Gtk?version=4.0';
-import Adw from 'gi://Adw';
 
-import { WelcomePage } from './welcome_page.js';
 import { AdjustmentModePage } from './adjustment_mode_page.js';
 import { ManipulateWindowPage } from './manipulate_window_page.js';
+import { WelcomePage } from './welcome_page.js';
 import { WorkspacesAndDisplaysPage } from './workspaces_and_displays_page.js';
 
 const WM_CLASS_ID = 'org.gnome.shell.extensions.shatter-shell.shortcuts';
 
+// oxfmt-ignore
 const AppWindow = GObject.registerClass(class AppWindow extends Adw.ApplicationWindow {
     constructor(application: Adw.Application, need_overrides_setup: boolean) {
         super({
@@ -92,7 +93,7 @@ function main(argv: string[]) {
         return -1;
     });
 
-    application.connect('activate', (application) => {
+    application.connect('activate', application => {
         const window = application.get_windows()[0] ?? new AppWindow(application, need_overrides_setup!);
         window.present();
     });

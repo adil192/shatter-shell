@@ -1,5 +1,6 @@
-import * as Ecs from './ecs.js';
 import GLib from 'gi://GLib';
+
+import * as Ecs from './ecs.js';
 
 export interface Executor<T> {
     wake(system: Ecs.System<T>, event: T): void;

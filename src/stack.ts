@@ -1,10 +1,10 @@
 import type { Entity } from './ecs.js';
 import type { Ext } from './extension.js';
+import type * as Settings from './settings.js';
 import type { ShellWindow } from './window.js';
 
 import * as a from './arena.js';
 import * as Ecs from './ecs.js';
-import type * as Settings from './settings.js';
 
 const Arena = a.Arena;
 import Atk from 'gi://Atk';
@@ -14,7 +14,11 @@ import Meta from 'gi://Meta';
 import Mtk from 'gi://Mtk';
 import St from 'gi://St';
 
-enum TabActive { active, inactive, urgent }
+enum TabActive {
+    active,
+    inactive,
+    urgent,
+}
 
 export const TAB_HEIGHT_UNSCALED = 43 as const;
 
@@ -60,14 +64,14 @@ const TabButton = GObject.registerClass(
             icon.set_x_align(Clutter.ActorAlign.START);
             icon.set_style('padding: 4px; margin-left: 4px;');
 
-            const title = this._title = new St.Label({
+            const title = (this._title = new St.Label({
                 y_expand: true,
                 x_expand: true,
                 x_align: Clutter.ActorAlign.CENTER,
                 y_align: Clutter.ActorAlign.CENTER,
                 style: 'padding-left: 4px; padding-right: 4px;',
                 text: window.title(),
-            });
+            }));
 
             const close_button = new St.Button({
                 child: new St.Icon({
@@ -258,7 +262,7 @@ export class Stack {
         for (const [_idx, tab] of this.tabs.entries()) {
             let tab_active: TabActive;
 
-            this.window_exec(tab, tab.entity, (window) => {
+            this.window_exec(tab, tab.entity, window => {
                 const actor = window.meta.get_compositor_private<Meta.WindowActor | null>();
 
                 if (Ecs.entity_eq(entity, tab.entity)) {
@@ -620,7 +624,7 @@ export class Stack {
         let idx = 0;
 
         for (const c of this.tabs) {
-            this.window_exec(c, c.entity, (window) => {
+            this.window_exec(c, c.entity, window => {
                 const actor = window.meta.get_compositor_private<Meta.WindowActor | null>();
                 if (!actor) return;
                 if (this.active_id === idx) {
@@ -710,7 +714,7 @@ export class Stack {
         // Connect tab-clicked signal
         tab.button_signal = widget.connect('clicked', () => {
             this.activate(entity);
-            this.window_exec(tab, entity, (window) => {
+            this.window_exec(tab, entity, window => {
                 const actor = window.meta.get_compositor_private<Meta.WindowActor | null>();
                 if (!actor) return;
 
@@ -732,13 +736,13 @@ export class Stack {
         // Attach new signals
         tab.signals = [
             window.meta.connect('notify::title', () => {
-                this.window_exec(tab, entity, (window) => {
+                this.window_exec(tab, entity, window => {
                     this.buttons.get(tab.button)?.set_title(window.title());
                 });
             }),
 
             window.meta.connect('notify::urgent', () => {
-                this.window_exec(tab, entity, (window) => {
+                this.window_exec(tab, entity, window => {
                     if (!window.meta.has_focus()) {
                         this.buttons.get(tab.button)?.set_active(TabActive.urgent);
                     }

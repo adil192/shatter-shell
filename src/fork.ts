@@ -1,9 +1,9 @@
 import Clutter from 'gi://Clutter';
 import Mtk from 'gi://Mtk';
 
-import type { Forest } from './forest.js';
 import type { Entity } from './ecs.js';
 import type { Ext } from './extension.js';
+import type { Forest } from './forest.js';
 import type { Node } from './node.js';
 
 import * as Ecs from './ecs.js';
@@ -56,9 +56,7 @@ export class Fork {
         this.left = left;
         this.right = right;
         this.workspace = workspace;
-        this.length_left = orientation === Clutter.Orientation.HORIZONTAL
-            ? this.area.width / 2
-            : this.area.height / 2;
+        this.length_left = orientation === Clutter.Orientation.HORIZONTAL ? this.area.width / 2 : this.area.height / 2;
         this.prev_length_left = this.length_left;
         this.entity = entity;
         this.orientation = orientation;
@@ -212,7 +210,12 @@ export class Fork {
     }
 
     /** Calculates the future arrangement of windows in this fork */
-    measure(tiler: Forest, ext: Ext, area: Mtk.Rectangle, record: (win: Entity, parent: Entity, area: Mtk.Rectangle) => void) {
+    measure(
+        tiler: Forest,
+        ext: Ext,
+        area: Mtk.Rectangle,
+        record: (win: Entity, parent: Entity, area: Mtk.Rectangle) => void,
+    ) {
         let ratio = null;
 
         const manually_moved = ext.grab_op !== null || ext.tiler.resizing_window;
@@ -358,9 +361,10 @@ export class Fork {
 
     /** Toggles the orientation of this fork */
     toggle_orientation() {
-        this.orientation = this.orientation === Clutter.Orientation.HORIZONTAL
-            ? Clutter.Orientation.VERTICAL
-            : Clutter.Orientation.HORIZONTAL;
+        this.orientation =
+            this.orientation === Clutter.Orientation.HORIZONTAL
+                ? Clutter.Orientation.VERTICAL
+                : Clutter.Orientation.HORIZONTAL;
 
         this.orientation_changed = true;
         if (this.n_toggled === 1) {

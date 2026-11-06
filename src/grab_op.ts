@@ -1,8 +1,8 @@
 import Mtk from 'gi://Mtk';
 
-import * as Movement from './movement.js';
-
 import type { Entity } from './ecs.js';
+
+import * as Movement from './movement.js';
 
 export class GrabOp {
     entity: Entity;
