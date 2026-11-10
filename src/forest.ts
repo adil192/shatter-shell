@@ -8,10 +8,10 @@ import type { ShellWindow } from './window.js';
 
 import * as arena from './arena.js';
 import * as geom from './core/geom.js';
+import * as movement from './core/movement.js';
 import * as Ecs from './ecs.js';
 import * as Fork from './fork.js';
 import { Log } from './log.js';
-import * as movement from './movement.js';
 import * as Node from './node.js';
 import { Stack } from './stack.js';
 
