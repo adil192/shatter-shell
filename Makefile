@@ -15,7 +15,7 @@ INSTALLNAME = $(UUID)
 
 SOURCES = src/*.ts src/*/*.ts *.scss icons/*.svg schemas/*.gschema.xml metadata.json README.md
 
-.PHONY: all clean compile debug listen install local-install uninstall zip-file lint fmt fmt-check
+.PHONY: all clean compile debug listen install local-install uninstall zip-file lint fmt fmt-check test
 
 # We no longer call `glib-compile-schemas`. This flag now controls whether the .gschemas.xml file is included in _build.
 COMPILE_SCHEMAS = true
@@ -67,3 +67,8 @@ fmt: node_modules/.package-lock.json
 
 fmt-check: node_modules/.package-lock.json
 	npx oxfmt --check
+
+# Unit tests run under Node, so they can only cover code that doesn't load GNOME libraries
+test: node_modules/.package-lock.json
+	npx tsc -p tests --noEmit
+	npx tsx --test 'tests/**/*.test.ts'
