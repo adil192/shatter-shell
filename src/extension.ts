@@ -49,6 +49,7 @@ import type { Misc } from '@girs/gnome-shell';
 import { ControlsState } from 'resource:///org/gnome/shell/ui/overviewControls.js';
 import { ScreenShield } from 'resource:///org/gnome/shell/ui/screenShield.js';
 
+import { FocusHistory } from './core/focus_history.js';
 import { Log } from './log.js';
 import { get_current_path } from './paths.js';
 import { clampRect, fmtRect } from './rectangle.js';
@@ -169,8 +170,8 @@ export class Ext extends Ecs.System<ExtEvent> {
     /** Misc GLib timeouts that will need to be removed when the extension is `disable`d. */
     readonly timeouts = new Set<number>();
 
-    /** The window that was focused before the last window */
-    private prev_focused: [Entity | null, Entity | null] = [null, null];
+    /** Which windows were focused most recently, overall and on each workspace */
+    readonly focus_history = new FocusHistory<Entity, WorkspaceID>(Ecs.entity_eq);
 
     /** Initially set to true when the extension is initializing */
     init: boolean = true;
@@ -186,9 +187,6 @@ export class Ext extends Ecs.System<ExtEvent> {
     private signals: Map<GObject.Object | Misc.signals.EventEmitter, Array<SignalID>> = new Map();
 
     private size_requests: Map<GObject.Object, SignalID> = new Map();
-
-    /** Stores windows that were focused on a workspace */
-    private workspace_active: Map<WorkspaceID, Entity | null> = new Map();
 
     // Entity-component associations
 
@@ -729,7 +727,7 @@ export class Ext extends Ecs.System<ExtEvent> {
             const activate_window = (window: Window.ShellWindow) => {
                 this.on_focused(window);
                 window.request_activate(true);
-                this.prev_focused = [null, window.entity];
+                this.focus_history.restart_from(window.entity);
             };
 
             const focused = this.get_focused_window();
@@ -740,7 +738,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
             // Activate the last-active window on workspace.
             const workspace_id = this.active_workspace();
-            const active = this.workspace_active.get(workspace_id);
+            const active = this.focus_history.last_on(workspace_id);
             if (active) {
                 const window = this.windows.get(active);
                 if (window && window.workspace_id() == workspace_id && !window.meta.minimized) {
@@ -767,14 +765,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         // Exit tiling adjustment mode on window destroy.
         if (this.tiler.window !== null && win == this.tiler.window) this.tiler.exit(this);
 
-        const [prev_a, prev_b] = this.prev_focused;
-
-        if (prev_a && Ecs.entity_eq(win, prev_a)) {
-            this.prev_focused[0] = null;
-        } else if (prev_b && Ecs.entity_eq(win, prev_b)) {
-            this.prev_focused[1] = this.prev_focused[0];
-            this.prev_focused[0] = null;
-        }
+        this.focus_history.forget(win);
 
         const window = this.windows.get(win);
         if (!window) return;
@@ -811,13 +802,13 @@ export class Ext extends Ecs.System<ExtEvent> {
         // to be focused is also a window in the same stack
         if (this.auto_tiler && stack !== null) {
             const stack_object = this.auto_tiler.forest.stacks.get(stack);
-            const prev = this.prev_focused[1];
+            const prev = this.focus_history.current;
             if (stack_object && prev) {
                 const prev_window = this.windows.get(prev);
                 if (prev_window) {
                     if (prev_window.stack !== stack) {
                         stack_object.auto_activate();
-                        this.prev_focused = [null, stack_object.active];
+                        this.focus_history.restart_from(stack_object.active);
                         this.windows.get(stack_object.active)?.request_activate();
                     }
                 }
@@ -831,18 +822,13 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     /** Triggered when a window has been focused */
     on_focused(win: Window.ShellWindow) {
-        this.workspace_active.set(this.active_workspace(), win.entity);
+        // Track history of focused windows, but do not permit duplicates.
+        this.focus_history.focused(win.entity, this.active_workspace());
 
         this.size_signals_unblock(win);
 
         if (this.exception_selecting) {
             this.exception_add(win);
-        }
-
-        // Track history of focused windows, but do not permit duplicates.
-        if (this.prev_focused[1] !== win.entity) {
-            this.prev_focused[0] = this.prev_focused[1];
-            this.prev_focused[1] = win.entity;
         }
 
         // Update the active tab in the stack.
@@ -854,9 +840,10 @@ export class Ext extends Ecs.System<ExtEvent> {
 
         this.show_border_on_focused();
 
-        if (this.auto_tiler && win.is_tilable() && this.prev_focused[0] !== null) {
-            const prev = this.windows.get(this.prev_focused[0]);
-            const is_attached = this.auto_tiler.attached.contains(this.prev_focused[0]);
+        const previous = this.focus_history.previous;
+        if (this.auto_tiler && win.is_tilable() && previous !== null) {
+            const prev = this.windows.get(previous);
+            const is_attached = this.auto_tiler.attached.contains(previous);
 
             if (
                 prev
@@ -1141,17 +1128,6 @@ export class Ext extends Ecs.System<ExtEvent> {
         } else if (this.settings.get_snap_to_grid()) {
             this.tiler.snap(this, win);
         }
-    }
-
-    previously_focused(active: Window.ShellWindow): Ecs.Entity | null {
-        for (const id of [1, 0]) {
-            const prev = this.prev_focused[id];
-            if (prev && !Ecs.entity_eq(active.entity, prev)) {
-                return prev;
-            }
-        }
-
-        return null;
     }
 
     movement_is_valid(win: Window.ShellWindow, movement: movement.Movement) {
@@ -1743,14 +1719,9 @@ export class Ext extends Ecs.System<ExtEvent> {
                     const refocus_tiled_window = () => {
                         // Re-focus a window that was unfocused.
                         let window: Window.ShellWindow | null = null;
-                        const [x, y] = this.prev_focused;
-
-                        if (y) {
-                            window = this.windows.get(y);
-                        }
-
-                        if (window === null && x) {
-                            window = this.windows.get(x);
+                        for (const entity of this.focus_history.recent()) {
+                            window = this.windows.get(entity);
+                            if (window) break;
                         }
 
                         if (window && window.same_monitor() && window.same_workspace() && !window.meta.minimized) {
@@ -1770,7 +1741,10 @@ export class Ext extends Ecs.System<ExtEvent> {
 
                             if (shell_window) {
                                 // Avoid re-focusing a window that's already focused.
-                                if (shell_window.entity !== this.prev_focused[1] && !shell_window.meta.minimized) {
+                                if (
+                                    !this.focus_history.is_current(shell_window.entity)
+                                    && !shell_window.meta.minimized
+                                ) {
                                     this.on_focused(shell_window);
                                 }
                             } else if (!meta_window.is_override_redirect()) {
@@ -1861,7 +1835,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         this.connect_object(workspace_manager, () =>
             workspace_manager.connect('showing-desktop-changed', () => {
                 this.hide_all_borders();
-                this.prev_focused = [null, null];
+                this.focus_history.clear();
             }),
         );
 
