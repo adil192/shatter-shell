@@ -5,6 +5,7 @@ import {
     downward_distance,
     leftward_distance,
     nearest_side,
+    overlay_area,
     type Rect,
     rightward_distance,
     shortest_side,
@@ -38,6 +39,25 @@ describe('nearest_side', () => {
         // (10, 10) is 10 from the left and top edges, but their middles are 40.something away
         const { distance } = nearest_side([10, 10], square, false);
         assert.equal(distance, Math.sqrt(10 * 10 + 40 * 40));
+    });
+});
+
+describe('overlay_area', () => {
+    const area: Rect = { x: 10, y: 20, width: 200, height: 100 };
+
+    test('a side takes the half of the area on that side', () => {
+        assert.deepEqual(overlay_area(area, Side.LEFT), { x: 10, y: 20, width: 100, height: 100 });
+        assert.deepEqual(overlay_area(area, Side.RIGHT), { x: 110, y: 20, width: 100, height: 100 });
+        assert.deepEqual(overlay_area(area, Side.TOP), { x: 10, y: 20, width: 200, height: 50 });
+        assert.deepEqual(overlay_area(area, Side.BOTTOM), { x: 10, y: 70, width: 200, height: 50 });
+    });
+
+    test('the center takes all of it', () => {
+        assert.deepEqual(overlay_area(area, Side.CENTER), area);
+    });
+
+    test('returns a new rectangle', () => {
+        assert.notEqual(overlay_area(area, Side.CENTER), area);
     });
 });
 

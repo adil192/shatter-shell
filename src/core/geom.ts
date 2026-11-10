@@ -120,6 +120,24 @@ export function nearest_side(
     return nearest;
 }
 
+/** The part of `area` that a window dropped at `side` of it would take: half of it, or all of it at the center */
+export function overlay_area(area: Rect, side: Side): Rect {
+    const { x, y, width, height } = area;
+
+    switch (side) {
+        case Side.LEFT:
+            return { x, y, width: width / 2, height };
+        case Side.RIGHT:
+            return { x: x + width / 2, y, width: width / 2, height };
+        case Side.TOP:
+            return { x, y, width, height: height / 2 };
+        case Side.BOTTOM:
+            return { x, y: y + height / 2, width, height: height / 2 };
+        case Side.CENTER:
+            return { x, y, width, height };
+    }
+}
+
 export function shortest_side(origin: [number, number], rect: Rect): number {
     let shortest = distance(origin, west(rect));
     shortest = Math.min(shortest, distance(origin, north(rect)));

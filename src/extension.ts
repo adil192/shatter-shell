@@ -32,7 +32,6 @@ const wom = global.workspace_manager;
 
 const Movement = movement.Movement;
 
-import Clutter from 'gi://Clutter';
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
 import GObject from 'gi://GObject';
@@ -50,6 +49,7 @@ import { ControlsState } from 'resource:///org/gnome/shell/ui/overviewControls.j
 import { ScreenShield } from 'resource:///org/gnome/shell/ui/screenShield.js';
 
 import { FocusHistory } from './core/focus_history.js';
+import * as geom from './core/geom.js';
 import { LayoutSizes } from './core/layout_sizes.js';
 import { Signals } from './core/signals.js';
 import { Log } from './log.js';
@@ -1189,38 +1189,14 @@ export class Ext extends Ecs.System<ExtEvent> {
                         return GLib.SOURCE_CONTINUE;
                     }
 
-                    const result = monitor_attachment ? null : auto_tiler.cursor_placement(this, area, cursor);
-
-                    if (!result) {
-                        this.overlay.x = area.x;
-                        this.overlay.y = area.y;
-                        this.overlay.width = area.width;
-                        this.overlay.height = area.height;
-
-                        this.overlay.visible = true;
-
-                        return GLib.SOURCE_CONTINUE;
+                    // A window dropped on a monitor takes all of it
+                    let side = geom.Side.CENTER;
+                    if (!monitor_attachment) {
+                        const stacking_with_mouse = this.settings.get_stacking_with_mouse();
+                        side = geom.nearest_side([cursor.x, cursor.y], area, stacking_with_mouse).side;
                     }
 
-                    const { orientation, swap } = result;
-
-                    const half_width = area.width / 2;
-                    const half_height = area.height / 2;
-
-                    const new_area: [number, number, number, number] =
-                        orientation === Clutter.Orientation.HORIZONTAL
-                            ? swap
-                                ? [area.x, area.y, half_width, area.height]
-                                : [area.x + half_width, area.y, half_width, area.height]
-                            : swap
-                              ? [area.x, area.y, area.width, half_height]
-                              : [area.x, area.y + half_height, area.width, half_height];
-
-                    this.overlay.x = new_area[0];
-                    this.overlay.y = new_area[1];
-                    this.overlay.width = new_area[2];
-                    this.overlay.height = new_area[3];
-
+                    this.set_overlay(geom.overlay_area(area, side));
                     this.overlay.visible = true;
 
                     return GLib.SOURCE_CONTINUE;
@@ -1518,7 +1494,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         this.timeouts.add(source);
     }
 
-    set_overlay(rect: Mtk.Rectangle) {
+    set_overlay(rect: geom.Rect) {
         this.overlay.x = rect.x;
         this.overlay.y = rect.y;
         this.overlay.width = rect.width;
