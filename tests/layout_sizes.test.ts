@@ -84,3 +84,26 @@ describe('what the gap setters return', () => {
         assert.equal(sizes.set_gap_outer(1), 0);
     });
 });
+
+describe('what set_scale returns', () => {
+    /** Sizes at `scale` with an outer gap of `gap` units */
+    function outer(gap: number, scale: number) {
+        const sizes = new LayoutSizes(scale);
+        sizes.set_gap_outer(gap);
+        return sizes;
+    }
+
+    test('how many pixels the outer gap grew or shrank by', () => {
+        // Not the ratio of the scales, taken as a number of gap units
+        assert.equal(outer(1, 1).set_scale(2), GAP_UNIT);
+        assert.equal(outer(1, 2).set_scale(1), -GAP_UNIT);
+    });
+
+    test('0 when there is no outer gap', () => {
+        assert.equal(outer(0, 1).set_scale(2), 0);
+    });
+
+    test('0 when the scale is set to what it was', () => {
+        assert.equal(outer(1, 2).set_scale(2), 0);
+    });
+});

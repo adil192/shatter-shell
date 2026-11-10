@@ -72,7 +72,10 @@ export class LayoutSizes {
         this.row_size_setting = size;
     }
 
-    set_scale(scale: number) {
+    /** @returns How many pixels the outer gap grew by */
+    set_scale(scale: number): number {
+        const before = this.gap_outer;
         this.scale_ = scale;
+        return this.gap_outer - before;
     }
 }
