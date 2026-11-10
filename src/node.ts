@@ -228,7 +228,7 @@ export class Node<T extends NodeADT = NodeADT> {
                 record(this.inner.entity, parent, area.copy());
                 break;
             case NodeKind.STACK:
-                const tab_height = ext.dpi * TAB_HEIGHT_UNSCALED;
+                const tab_height = ext.sizes.scale * TAB_HEIGHT_UNSCALED;
 
                 this.inner.rect = area.copy();
                 this.inner.rect.y += tab_height;

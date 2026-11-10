@@ -179,8 +179,8 @@ export class Stack {
         this.active = active;
         this.monitor = monitor;
         this.workspace = workspace;
-        this.tab_height = TAB_HEIGHT_UNSCALED * this.ext.dpi;
-        this.tab_separation = TAB_SEPARATION_UNSCALED * this.ext.dpi;
+        this.tab_height = TAB_HEIGHT_UNSCALED * this.ext.sizes.scale;
+        this.tab_separation = TAB_SEPARATION_UNSCALED * this.ext.sizes.scale;
 
         this.widgets = stack_widgets_new();
 
@@ -687,8 +687,8 @@ export class Stack {
 
         this.rect = rect;
 
-        this.tab_height = TAB_HEIGHT_UNSCALED * this.ext.dpi;
-        this.tab_separation = TAB_SEPARATION_UNSCALED * this.ext.dpi;
+        this.tab_height = TAB_HEIGHT_UNSCALED * this.ext.sizes.scale;
+        this.tab_separation = TAB_SEPARATION_UNSCALED * this.ext.sizes.scale;
 
         this.stack_rect = new Mtk.Rectangle({
             x: rect.x,

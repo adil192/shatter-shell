@@ -67,9 +67,9 @@ export class Fork {
     area_of_left(ext: Ext): Mtk.Rectangle {
         let { x, y, width, height } = this.area;
         if (this.is_horizontal()) {
-            width = this.length_left - ext.gap_inner_half;
+            width = this.length_left - ext.sizes.gap_inner_half;
         } else {
-            height = this.length_left - ext.gap_inner_half;
+            height = this.length_left - ext.sizes.gap_inner_half;
         }
         return new Mtk.Rectangle({ x, y, width, height });
     }
@@ -78,11 +78,11 @@ export class Fork {
     area_of_right(ext: Ext): Mtk.Rectangle {
         let { x, y, width, height } = this.area;
         if (this.is_horizontal()) {
-            x = x + this.length_left + ext.gap_inner_half;
-            width = width - this.length_left - ext.gap_inner_half;
+            x = x + this.length_left + ext.sizes.gap_inner_half;
+            width = width - this.length_left - ext.sizes.gap_inner_half;
         } else {
-            y = y + this.length_left + ext.gap_inner_half;
-            height = height - this.length_left - ext.gap_inner_half;
+            y = y + this.length_left + ext.sizes.gap_inner_half;
+            height = height - this.length_left - ext.sizes.gap_inner_half;
         }
         return new Mtk.Rectangle({ x, y, width, height });
     }
@@ -257,12 +257,12 @@ export class Fork {
                 if (length == 0) length = 32;
             }
 
-            region[l] = length - ext.gap_inner_half;
+            region[l] = length - ext.sizes.gap_inner_half;
 
             this.left.measure(tiler, ext, this.entity, region, record);
 
-            region[p] = region[p] + length + ext.gap_inner_half;
-            region[l] = this.area[l] - length - ext.gap_inner_half;
+            region[p] = region[p] + length + ext.sizes.gap_inner_half;
+            region[l] = this.area[l] - length - ext.sizes.gap_inner_half;
 
             this.right.measure(tiler, ext, this.entity, region, record);
         } else {
@@ -322,10 +322,10 @@ export class Fork {
                 }
             }
 
-            area.x += ext.gap_outer;
-            area.y += ext.gap_outer;
-            area.width -= ext.gap_outer * 2;
-            area.height -= ext.gap_outer * 2;
+            area.x += ext.sizes.gap_outer;
+            area.y += ext.sizes.gap_outer;
+            area.width -= ext.sizes.gap_outer * 2;
+            area.height -= ext.sizes.gap_outer * 2;
 
             this.set_area(area.copy());
             this.measure(forest, ext, area, forest.on_record());
