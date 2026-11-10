@@ -187,13 +187,6 @@ export class World {
         return this.tags_[entity[0]]!;
     }
 
-    /** Iterates across entities in the world */
-    *entities() {
-        for (const entity of this.entities_.values()) {
-            if (this.free_slots.indexOf(entity[0]) === -1) yield entity;
-        }
-    }
-
     /**
      * Create a new entity in the world.
      *

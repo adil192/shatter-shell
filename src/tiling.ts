@@ -801,7 +801,6 @@ export class Tiler {
 
                 if (!tree_swapped) {
                     ext.size_signals_block(meta);
-                    const meta_entity = this.window;
                     const overlay = ext.overlay;
                     const movement = new Mtk.Rectangle({
                         x: overlay.x,
@@ -811,7 +810,6 @@ export class Tiler {
                     });
                     meta.move(movement, () => {
                         ext.size_signals_unblock(meta);
-                        ext.add_tag(meta_entity, Tags.Tiled);
                     });
                 }
             }

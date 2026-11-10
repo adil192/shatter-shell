@@ -1,16 +1,7 @@
 import Cogl from 'gi://Cogl';
 import Gio from 'gi://Gio';
-import GObject from 'gi://GObject';
 
 import { Log } from './log.js';
-
-export function block_signal(object: GObject.Object, signal: SignalID) {
-    GObject.signal_handler_block(object, signal);
-}
-
-export function unblock_signal(object: GObject.Object, signal: SignalID) {
-    GObject.signal_handler_unblock(object, signal);
-}
 
 export function exists(path: string): boolean {
     return Gio.File.new_for_path(path).query_exists(null);

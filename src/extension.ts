@@ -202,9 +202,6 @@ export class Ext extends Ecs.System<ExtEvent> {
     /** Store for names associated with windows */
     names: Ecs.Storage<string> = this.register_storage();
 
-    /** Signal ID which handles size-changed signals */
-    size_changed_signal: SignalID = 0;
-
     /** Set to true if a window is snapped to the grid */
     snapped: Ecs.Storage<boolean> = this.register_storage();
 
@@ -375,11 +372,6 @@ export class Ext extends Ecs.System<ExtEvent> {
     active_workspace(): WorkspaceID {
         const id = wom.get_active_workspace_index();
         return workspaceID(id);
-    }
-
-    actor_of(entity: Entity): Meta.WindowActor | null {
-        const window = this.windows.get(entity);
-        return window ? window.meta.get_compositor_private<Meta.WindowActor | null>() : null;
     }
 
     /** Connects a callback signal to a GObject or EventEmitter, and records the signal in {@link signals}. */
@@ -562,19 +554,6 @@ export class Ext extends Ecs.System<ExtEvent> {
         this.overlay.visible = false;
     }
 
-    find_monitor_to_retach(width: number, height: number): [MonitorID, Display] {
-        if (!this.settings.get_workspaces_only_on_primary()) {
-            for (const [index, display] of this.displays[1]) {
-                if (display.area.width == width && display.area.height == height) {
-                    return [index, display];
-                }
-            }
-        }
-
-        const primary = monitorID(display.get_primary_monitor());
-        return [primary, this.displays[1].get(primary)!];
-    }
-
     find_unused_workspace(monitor: MonitorID): [WorkspaceID, Meta.Workspace | null] {
         if (!this.auto_tiler) return [0, wom.get_workspace_by_index(0)];
 
@@ -713,10 +692,6 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     monitor_work_area(monitor: MonitorID): Mtk.Rectangle {
         return wom.get_active_workspace().get_work_area_for_monitor(monitor);
-    }
-
-    monitor_area(monitor: MonitorID): Mtk.Rectangle {
-        return global.display.get_monitor_geometry(monitor);
     }
 
     on_active_workspace_changed() {
@@ -1638,7 +1613,7 @@ export class Ext extends Ecs.System<ExtEvent> {
             }),
         );
 
-        this.size_changed_signal = this.connect_object(wim, () =>
+        this.connect_object(wim, () =>
             wim.connect('size-change', (_, actor, event) => {
                 if (!this.auto_tiler) return;
 
@@ -1925,14 +1900,6 @@ export class Ext extends Ecs.System<ExtEvent> {
         this.tiler.queue.stop();
     }
 
-    size_changed_block() {
-        utils.block_signal(wim, this.size_changed_signal);
-    }
-
-    size_changed_unblock() {
-        utils.unblock_signal(wim, this.size_changed_signal);
-    }
-
     size_signals_block(win: Window.ShellWindow) {
         this.add_tag(win.entity, Tags.Blocked);
     }
@@ -1964,14 +1931,6 @@ export class Ext extends Ecs.System<ExtEvent> {
         }
 
         return matched;
-    }
-
-    *tiled_windows() {
-        for (const entity of this.entities()) {
-            if (this.contains_tag(entity, Tags.Tiled)) {
-                yield entity;
-            }
-        }
     }
 
     /** If the auto-tilable status of a window has changed, detach or attach the window. */
@@ -2089,8 +2048,6 @@ export class Ext extends Ecs.System<ExtEvent> {
 
         this.moved_by_mouse = false;
     }
-
-    update_display_configuration_before() {}
 
     update_display_configuration(workareas_only: boolean) {
         if (!this.auto_tiler || sessionMode.isLocked) return;
@@ -2416,22 +2373,6 @@ export class Ext extends Ecs.System<ExtEvent> {
         if (id[1] < 0) id[1] = 0;
 
         return id;
-    }
-
-    is_floating(window: Window.ShellWindow): boolean {
-        let shall_float: boolean = false;
-        const wm_class = window.meta.get_wm_class();
-        const wm_title = window.meta.get_title();
-
-        if (wm_class != null && wm_class && wm_title) {
-            shall_float = this.conf.window_shall_float(wm_class, wm_title);
-        }
-
-        const floating_tagged = this.contains_tag(window.entity, Tags.Floating);
-        const force_tiled_tagged = this.contains_tag(window.entity, Tags.ForceTile);
-        // Tags.Tiled does not seem to matter, so not checking here
-
-        return (floating_tagged && !force_tiled_tagged) || (shall_float && !force_tiled_tagged);
     }
 }
 
