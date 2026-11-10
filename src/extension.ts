@@ -51,6 +51,14 @@ import { ScreenShield } from 'resource:///org/gnome/shell/ui/screenShield.js';
 import { FocusHistory } from './core/focus_history.js';
 import * as geom from './core/geom.js';
 import { LayoutSizes } from './core/layout_sizes.js';
+import {
+    type Migration as MonitorMigration,
+    type MonitorInfo,
+    monitor_changes,
+    plan_migrations,
+    unchanged_monitors,
+    workspace_on,
+} from './core/monitor_changes.js';
 import { Signals } from './core/signals.js';
 import { Log } from './log.js';
 import { get_current_path } from './paths.js';
@@ -79,11 +87,6 @@ const STYLESHEETS = {
     dark: Gio.File.new_for_path(STYLESHEET_PATHS.dark),
     darkHc: Gio.File.new_for_path(STYLESHEET_PATHS.darkHc),
 } as const;
-
-interface Display {
-    area: Mtk.Rectangle;
-    ws: Mtk.Rectangle;
-}
 
 interface Injection<T extends object, K extends keyof T = keyof T> {
     object: T;
@@ -123,9 +126,9 @@ export class Ext extends Ecs.System<ExtEvent> {
     displays_updating: SignalID | null = null;
 
     /** The known display configuration, for tracking monitor removals and changes */
-    displays: [primaryMonitor: MonitorID, monitors: Map<MonitorID, Display>] = [
+    displays: [primaryMonitor: MonitorID, monitors: Map<MonitorID, MonitorInfo<Mtk.Rectangle>>] = [
         monitorID(global.display.get_primary_monitor()),
-        new Map<MonitorID, Display>(),
+        new Map<MonitorID, MonitorInfo<Mtk.Rectangle>>(),
     ];
 
     /** The sizes in pixels that the layout uses: the gaps, the snap-to-grid cells, and the scale factor */
@@ -2036,30 +2039,19 @@ export class Ext extends Ecs.System<ExtEvent> {
             }
         };
 
-        type Migration = [Fork, MonitorID, Mtk.Rectangle, boolean];
+        type Migration = MonitorMigration<Fork, MonitorID, Mtk.Rectangle>;
 
-        const migrations: Array<Migration> = [];
-
-        const apply_migrations = (assigned_monitors: Set<MonitorID>) => {
+        const apply_migrations = (migrations: Migration[], claimed: Set<MonitorID>) => {
             if (!migrations.length) return;
 
             new exec.OnceExecutor<Migration, Migration[]>(migrations).start(
                 500,
-                ([fork, new_monitor, workspace, find_workspace]) => {
-                    let new_workspace: WorkspaceID;
+                ({ tree: fork, monitor, work_area, moved }) => {
+                    const workspace = moved
+                        ? workspace_on(monitor, claimed, monitor => this.find_unused_workspace(monitor)[0])
+                        : fork.workspace;
 
-                    if (find_workspace) {
-                        if (assigned_monitors.has(new_monitor)) {
-                            [new_workspace] = this.find_unused_workspace(new_monitor);
-                        } else {
-                            assigned_monitors.add(new_monitor);
-                            new_workspace = 0;
-                        }
-                    } else {
-                        new_workspace = fork.workspace;
-                    }
-
-                    fork.migrate(this, forest, workspace, new_monitor, new_workspace);
+                    fork.migrate(this, forest, work_area, monitor, workspace);
                     fork.set_ratio(fork.length() / 2);
 
                     return true;
@@ -2080,20 +2072,21 @@ export class Ext extends Ecs.System<ExtEvent> {
 
         const [old_primary, old_displays] = this.displays;
 
-        const changes = new Map<MonitorID, MonitorID>();
+        // Each window's monitor before and after the change
+        const placements = function* (ext: Ext): Generator<[MonitorID, MonitorID]> {
+            for (const [entity, w] of ext.windows.iter()) {
+                if (!w.actor_exists()) continue;
 
-        // Records which display's windows were moved to what new display's ID
-        for (const [entity, w] of this.windows.iter()) {
-            if (!w.actor_exists()) continue;
+                const placement = ext.monitors.get(entity);
+                if (placement) yield [placement[0], w.monitor_id()];
+            }
+        };
 
-            this.monitors.with(entity, ([mon]) => {
-                const assignment = mon === old_primary ? primary_display : w.monitor_id();
-                changes.set(mon, assignment);
-            });
-        }
+        // Where each monitor's windows ended up
+        const changes = monitor_changes(placements(this), old_primary, primary_display);
 
         // Fetch a new list of monitors
-        const updated = new Map<MonitorID, Display>();
+        const updated = new Map<MonitorID, MonitorInfo<Mtk.Rectangle>>();
 
         for (const mon of layoutManager.monitors) {
             const area = new Mtk.Rectangle({ x: mon.x, y: mon.y, width: mon.width, height: mon.height });
@@ -2133,48 +2126,15 @@ export class Ext extends Ecs.System<ExtEvent> {
             (() => {
                 if (!this.auto_tiler) return;
 
-                const toplevels = [];
-                const assigned_monitors = new Set<MonitorID>();
+                const toplevels = Array.from(forest.forks.values()).filter(f => f.is_toplevel);
+                const migrations = plan_migrations(toplevels, changes, this.displays[1]);
 
-                for (const [old_mon, new_mon] of changes) {
-                    if (old_mon === new_mon) assigned_monitors.add(new_mon);
+                for (const migration of migrations) {
+                    if (migration.moved) migration.tree.workspace = 0;
+                    mark_for_reassignment(this, migration.tree.entity);
                 }
 
-                for (const f of forest.forks.values()) {
-                    if (f.is_toplevel) {
-                        toplevels.push(f);
-
-                        let migration: Migration | null = null;
-
-                        const displays = this.displays[1];
-
-                        for (const [old_monitor, new_monitor] of changes) {
-                            const display = displays.get(new_monitor);
-
-                            if (!display) continue;
-
-                            if (f.monitor === old_monitor) {
-                                f.monitor = new_monitor;
-                                f.workspace = 0;
-                                migration = [f, new_monitor, display.ws, true];
-                            }
-                        }
-
-                        if (!migration) {
-                            const display = displays.get(f.monitor);
-                            if (display) {
-                                migration = [f, f.monitor, display.ws, false];
-                            }
-                        }
-
-                        if (migration) {
-                            mark_for_reassignment(this, migration[0].entity);
-                            migrations.push(migration);
-                        }
-                    }
-                }
-
-                apply_migrations(assigned_monitors);
+                apply_migrations(migrations, unchanged_monitors(changes));
 
                 return;
             })();
