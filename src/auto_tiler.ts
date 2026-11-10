@@ -665,7 +665,7 @@ export class AutoTiler {
             return Err('ignoring focus');
         }
 
-        const prev = ext.previously_focused(win);
+        const prev = ext.focus_history.previous_to(win.entity);
 
         if (!prev) {
             return Err('no window has been previously focused');
