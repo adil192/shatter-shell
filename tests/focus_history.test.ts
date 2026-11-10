@@ -69,6 +69,17 @@ describe('FocusHistory', () => {
         assert.equal(history.previous, null);
     });
 
+    test('forgetting a window forgets it on every workspace', () => {
+        const history = new FocusHistory<number>(same);
+        history.focused(1, 0);
+        history.focused(2, 1);
+        history.focused(1, 2);
+        history.forget(1);
+        assert.equal(history.last_on(0), null);
+        assert.equal(history.last_on(1), 2);
+        assert.equal(history.last_on(2), null);
+    });
+
     test('forgetting an unknown window changes nothing', () => {
         const history = one_then_two();
         history.forget(3);
