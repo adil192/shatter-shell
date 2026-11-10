@@ -50,7 +50,7 @@ import { ControlsState } from 'resource:///org/gnome/shell/ui/overviewControls.j
 import { ScreenShield } from 'resource:///org/gnome/shell/ui/screenShield.js';
 
 import { FocusHistory } from './core/focus_history.js';
-import { GAP_UNIT, LayoutSizes } from './core/layout_sizes.js';
+import { LayoutSizes } from './core/layout_sizes.js';
 import { Log } from './log.js';
 import { get_current_path } from './paths.js';
 import { clampRect, fmtRect } from './rectangle.js';
@@ -976,23 +976,29 @@ export class Ext extends Ecs.System<ExtEvent> {
         const change = this.sizes.set_gap_outer(this.settings.get_gap_outer());
 
         if (change != 0) {
-            // In units of the setting, as it has always been
-            this.update_outer_gap(change / GAP_UNIT / this.sizes.scale);
+            this.update_outer_gap(change);
 
             Gio.Settings.sync();
         }
     }
 
-    update_outer_gap(diff: number) {
+    /**
+     * Moves every tree `change` pixels further in from its monitor's edges, and retiles it. A
+     * smart-gapped tree has no outer gap, so its area stays, but it is retiled too, as a new scale
+     * changes its inner gaps and tabs.
+     */
+    update_outer_gap(change: number) {
         if (this.auto_tiler) {
             for (const [entity] of this.auto_tiler.forest.toplevel.values()) {
                 const fork = this.auto_tiler.forest.forks.get(entity);
 
                 if (fork) {
-                    fork.area.x += diff * 4;
-                    fork.area.y += diff * 4;
-                    fork.area.width -= diff * 8;
-                    fork.area.height -= diff * 8;
+                    if (!fork.smart_gapped) {
+                        fork.area.x += change;
+                        fork.area.y += change;
+                        fork.area.width -= change * 2;
+                        fork.area.height -= change * 2;
+                    }
 
                     this.auto_tiler.tile(this, fork, fork.area);
                 }
@@ -2266,12 +2272,14 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     update_scale() {
-        const scale = St.ThemeContext.get_for_stage(global.stage).scale_factor;
-        const diff = scale / this.sizes.scale;
-        this.sizes.set_scale(scale);
+        const change = this.sizes.set_scale(St.ThemeContext.get_for_stage(global.stage).scale_factor);
 
-        this.update_inner_gap();
-        this.update_outer_gap(diff);
+        // Both retile, with the new inner gap too
+        if (change != 0) {
+            this.update_outer_gap(change);
+        } else {
+            this.update_inner_gap();
+        }
     }
 
     update_snapped() {
