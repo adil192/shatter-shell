@@ -32,4 +32,12 @@ export default defineConfig({
         'unicorn/consistent-function-scoping': 'off', // Unnecessary fragmentation of code
         'unicorn/no-array-sort': 'off', // It's usually preferable to mutate the array in-place rather than creating a new one
     },
+    overrides: [
+        {
+            files: ['tests/**'],
+            rules: {
+                'typescript/no-floating-promises': 'off', // node:test runs the promises that test() returns
+            },
+        },
+    ],
 });

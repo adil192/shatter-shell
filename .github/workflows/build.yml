@@ -44,6 +44,9 @@ jobs:
       - name: Run lints
         run: make lint
 
+      - name: Run tests
+        run: make test
+
       - name: Shexli lints
         uses: stuarthayhurst/shexli-github-action@81c25e448506a299c12162e78db901a3b0f1109f
         with:
