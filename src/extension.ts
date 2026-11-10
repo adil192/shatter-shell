@@ -50,6 +50,7 @@ import { ControlsState } from 'resource:///org/gnome/shell/ui/overviewControls.j
 import { ScreenShield } from 'resource:///org/gnome/shell/ui/screenShield.js';
 
 import { FocusHistory } from './core/focus_history.js';
+import { GAP_UNIT, LayoutSizes } from './core/layout_sizes.js';
 import { Log } from './log.js';
 import { get_current_path } from './paths.js';
 import { clampRect, fmtRect } from './rectangle.js';
@@ -115,17 +116,11 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     readonly conf: Config.Config;
 
-    /** Column sizes in snap-to-grid */
-    column_size: number = 32;
-
     /** The currently-loaded theme variant */
     current_style: Style = Style.dark;
 
     /** Set when the display configuration has been triggered for execution */
     displays_updating: SignalID | null = null;
-
-    /** Row size in snap-to-grid */
-    row_size: number = 32;
 
     /** The known display configuration, for tracking monitor removals and changes */
     displays: [primaryMonitor: MonitorID, monitors: Map<MonitorID, Display>] = [
@@ -133,28 +128,13 @@ export class Ext extends Ecs.System<ExtEvent> {
         new Map<MonitorID, Display>(),
     ];
 
-    /** The current scaling factor in GNOME Shell */
-    dpi: number = St.ThemeContext.get_for_stage(global.stage).scale_factor;
+    /** The sizes in pixels that the layout uses: the gaps, the snap-to-grid cells, and the scale factor */
+    readonly sizes = new LayoutSizes(St.ThemeContext.get_for_stage(global.stage).scale_factor);
 
     drag_signal: SignalID | null = null;
 
     /** If set, the user is currently selecting a window to add to floating exceptions */
     exception_selecting: boolean = false;
-
-    /** The number of pixels between windows */
-    gap_inner: number = 0;
-
-    /** Exactly half of the value of the inner gap */
-    gap_inner_half: number = 0;
-
-    /** Previously-set value of the inner gap */
-    gap_inner_prev: number = 0;
-
-    /** The number of pixels around a display's work area */
-    gap_outer: number = 0;
-
-    /** Previously-set value of the outer gap */
-    gap_outer_prev: number = 0;
 
     /** Information about a current possible grab operation */
     grab_op: GrabOp.GrabOp | null = null;
@@ -702,13 +682,10 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     load_settings() {
-        this.set_gap_inner(this.settings.get_gap_inner());
-        this.set_gap_outer(this.settings.get_gap_outer());
-        this.gap_inner_prev = this.gap_inner;
-        this.gap_outer_prev = this.gap_outer;
-
-        this.column_size = this.settings.get_column_size() * this.dpi;
-        this.row_size = this.settings.get_row_size() * this.dpi;
+        this.sizes.set_gap_inner(this.settings.get_gap_inner());
+        this.sizes.set_gap_outer(this.settings.get_gap_outer());
+        this.sizes.set_column_size(this.settings.get_column_size());
+        this.sizes.set_row_size(this.settings.get_row_size());
     }
 
     monitor_work_area(monitor: MonitorID): Mtk.Rectangle {
@@ -949,11 +926,9 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     on_gap_inner() {
-        const current = this.settings.get_gap_inner();
-        this.set_gap_inner(current);
-        const prev_gap = this.gap_inner_prev / 4 / this.dpi;
+        const change = this.sizes.set_gap_inner(this.settings.get_gap_inner());
 
-        if (current != prev_gap) {
+        if (change != 0) {
             this.update_inner_gap();
             Gio.Settings.sync();
         }
@@ -998,15 +973,11 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     on_gap_outer() {
-        const current = this.settings.get_gap_outer();
-        this.set_gap_outer(current);
+        const change = this.sizes.set_gap_outer(this.settings.get_gap_outer());
 
-        const prev_gap = this.gap_outer_prev / 4 / this.dpi;
-        const diff = current - prev_gap;
-
-        if (diff != 0) {
-            this.set_gap_outer(current);
-            this.update_outer_gap(diff);
+        if (change != 0) {
+            // In units of the setting, as it has always been
+            this.update_outer_gap(change / GAP_UNIT / this.sizes.scale);
 
             Gio.Settings.sync();
         }
@@ -1116,7 +1087,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                         if (movement === Movement.NONE) return;
 
                         if (win.stack != null) {
-                            const tab_dimension = this.dpi * stack.TAB_HEIGHT_UNSCALED;
+                            const tab_dimension = this.sizes.scale * stack.TAB_HEIGHT_UNSCALED;
                             crect.height += tab_dimension;
                             crect.y -= tab_dimension;
                         }
@@ -1235,10 +1206,10 @@ export class Ext extends Ecs.System<ExtEvent> {
 
                     if (windowless) {
                         [area, monitor_attachment] = [this.monitor_work_area(monitor), true];
-                        area.x += this.gap_outer;
-                        area.y += this.gap_outer;
-                        area.width -= this.gap_outer * 2;
-                        area.height -= this.gap_outer * 2;
+                        area.x += this.sizes.gap_outer;
+                        area.y += this.sizes.gap_outer;
+                        area.width -= this.sizes.gap_outer * 2;
+                        area.height -= this.sizes.gap_outer * 2;
                     } else if (attach_to) {
                         const is_sibling = this.auto_tiler.windows_are_siblings(entity, attach_to.entity);
 
@@ -1578,17 +1549,6 @@ export class Ext extends Ecs.System<ExtEvent> {
             }
         });
         this.timeouts.add(source);
-    }
-
-    set_gap_inner(gap: number) {
-        this.gap_inner_prev = this.gap_inner;
-        this.gap_inner = gap * 4 * this.dpi;
-        this.gap_inner_half = this.gap_inner / 2;
-    }
-
-    set_gap_outer(gap: number) {
-        this.gap_outer_prev = this.gap_outer;
-        this.gap_outer = gap * 4 * this.dpi;
     }
 
     set_overlay(rect: Mtk.Rectangle) {
@@ -2306,18 +2266,9 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     update_scale() {
-        const new_dpi = St.ThemeContext.get_for_stage(global.stage).scale_factor;
-        const diff = new_dpi / this.dpi;
-        this.dpi = new_dpi;
-
-        this.column_size *= diff;
-        this.row_size *= diff;
-
-        this.gap_inner_prev *= diff;
-        this.gap_inner *= diff;
-        this.gap_inner_half *= diff;
-        this.gap_outer_prev *= diff;
-        this.gap_outer *= diff;
+        const scale = St.ThemeContext.get_for_stage(global.stage).scale_factor;
+        const diff = scale / this.sizes.scale;
+        this.sizes.set_scale(scale);
 
         this.update_inner_gap();
         this.update_outer_gap(diff);

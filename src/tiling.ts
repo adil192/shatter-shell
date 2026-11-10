@@ -79,8 +79,8 @@ export class Tiler {
     rect(ext: Ext, monitor: Mtk.Rectangle): Mtk.Rectangle | null {
         if (!ext.overlay.visible) return null;
 
-        const columns = Math.floor(monitor.width / ext.column_size);
-        const rows = Math.floor(monitor.height / ext.row_size);
+        const columns = Math.floor(monitor.width / ext.sizes.column_size);
+        const rows = Math.floor(monitor.height / ext.sizes.row_size);
 
         return monitor_rect(monitor, columns, rows);
     }
@@ -262,10 +262,10 @@ export class Tiler {
             fork.smart_gapped = false;
             const rect = ext.monitor_work_area(fork.monitor);
 
-            rect.x += ext.gap_outer;
-            rect.y += ext.gap_outer;
-            rect.width -= ext.gap_outer * 2;
-            rect.height -= ext.gap_outer * 2;
+            rect.x += ext.sizes.gap_outer;
+            rect.y += ext.sizes.gap_outer;
+            rect.width -= ext.sizes.gap_outer * 2;
+            rect.height -= ext.sizes.gap_outer * 2;
 
             fork.set_area(rect);
         }
@@ -348,10 +348,10 @@ export class Tiler {
             fork.smart_gapped = false;
             const rect = ext.monitor_work_area(fork.monitor);
 
-            rect.x += ext.gap_outer;
-            rect.y += ext.gap_outer;
-            rect.width -= ext.gap_outer * 2;
-            rect.height -= ext.gap_outer * 2;
+            rect.x += ext.sizes.gap_outer;
+            rect.y += ext.sizes.gap_outer;
+            rect.width -= ext.sizes.gap_outer * 2;
+            rect.height -= ext.sizes.gap_outer * 2;
 
             fork.set_area(rect);
         }
@@ -839,8 +839,8 @@ export class Tiler {
     snap(ext: Ext, win: window.ShellWindow) {
         const mon_geom = ext.monitor_work_area(win.monitor_id());
         const rect = win.rect();
-        const columns = Math.floor(mon_geom.width / ext.column_size);
-        const rows = Math.floor(mon_geom.height / ext.row_size);
+        const columns = Math.floor(mon_geom.width / ext.sizes.column_size);
+        const rows = Math.floor(mon_geom.height / ext.sizes.row_size);
         this.change(rect, monitor_rect(mon_geom, columns, rows), 0, 0, 0, 0);
 
         win.move(rect);
