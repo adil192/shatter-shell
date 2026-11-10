@@ -8,8 +8,8 @@ import type { Forest, MoveBy, MoveByCursor } from './forest.js';
 import type { Fork } from './fork.js';
 import type { ShellWindow } from './window.js';
 
+import * as geom from './core/geom.js';
 import * as ecs from './ecs.js';
-import * as geom from './geom.js';
 import * as lib from './lib.js';
 import * as node from './node.js';
 import { Result, Ok, Err } from './result.js';
@@ -745,7 +745,7 @@ export function cursor_placement(ext: Ext, area: Mtk.Rectangle, cursor: Mtk.Rect
     const { LEFT, RIGHT, TOP, BOTTOM } = geom.Side;
     const { HORIZONTAL, VERTICAL } = Clutter.Orientation;
 
-    const [, side] = geom.nearest_side(ext, [cursor.x, cursor.y], area);
+    const { side } = geom.nearest_side([cursor.x, cursor.y], area, ext.settings.get_stacking_with_mouse());
 
     const res: [Clutter.Orientation, boolean] | null =
         side === LEFT

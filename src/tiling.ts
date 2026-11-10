@@ -8,9 +8,9 @@ import type { Entity } from './ecs.js';
 import type { Ext } from './extension.js';
 import type { NodeStack } from './node.js';
 
+import * as geom from './core/geom.js';
 import * as exec from './executor.js';
 import { Fork } from './fork.js';
-import * as geom from './geom.js';
 // import * as Ecs from './ecs.js';
 import * as GrabOp from './grab_op.js';
 import * as Lib from './lib.js';

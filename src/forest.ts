@@ -7,9 +7,9 @@ import type { Ext } from './extension.js';
 import type { ShellWindow } from './window.js';
 
 import * as arena from './arena.js';
+import * as geom from './core/geom.js';
 import * as Ecs from './ecs.js';
 import * as Fork from './fork.js';
-import * as geom from './geom.js';
 import { Log } from './log.js';
 import * as movement from './movement.js';
 import * as Node from './node.js';
