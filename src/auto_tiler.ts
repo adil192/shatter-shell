@@ -262,6 +262,7 @@ export class AutoTiler {
 
     /** Turns a stack back into a plain window once only one window is left in it. */
     dissolve_single_stack(ext: Ext, stack: node.NodeStack) {
+        if (!ext.settings.get_dissolve_single_window_stacks()) return;
         if (stack.entities.length !== 1) return;
 
         const entity = stack.entities[0]!;

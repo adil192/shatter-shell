@@ -34,6 +34,19 @@ export default class ShatterShellPreferences extends ExtensionPreferences {
             }
 
             {
+                const row = new Adw.SwitchRow({
+                    title: 'Auto-dissolve stacks with a single window',
+                    subtitle: 'Remove the tab bar once only one window is left in a stack',
+                    active: ext.get_dissolve_single_window_stacks(),
+                });
+                row.connect('notify::active', row => {
+                    ext.set_dissolve_single_window_stacks(row.active);
+                    Settings.sync();
+                });
+                group.add(row);
+            }
+
+            {
                 const row = new Adw.SpinRow({
                     title: 'Max window width',
                     subtitle: '0 to disable',

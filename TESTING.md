@@ -51,6 +51,7 @@ Tasks for a tester to verify when approving a patch. Use complex window layouts 
 - [ ] Windows inside and outside of a stack can be swapped multiple times and in both directions.
 - [ ] Moving the last window out of a stack works as expected.
 - [ ] A stack dissolves into a plain window when closing, moving or dragging away its second-last window, and focus stays on the remaining window after a close.
+- [ ] With "Auto-dissolve stacks with a single window" disabled, a stack keeps its tab bar when only one window is left in it, and closing a window in it focuses the remaining one.
 - [ ] Toggling stacking on a lone window still gives it a tab bar, so that other windows can be moved into it.
 - [ ] Inserting a workspace before a stack (at the start with the move-to-workspace shortcut, or anywhere by dragging to a gap in the overview) keeps its tabs, the surrounding split layout, and any minimized windows minimized.
 - [ ] After inserting a workspace, the tab bar shows on the workspace that the stack moved to and not on the new one, and moving or closing tabs there still works.

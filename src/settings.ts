@@ -41,6 +41,9 @@ export class ExtensionSettings {
     get_stacking_with_mouse(): boolean { return this.ext.get_boolean('stacking-with-mouse'); }
     set_stacking_with_mouse(value: boolean) { this.ext.set_boolean('stacking-with-mouse', value); }
 
+    get_dissolve_single_window_stacks(): boolean { return this.ext.get_boolean('dissolve-single-window-stacks'); }
+    set_dissolve_single_window_stacks(value: boolean) { this.ext.set_boolean('dissolve-single-window-stacks', value); }
+
     get_column_size() { return this.ext.get_uint('column-size'); }
     set_column_size(value: number) { this.ext.set_uint('column-size', value); }
 
