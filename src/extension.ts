@@ -453,7 +453,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         this.connect_meta(win, 'workspace-changed', () => {
             this.register(Events.window_event(win, WindowEventType.Workspace));
         });
-        this.connect_meta(win, 'highest-scale-monitor-changed', () => {
+        this.connect_meta(win, 'notify::main-monitor', () => {
             this.register(Events.window_event(win, WindowEventType.Workspace));
         });
 
@@ -1254,7 +1254,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
                         [area, monitor_attachment] =
                             (win.stack === null && attach_to.stack === null && is_sibling)
-                            || (win.stack === null && is_sibling)
+                                || (win.stack === null && is_sibling)
                                 ? [fork.area, false]
                                 : [attach_to.meta.get_frame_rect(), false];
                     } else {
@@ -1285,8 +1285,8 @@ export class Ext extends Ecs.System<ExtEvent> {
                                 ? [area.x, area.y, half_width, area.height]
                                 : [area.x + half_width, area.y, half_width, area.height]
                             : swap
-                              ? [area.x, area.y, area.width, half_height]
-                              : [area.x, area.y + half_height, area.width, half_height];
+                                ? [area.x, area.y, area.width, half_height]
+                                : [area.x, area.y + half_height, area.width, half_height];
 
                     this.overlay.x = new_area[0];
                     this.overlay.y = new_area[1];
@@ -2102,7 +2102,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         this.moved_by_mouse = false;
     }
 
-    update_display_configuration_before() {}
+    update_display_configuration_before() { }
 
     update_display_configuration(workareas_only: boolean) {
         if (!this.auto_tiler || sessionMode.isLocked) return;
