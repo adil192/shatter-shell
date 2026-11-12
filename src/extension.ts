@@ -453,6 +453,9 @@ export class Ext extends Ecs.System<ExtEvent> {
         this.connect_meta(win, 'workspace-changed', () => {
             this.register(Events.window_event(win, WindowEventType.Workspace));
         });
+        this.connect_meta(win, 'notify::main-monitor', () => {
+            this.register(Events.window_event(win, WindowEventType.Workspace));
+        });
 
         this.connect_size_signal(win, 'size-changed', debounce_size_event);
         this.connect_size_signal(win, 'position-changed', debounce_size_event);
