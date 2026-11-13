@@ -49,6 +49,7 @@ This repo includes a PKGBUILD for Arch.
     ```
 2.  Build and install:
     ```bash
+    cd packaging/pkgbuild/
     makepkg -si
     ```
 </details>
