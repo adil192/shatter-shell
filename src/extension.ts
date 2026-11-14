@@ -823,7 +823,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                 // The stack dissolved, leaving just this window
                 const remaining = stack_node.entities[0];
                 if (remaining && !Ecs.entity_eq(remaining, win) && !Ecs.entity_eq(remaining, prev)) {
-                    this.prev_focused = [null, remaining];
+                    this.focus_history.restart_from(remaining);
                     this.windows.get(remaining)?.request_activate();
                 }
             }
