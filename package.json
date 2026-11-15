@@ -20,8 +20,5 @@
         "sass": "^1.107.1",
         "tsx": "^4.23.15",
         "typescript": "^7.0.2"
-    },
-    "allowScripts": {
-        "@parcel/watcher": false
     }
 }
