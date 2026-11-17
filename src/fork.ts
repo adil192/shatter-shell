@@ -8,6 +8,7 @@ import type { Node } from './node.js';
 
 import * as Ecs from './ecs.js';
 import * as node from './node.js';
+import { TAB_HEIGHT_UNSCALED } from './stack.js';
 import { ShellWindow } from './window.js';
 const { NodeKind } = node;
 
@@ -257,6 +258,17 @@ export class Fork {
                 if (length == 0) length = 32;
             }
 
+            const gap = ext.sizes.gap_inner_half;
+            const left_size = minimum_size(tiler, ext, this.left);
+            const left_min = left_size[this.is_horizontal() ? 0 : 1];
+            const right_size = minimum_size(tiler, ext, this.right);
+            const right_min = right_size[this.is_horizontal() ? 0 : 1];
+            const lower_bound = left_min + gap;
+            const upper_bound = this.area[l] - right_min - gap;
+            if (lower_bound <= upper_bound) {
+                length = Math.max(lower_bound, Math.min(upper_bound, length));
+            }
+
             region[l] = length - ext.sizes.gap_inner_half;
 
             this.left.measure(tiler, ext, this.entity, region, record);
@@ -378,4 +390,47 @@ export class Fork {
             this.n_toggled += 1;
         }
     }
+}
+
+function minimum_size(tiler: Forest, ext: Ext, branch: Node): [number, number] {
+    switch (branch.inner.kind) {
+        case NodeKind.WINDOW:
+            return window_minimum_size(ext, branch.inner.entity);
+        case NodeKind.STACK: {
+            let width = 0;
+            let height = 0;
+            for (const entity of branch.inner.entities) {
+                const [window_width, window_height] = window_minimum_size(ext, entity);
+                width = Math.max(width, window_width);
+                height = Math.max(height, window_height);
+            }
+            return [width, height + ext.sizes.scale * TAB_HEIGHT_UNSCALED];
+        }
+        case NodeKind.FORK: {
+            const fork = tiler.forks.get(branch.inner.entity);
+            if (!fork) return [0, 0];
+
+            const [left_width, left_height] = minimum_size(tiler, ext, fork.left);
+            if (!fork.right) return [left_width, left_height];
+
+            const [right_width, right_height] = minimum_size(tiler, ext, fork.right);
+            if (fork.is_horizontal()) {
+                return [left_width + right_width + ext.sizes.gap_inner, Math.max(left_height, right_height)];
+            } else {
+                return [Math.max(left_width, right_width), left_height + right_height + ext.sizes.gap_inner];
+            }
+        }
+    }
+}
+
+function window_minimum_size(ext: Ext, entity: Entity): [number, number] {
+    const window = ext.windows.get(entity);
+    if (!window) return [0, 0];
+
+    const [known, width, height] = window.meta.get_min_size();
+    if (!known) return [0, 0];
+
+    // Frame size is bigger because of borders/decorations
+    const frame = window.meta.client_rect_to_frame_rect(Mtk.Rectangle.new(0, 0, width, height));
+    return [frame.width, frame.height];
 }
