@@ -245,8 +245,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                 actor.remove_all_transitions();
                 const { x, y, width, height } = movement;
 
-                window.meta.move_resize_frame(true, x, y, width, height);
-                window.meta.move_frame(true, x, y);
+                window.meta.move_resize_frame(false, x, y, width, height);
 
                 this.monitors.insert(window.entity, [window.monitor_id(), window.workspace_id()]);
 
