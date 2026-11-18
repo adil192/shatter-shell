@@ -48,6 +48,12 @@ export class ShellWindow {
     known_workspace: WorkspaceID;
     grab: boolean = false;
     activate_after_move: boolean = false;
+    /**
+     * Some window animations are already handled by GNOME,
+     * such as fullscreening or opening a new window.
+     * Don't animate them ourselves.
+     */
+    dont_animate_next_movement: boolean = false;
     ignore_detach: boolean = false;
     was_attached_to?: [Entity, boolean | number];
     destroying: boolean = false;
@@ -297,7 +303,7 @@ export class ShellWindow {
             if (this.is_maximized()) {
                 meta.unmaximize();
             }
-            actor.remove_all_transitions();
+            if (!this.dont_animate_next_movement) actor.remove_all_transitions();
 
             this.ext.movements.insert(this.entity, rect);
 
@@ -594,6 +600,14 @@ export class ShellWindow {
 
     private workspace_changed() {
         this.restack(RESTACK_STATE.WORKSPACE_CHANGED);
+    }
+
+    /**
+     * Unsets the {@link dont_animate_next_movement} flag, provided the window isn't fullscreen or maximized.
+     * Fullscreen/maximized windows are animated by GNOME itself.
+     */
+    unset_dont_animate_next_movement() {
+        this.dont_animate_next_movement = this.meta.is_fullscreen() || this.is_maximized();
     }
 }
 

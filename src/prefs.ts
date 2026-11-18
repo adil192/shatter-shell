@@ -21,6 +21,21 @@ export default class ShatterShellPreferences extends ExtensionPreferences {
             page.add(group);
 
             {
+                const row = new Adw.ComboRow({
+                    title: 'Animate window movements',
+                    subtitle: "Smoothly transition tiled windows' sizes and positions",
+                    model: Gtk.StringList.new(['System default', 'On', 'Off']),
+                    selected: ext.get_animate_windows_enum(),
+                });
+                row.connect('notify::selected', row => {
+                    // oxlint-disable-next-line typescript/no-unsafe-enum-assignment
+                    ext.set_animate_windows(row.selected);
+                    Settings.sync();
+                });
+                group.add(row);
+            }
+
+            {
                 const row = new Adw.SwitchRow({
                     title: 'Allow stacking with mouse',
                     subtitle: 'Drag a window over another to stack them',

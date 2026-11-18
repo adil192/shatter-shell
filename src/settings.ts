@@ -72,6 +72,21 @@ export class ExtensionSettings {
     set_untile_reset_windows(value: boolean) { this.ext.set_boolean('untile-reset-windows', value); }
 
     // oxlint-disable-next-line typescript/no-unsafe-enum-assignment
+    get_animate_windows_enum(): AnimateWindows { return this.ext.get_enum('animate-windows'); }
+    set_animate_windows(value: AnimateWindows) { this.ext.set_enum('animate-windows', value); }
+    get_animate_windows(): boolean {
+        switch (this.get_animate_windows_enum()) {
+            case AnimateWindows.SYSTEM:
+                const reduced_motion = this.get_reduced_motion();
+                return !reduced_motion;
+            case AnimateWindows.ON:
+                return true;
+            case AnimateWindows.OFF:
+                return false;
+        }
+    }
+
+    // oxlint-disable-next-line typescript/no-unsafe-enum-assignment
     get_log_level(): LogLevel { return this.ext.get_uint('log-level'); }
     set_log_level(value: LogLevel) { this.ext.set_uint('log-level', value); }
 
@@ -107,5 +122,22 @@ export class ExtensionSettings {
 
     get_workspaces_only_on_primary() { return this.mutter.get_boolean('workspaces-only-on-primary'); }
 
+    get_reduced_motion() {
+        try {
+            // oxlint-disable-next-line typescript/no-unsafe-enum-assignment
+            const reduced_motion: GDesktopEnums.ReducedMotion = this.a11y_interface.get_enum('reduced-motion');
+            return reduced_motion == GDesktopEnums.ReducedMotion.REDUCE;
+        } catch {
+            // reduced-motion was added in GNOME 50
+            return false;
+        }
+    }
+
     set_edge_tiling(value: boolean) { this.mutter.set_boolean('edge-tiling', value); }
+}
+
+export enum AnimateWindows {
+    SYSTEM = 0,
+    ON = 1,
+    OFF = 2,
 }

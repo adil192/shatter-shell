@@ -55,6 +55,7 @@ import { Signals } from './core/signals.js';
 import { Log } from './log.js';
 import { get_current_path } from './paths.js';
 import { Tags } from './tags.js';
+import { WindowAnimationController } from './window_animation_controller.js';
 const { monitorID, workspaceID } = Lib;
 
 const sessionMode = Main.sessionMode as typeof Main.sessionMode & { isLocked?: boolean };
@@ -106,9 +107,6 @@ export class Ext extends Ecs.System<ExtEvent> {
     overlay = new St.BoxLayout({ style_class: 'shatter-shell-overlay', visible: false });
 
     // State
-
-    /** Animate window movements */
-    animate_windows: boolean = true;
 
     button: typeof PanelSettings.Indicator.prototype.button | null = null;
     button_auto_on_icon: Gio.Icon | null = null;
@@ -167,6 +165,8 @@ export class Ext extends Ecs.System<ExtEvent> {
     private readonly signals = new Signals<GObject.Object | Misc.signals.EventEmitter>();
 
     private size_requests: Map<GObject.Object, SignalID> = new Map();
+
+    readonly window_animations = new WindowAnimationController();
 
     // Entity-component associations
 
@@ -242,10 +242,16 @@ export class Ext extends Ecs.System<ExtEvent> {
                     return;
                 }
 
-                actor.remove_all_transitions();
-                const { x, y, width, height } = movement;
+                if (window.dont_animate_next_movement) {
+                    this.window_animations.stop(actor);
+                    window.unset_dont_animate_next_movement();
+                } else if (!this.settings.get_animate_windows()) {
+                    this.window_animations.stop(actor);
+                } else {
+                    this.window_animations.start(window, actor, movement);
+                }
 
-                window.meta.move_resize_frame(false, x, y, width, height);
+                window.meta.move_resize_frame(false, movement.x, movement.y, movement.width, movement.height);
 
                 this.monitors.insert(window.entity, [window.monitor_id(), window.workspace_id()]);
 
@@ -314,7 +320,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                 const actor = event.window.get_compositor_private<Meta.WindowActor | null>();
                 if (!actor) return;
 
-                this.on_window_create(event.window, actor);
+                this.on_window_create(event.window, actor, event.is_new_window);
                 break;
 
             /** Stateless global events */
@@ -1343,9 +1349,16 @@ export class Ext extends Ecs.System<ExtEvent> {
         }
     }
 
-    on_window_create(window: Meta.Window, actor: Meta.WindowActor) {
+    on_window_create(window: Meta.Window, actor: Meta.WindowActor, is_new_window: boolean) {
         const win = this.get_window(window);
         if (!win) return;
+
+        if (is_new_window) {
+            win.dont_animate_next_movement = true;
+            actor.connect('first-frame', () => {
+                if (!this.movements.contains(win.entity)) win.unset_dont_animate_next_movement();
+            });
+        }
 
         actor.connect('destroy', () => {
             if (win.border) {
@@ -1365,7 +1378,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         this.ignore_display_update = true;
     }
 
-    /** Handle workspace change events */
+    /** Called when a window changes workspace/monitor */
     on_workspace_changed(win: Window.ShellWindow) {
         if (this.auto_tiler && !this.contains_tag(win.entity, Tags.Floating)) {
             const id = this.workspace_id(win);
@@ -1548,10 +1561,20 @@ export class Ext extends Ecs.System<ExtEvent> {
                 const win = this.get_window(meta);
                 if (!win) return;
 
-                if (event === Meta.SizeChange.MAXIMIZE || event === Meta.SizeChange.UNMAXIMIZE) {
-                    this.register(Events.window_event(win, WindowEventType.Maximize));
-                } else {
-                    this.register(Events.window_event(win, WindowEventType.Fullscreen));
+                switch (event) {
+                    case Meta.SizeChange.MAXIMIZE:
+                    case Meta.SizeChange.UNMAXIMIZE:
+                        win.dont_animate_next_movement = true;
+                        this.register(Events.window_event(win, WindowEventType.Maximize));
+                        break;
+                    case Meta.SizeChange.FULLSCREEN:
+                    case Meta.SizeChange.UNFULLSCREEN:
+                        win.dont_animate_next_movement = true;
+                        this.register(Events.window_event(win, WindowEventType.Fullscreen));
+                        break;
+                    case Meta.SizeChange.MONITOR_MOVE:
+                        // TODO(adil192): Consider removing `notify::main-monitor` listener from window and emitting the `WindowEventType.Workspace` event here. Must not regress https://github.com/adil192/shatter-shell/issues/98
+                        break;
                 }
             }),
         );
@@ -1614,7 +1637,6 @@ export class Ext extends Ecs.System<ExtEvent> {
                 if (window) {
                     this.on_focused(window);
                 }
-                this.register(Events.global(GlobalEvent.OverviewHidden));
             }),
         );
 
@@ -1688,7 +1710,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
         this.signals.connect(display, () =>
             display.connect('window-created', (_, window) => {
-                this.register({ tag: 'window_create', window });
+                this.register({ tag: 'window_create', window, is_new_window: true });
             }),
         );
 
@@ -1775,7 +1797,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
         if (this.init) {
             for (const window of this.tab_list(Meta.TabList.NORMAL, null)) {
-                this.register({ tag: 'window_create', window: window.meta });
+                this.register({ tag: 'window_create', window: window.meta, is_new_window: false });
             }
 
             this.register_fn(() => (this.init = false));
@@ -2350,6 +2372,7 @@ export default class ShatterShellExtension extends Extension {
                 return;
             }
 
+            ext.window_animations.stop_all();
             ext.injections_remove();
             ext.signals_remove();
             ext.exit_modes();

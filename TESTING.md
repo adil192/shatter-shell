@@ -24,6 +24,7 @@ Tasks for a tester to verify when approving a patch. Use complex window layouts 
 - [ ] Windows moved with the keyboard tile into place
 - [ ] Windows moved with the mouse tile into place
 - [ ] A window with a minimum size larger than its initial tile gets more space from adjacent tiles when possible, without pushing windows offscreen
+- [ ] Tiled windows smoothly transition their position and size when the layout changes, including during rapid successive changes
 - [ ] Windows swap with the keyboard (test with different size windows)
 - [ ] Windows can be resized with the keyboard (Test resizing four windows above, below, right, and left to ensure shortcut consistency)
 - [ ] Windows can be resized with the mouse

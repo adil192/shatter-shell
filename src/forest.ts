@@ -396,7 +396,8 @@ export class Forest extends Ecs.World {
                     case Node.NodeKind.FORK:
                         this.reassign_children_to_parent(fork_entity, fork.right.inner.entity, fork);
                         break;
-                    default:
+                    case Node.NodeKind.WINDOW:
+                    case Node.NodeKind.STACK:
                         const detached = fork.right;
                         fork.left = detached;
                         fork.right = null;
@@ -435,7 +436,8 @@ export class Forest extends Ecs.World {
                         case Node.NodeKind.FORK:
                             this.reassign_children_to_parent(fork_entity, fork.left.inner.entity, fork);
                             break;
-                        default:
+                        case Node.NodeKind.WINDOW:
+                        case Node.NodeKind.STACK:
                             fork.right = null;
                             break;
                     }
@@ -587,6 +589,9 @@ export class Forest extends Ecs.World {
                     break;
                 case Node.NodeKind.STACK:
                     window_compare(node.inner.entities[0]!);
+                    break;
+                case Node.NodeKind.FORK:
+                    break;
             }
         }
 

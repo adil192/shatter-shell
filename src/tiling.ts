@@ -286,9 +286,10 @@ export class Tiler {
                 orientation = VERTICAL;
                 reverse = false;
                 break;
-            default:
+            case Direction.Down:
                 orientation = VERTICAL;
                 reverse = true;
+                break;
         }
 
         if (!ext.auto_tiler) return;
@@ -516,9 +517,10 @@ export class Tiler {
                 mov1 = [0, hcolumn, 0, -hcolumn];
                 mov2 = [0, 0, 0, -hcolumn];
                 break;
-            default:
+            case Direction.Down:
                 mov1 = [0, 0, 0, hcolumn];
                 mov2 = [0, -hcolumn, 0, hcolumn];
+                break;
         }
 
         this.move_auto_(
@@ -686,8 +688,9 @@ export class Tiler {
                 case Direction.Up:
                     array = [0, 0, 0, -1];
                     break;
-                default:
+                case Direction.Right:
                     array = [0, 0, 1, 0];
+                    break;
             }
 
             const [x, y, w, h] = array;

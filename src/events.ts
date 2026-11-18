@@ -25,6 +25,8 @@ interface WindowMove {
 interface CreateWindow {
     tag: 'window_create';
     window: Meta.Window;
+    /** Window animation disabled for new windows */
+    is_new_window: boolean;
 }
 
 interface WindowEvent {
@@ -42,7 +44,6 @@ export enum GlobalEvent {
     GnomeThemeChanged,
     MonitorsChanged,
     OverviewShown,
-    OverviewHidden,
 }
 
 /** The type of event triggered on a window */

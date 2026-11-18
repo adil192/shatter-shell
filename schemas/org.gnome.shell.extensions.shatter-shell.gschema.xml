@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE schemalist PUBLIC "org.gnome.shell.extensions.shatter-shell.gschema.dtd" "https://gitlab.gnome.org/GNOME/glib/-/raw/HEAD/gio/gschema.dtd">
 <schemalist gettext-domain="shatter-shell">
+    <enum id="org.gnome.shell.extensions.shatter-shell.animate-windows">
+        <value nick="system-default" value="0" />
+        <value nick="on" value="1" />
+        <value nick="off" value="2" />
+    </enum>
+
     <schema id="org.gnome.shell.extensions.shatter-shell" path="/org/gnome/shell/extensions/shatter-shell/">
         <!-- Appearance Options -->
         <key type="b" name="active-hint">
@@ -63,6 +69,11 @@
         <key type="b" name="untile-reset-windows">
             <default>true</default>
             <summary>Reset windows to their previous position if tiling is disabled.</summary>
+        </key>
+
+        <key name="animate-windows" enum="org.gnome.shell.extensions.shatter-shell.animate-windows">
+            <default>"system-default"</default>
+            <summary>Smoothly transition tiled windows' sizes and positions. Default obeys the system Reduce Motion setting.</summary>
         </key>
 
         <key type="b" name="stacking-with-mouse">
