@@ -6,7 +6,6 @@ import type { Indicator } from './panel_settings.js';
 
 import * as auto_tiler from './auto_tiler.js';
 import * as Config from './config.js';
-import * as add_exception from './dialog_add_exception.js';
 import * as Ecs from './ecs.js';
 import * as Events from './events.js';
 import * as Executor from './executor.js';
@@ -45,13 +44,13 @@ import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 const { layoutManager, modalActorFocusStack, overview, panel, screenShield } = Main;
 import type { Misc } from '@girs/gnome-shell';
 
-import { ControlsState } from 'resource:///org/gnome/shell/ui/overviewControls.js';
 import { ScreenShield } from 'resource:///org/gnome/shell/ui/screenShield.js';
 
 import { FocusHistory } from './core/focus_history.js';
 import * as geom from './core/geom.js';
 import { LayoutSizes } from './core/layout_sizes.js';
 import { Signals } from './core/signals.js';
+import { GnomeExceptions } from './gnome/gnome_exceptions.js';
 import { Log } from './log.js';
 import { get_current_path } from './paths.js';
 import { Tags } from './tags.js';
@@ -133,8 +132,8 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     drag_signal: SignalID | null = null;
 
-    /** If set, the user is currently selecting a window to add to floating exceptions */
-    exception_selecting: boolean = false;
+    /** Opens the floating exceptions, and applies them to the windows */
+    readonly gnome_exceptions: GnomeExceptions;
 
     /** Information about a current possible grab operation */
     grab_op: GrabOp.GrabOp | null = null;
@@ -211,6 +210,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         this.load_settings();
 
         this.conf = conf;
+        this.gnome_exceptions = new GnomeExceptions(conf, this);
     }
 
     // System interface
@@ -433,85 +433,6 @@ export class Ext extends Ecs.System<ExtEvent> {
                 }
             }
         });
-    }
-
-    exception_add(win: Window.ShellWindow) {
-        this.exception_selecting = false;
-        const d = new add_exception.AddExceptionDialog(
-            // Cancel
-            () => this.exception_dialog(),
-            // this_app
-            () => {
-                let wmclass = win.meta.get_wm_class();
-                if (wmclass != null) {
-                    if (!wmclass.length) {
-                        wmclass = win.name();
-                    }
-                    if (wmclass.length) {
-                        this.conf.add_app_exception(wmclass);
-                    }
-                }
-                this.exception_dialog();
-            },
-            // current-window
-            () => {
-                const wmclass = win.meta.get_wm_class();
-                if (wmclass !== null) this.conf.add_window_exception(wmclass, win.title());
-                this.exception_dialog();
-            },
-            // Reload the tiling config on dialog close
-            () => void this.reload_and_reapply_tiling_config(),
-        );
-        d.open();
-    }
-
-    exception_dialog() {
-        const path = get_current_path() + '/floating_exceptions/main.js';
-
-        const event_handler = (event: string): boolean => {
-            switch (event) {
-                case 'MODIFIED':
-                    this.register_fn(() => void this.reload_and_reapply_tiling_config());
-                    break;
-                case 'SELECT':
-                    this.register_fn(() => this.exception_select());
-                    return false;
-            }
-
-            return true;
-        };
-
-        const ipc = utils.async_process_ipc(['gjs', '--module', path]);
-
-        if (ipc) {
-            const decoder = new TextDecoder('utf-8');
-
-            const generator: Gio.AsyncReadyCallback<Gio.DataInputStream> = (stdout, res) => {
-                try {
-                    const [bytes] = stdout!.read_line_finish(res);
-                    if (bytes) {
-                        if (event_handler(decoder.decode(bytes).trim())) {
-                            ipc.stdout.read_line_async(0, ipc.cancellable, generator);
-                        }
-                    }
-                } catch (why) {
-                    Log.error(`failed to read response from floating exceptions dialog: ${why}`);
-                }
-            };
-
-            ipc.stdout.read_line_async(0, ipc.cancellable, generator);
-        }
-    }
-
-    exception_select() {
-        const source = GLib.timeout_add(GLib.PRIORITY_LOW, 100, () => {
-            this.exception_selecting = true;
-            overview.show(ControlsState.WINDOW_PICKER);
-
-            this.timeouts.delete(source);
-            return GLib.SOURCE_REMOVE;
-        });
-        this.timeouts.add(source);
     }
 
     exit_modes() {
@@ -778,8 +699,8 @@ export class Ext extends Ecs.System<ExtEvent> {
 
         this.size_signals_unblock(win);
 
-        if (this.exception_selecting) {
-            this.exception_add(win);
+        if (this.gnome_exceptions.picking) {
+            this.gnome_exceptions.add(win);
         }
 
         // Update the active tab in the stack.
@@ -1853,25 +1774,6 @@ export class Ext extends Ecs.System<ExtEvent> {
         }
 
         return matched;
-    }
-
-    /** If the auto-tilable status of a window has changed, detach or attach the window. */
-    async reload_and_reapply_tiling_config() {
-        await this.conf.reload();
-
-        const at = this.auto_tiler;
-        if (!at) return;
-
-        for (const [entity, window] of this.windows.iter()) {
-            const attachment = at.attached.get(entity);
-            if (window.is_tilable()) {
-                if (!attachment) {
-                    at.auto_tile(this, window, this.init);
-                }
-            } else if (attachment) {
-                at.detach_window(this, entity);
-            }
-        }
     }
 
     toggle_tiling() {

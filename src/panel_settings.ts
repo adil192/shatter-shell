@@ -107,7 +107,7 @@ function floating_window_exceptions(ext: Ext, menu: PopupMenu) {
     const base = new PopupBaseMenuItem();
     base.add_child(widget);
     base.connect('activate', () => {
-        ext.exception_dialog();
+        ext.gnome_exceptions.open();
         close_menu_after_300ms(ext, menu);
     });
 
