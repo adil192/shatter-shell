@@ -16,7 +16,6 @@ import * as GrabOp from './grab_op.js';
 import * as Lib from './lib.js';
 import { Log } from './log.js';
 import * as Node from './node.js';
-import { applyRect, clampRect, diffRect } from './rectangle.js';
 import { Tags } from './tags.js';
 import * as window from './window.js';
 const { monitorID } = Lib;
@@ -527,11 +526,11 @@ export class Tiler {
             new Mtk.Rectangle({ x: mov1[0], y: mov1[1], width: mov1[2], height: mov1[3] }),
             new Mtk.Rectangle({ x: mov2[0], y: mov2[1], width: mov2[2], height: mov2[3] }),
             (work_area, crect, mov) => {
-                applyRect(crect, mov);
+                geom.add(crect, mov);
                 const before = crect.copy();
-                clampRect(crect, work_area);
-                const diff = diffRect(before, crect);
-                applyRect(crect, new Mtk.Rectangle({ width: -diff.x, height: -diff.y }));
+                geom.clamp(crect, work_area);
+                const diff = geom.diff(before, crect);
+                geom.add(crect, { x: 0, y: 0, width: -diff.x, height: -diff.y });
                 return false;
             },
         );

@@ -2,7 +2,12 @@ import assert from 'node:assert/strict';
 import { describe, test } from 'node:test';
 
 import {
+    add,
+    clamp,
+    diff,
     downward_distance,
+    fmt,
+    intersection,
     leftward_distance,
     nearest_side,
     overlay_area,
@@ -17,6 +22,68 @@ import {
 const square: Rect = { x: 0, y: 0, width: 100, height: 100 };
 
 const framed = (rect: Rect) => ({ get_frame_rect: () => rect });
+
+describe('intersection', () => {
+    test('is where the two rectangles overlap', () => {
+        const other: Rect = { x: 50, y: 60, width: 100, height: 100 };
+        assert.deepEqual(intersection(square, other), { x: 50, y: 60, width: 50, height: 40 });
+        assert.deepEqual(intersection(other, square), { x: 50, y: 60, width: 50, height: 40 });
+    });
+
+    test('a rectangle inside the other is the whole of it', () => {
+        const inner: Rect = { x: 10, y: 20, width: 30, height: 40 };
+        assert.deepEqual(intersection(square, inner), inner);
+    });
+
+    test('rectangles that only touch, or are apart, do not overlap', () => {
+        assert.equal(intersection(square, { x: 100, y: 0, width: 50, height: 50 }), null);
+        assert.equal(intersection(square, { x: 0, y: 100, width: 50, height: 50 }), null);
+        assert.equal(intersection(square, { x: 200, y: 200, width: 50, height: 50 }), null);
+    });
+});
+
+describe('clamp', () => {
+    test('shrinks the rectangle to the part inside the bounds, in place', () => {
+        const rect: Rect = { x: -20, y: 50, width: 60, height: 80 };
+        clamp(rect, square);
+        assert.deepEqual(rect, { x: 0, y: 50, width: 40, height: 50 });
+    });
+
+    test('leaves the rectangle alone when it is outside the bounds', () => {
+        const rect: Rect = { x: 200, y: 200, width: 10, height: 10 };
+        clamp(rect, square);
+        assert.deepEqual(rect, { x: 200, y: 200, width: 10, height: 10 });
+    });
+});
+
+describe('add', () => {
+    test('adds each field, in place', () => {
+        const rect: Rect = { x: 1, y: 2, width: 3, height: 4 };
+        add(rect, { x: 10, y: -20, width: 30, height: -4 });
+        assert.deepEqual(rect, { x: 11, y: -18, width: 33, height: 0 });
+    });
+});
+
+describe('diff', () => {
+    test('is how much each field changes from the first to the second', () => {
+        const from: Rect = { x: 1, y: 2, width: 3, height: 4 };
+        const to: Rect = { x: 11, y: -18, width: 33, height: 0 };
+        assert.deepEqual(diff(from, to), { x: 10, y: -20, width: 30, height: -4 });
+    });
+
+    test('adding the difference to the first gives the second', () => {
+        const from: Rect = { x: 5, y: 6, width: 7, height: 8 };
+        const to: Rect = { x: 0, y: 10, width: 20, height: 3 };
+        add(from, diff(from, to));
+        assert.deepEqual(from, to);
+    });
+});
+
+describe('fmt', () => {
+    test('lists the fields in order', () => {
+        assert.equal(fmt({ x: 1, y: 2, width: 3, height: 4 }), 'Rect(1,2,3,4)');
+    });
+});
 
 describe('nearest_side', () => {
     test('picks the side whose middle is nearest', () => {

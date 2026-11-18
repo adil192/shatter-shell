@@ -35,6 +35,50 @@ function ycenter(rect: Rect): number {
     return rect.y + rect.height / 2;
 }
 
+/** `rect` as text, for logs */
+export function fmt(rect: Rect): string {
+    return `Rect(${[rect.x, rect.y, rect.width, rect.height]})`;
+}
+
+/** Where `a` and `b` overlap, or null if they don't; rectangles that only touch don't overlap */
+export function intersection(a: Rect, b: Rect): Rect | null {
+    const x = Math.max(a.x, b.x);
+    const y = Math.max(a.y, b.y);
+    const width = Math.min(xend(a), xend(b)) - x;
+    const height = Math.min(yend(a), yend(b)) - y;
+
+    return width > 0 && height > 0 ? { x, y, width, height } : null;
+}
+
+/** Shrinks `rect` in place to the part of it inside `bounds`; leaves it alone if they don't overlap */
+export function clamp(rect: Rect, bounds: Rect) {
+    const overlap = intersection(rect, bounds);
+    if (!overlap) return;
+
+    rect.x = overlap.x;
+    rect.y = overlap.y;
+    rect.width = overlap.width;
+    rect.height = overlap.height;
+}
+
+/** Adds each field of `delta` to `rect`, in place */
+export function add(rect: Rect, delta: Rect) {
+    rect.x += delta.x;
+    rect.y += delta.y;
+    rect.width += delta.width;
+    rect.height += delta.height;
+}
+
+/** How much each field changes going from `from` to `to` */
+export function diff(from: Rect, to: Rect): Rect {
+    return {
+        x: to.x - from.x,
+        y: to.y - from.y,
+        width: to.width - from.width,
+        height: to.height - from.height,
+    };
+}
+
 function center(rect: Rect): [number, number] {
     return [xcenter(rect), ycenter(rect)];
 }

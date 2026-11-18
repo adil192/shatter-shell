@@ -54,7 +54,6 @@ import { LayoutSizes } from './core/layout_sizes.js';
 import { Signals } from './core/signals.js';
 import { Log } from './log.js';
 import { get_current_path } from './paths.js';
-import { clampRect, fmtRect } from './rectangle.js';
 import { Tags } from './tags.js';
 const { monitorID, workspaceID } = Lib;
 
@@ -822,7 +821,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                 + `  class: "${win.meta.get_wm_class()}",\n`
                 + `  monitor: ${win.monitor_id()},\n`
                 + `  name: ${win.name()},\n`
-                + `  rect: ${fmtRect(win.rect())},\n`
+                + `  rect: ${geom.fmt(win.rect())},\n`
                 + `  workspace: ${win.workspace_id()},\n`
                 + `  stack: ${win.stack},\n`;
 
@@ -1061,7 +1060,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
                         const top_level = forest.find_toplevel(this.workspace_id());
                         if (top_level) {
-                            clampRect(crect, forest.forks.get(top_level)!.area);
+                            geom.clamp(crect, forest.forks.get(top_level)!.area);
                         }
 
                         if (this.movement_is_valid(win, movement)) {

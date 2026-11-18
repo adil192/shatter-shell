@@ -13,7 +13,6 @@ import * as Fork from './fork.js';
 import { Log } from './log.js';
 import * as movement from './movement.js';
 import * as Node from './node.js';
-import { fmtRect } from './rectangle.js';
 import { Stack } from './stack.js';
 
 const { Arena } = arena;
@@ -883,7 +882,7 @@ export class Forest extends Ecs.World {
                 return fork ? this.display_fork(ext, branch.inner.entity, fork, scope + 1) : 'Missing Fork';
             case Node.NodeKind.WINDOW:
                 const window = ext.windows.get(branch.inner.entity);
-                const area = window ? fmtRect(window.rect()) : 'unknown area';
+                const area = window ? geom.fmt(window.rect()) : 'unknown area';
                 const parent = ext.auto_tiler?.attached.get(branch.inner.entity);
                 return `Window(${branch.inner.entity}) (${area}; parent: ${parent})`;
             case Node.NodeKind.STACK:
@@ -891,7 +890,7 @@ export class Forest extends Ecs.World {
 
                 for (const entity of branch.inner.entities) {
                     const window = ext.windows.get(entity);
-                    fmt += `Window(${entity}) (${window ? fmtRect(window.rect()) : 'unknown area'}), `;
+                    fmt += `Window(${entity}) (${window ? geom.fmt(window.rect()) : 'unknown area'}), `;
                 }
 
                 return fmt + ')';
@@ -899,7 +898,7 @@ export class Forest extends Ecs.World {
     }
 
     display_fork(ext: Ext, entity: Entity, fork: Fork.Fork, scope: number): string {
-        let fmt = `Fork(${entity}) [${fmtRect(fork.area)}]: {\n`;
+        let fmt = `Fork(${entity}) [${geom.fmt(fork.area)}]: {\n`;
 
         fmt += ' '.repeat((1 + scope) * 2) + `workspace: (${fork.workspace}),\n`;
         fmt += ' '.repeat((1 + scope) * 2) + `left: ${this.display_branch(ext, fork.left, scope)},\n`;
