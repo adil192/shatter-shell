@@ -52,33 +52,13 @@ import { FocusHistory } from './core/focus_history.js';
 import * as geom from './core/geom.js';
 import { LayoutSizes } from './core/layout_sizes.js';
 import { Signals } from './core/signals.js';
+import { GnomeTheme } from './gnome/gnome_theme.js';
 import { Log } from './log.js';
 import { get_current_path } from './paths.js';
 import { Tags } from './tags.js';
 const { monitorID, workspaceID } = Lib;
 
 const sessionMode = Main.sessionMode as typeof Main.sessionMode & { isLocked?: boolean };
-
-enum Style {
-    light = 'light',
-    /** Light with high contrast */
-    lightHc = 'lightHc',
-    dark = 'dark',
-    /** Dark with high contrast */
-    darkHc = 'darkHc',
-}
-const STYLESHEET_PATHS = {
-    light: stylesheet_path('light'),
-    lightHc: stylesheet_path('light-hc'),
-    dark: stylesheet_path('dark'),
-    darkHc: stylesheet_path('dark-hc'),
-} as const;
-const STYLESHEETS = {
-    light: Gio.File.new_for_path(STYLESHEET_PATHS.light),
-    lightHc: Gio.File.new_for_path(STYLESHEET_PATHS.lightHc),
-    dark: Gio.File.new_for_path(STYLESHEET_PATHS.dark),
-    darkHc: Gio.File.new_for_path(STYLESHEET_PATHS.darkHc),
-} as const;
 
 interface Display {
     area: Mtk.Rectangle;
@@ -116,8 +96,8 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     readonly conf: Config.Config;
 
-    /** The currently-loaded theme variant */
-    current_style: Style = Style.dark;
+    /** Loads the extension's stylesheet that goes with GNOME's color scheme */
+    readonly gnome_theme = new GnomeTheme(this.settings, func => this.register_fn(func));
 
     /** Set when the display configuration has been triggered for execution */
     displays_updating: SignalID | null = null;
@@ -321,10 +301,6 @@ export class Ext extends Ecs.System<ExtEvent> {
             /** Stateless global events */
             case 'global':
                 switch (event.event) {
-                    case GlobalEvent.GnomeThemeChanged:
-                        this.on_gnome_theme_changed();
-                        break;
-
                     case GlobalEvent.MonitorsChanged:
                         this.update_display_configuration(false);
                         break;
@@ -1204,19 +1180,6 @@ export class Ext extends Ecs.System<ExtEvent> {
         }
     }
 
-    on_gnome_theme_changed() {
-        this.reload_theme();
-        load_theme(this.current_style);
-    }
-
-    reload_theme() {
-        if (this.settings.get_is_dark()) {
-            this.current_style = this.settings.get_is_high_contrast() ? Style.darkHc : Style.dark;
-        } else {
-            this.current_style = this.settings.get_is_high_contrast() ? Style.lightHc : Style.light;
-        }
-    }
-
     /** Handle window maximization notifications */
     on_maximize(win: Window.ShellWindow) {
         if (win.is_maximized()) {
@@ -1502,16 +1465,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     /** Begin listening for signals from windows, and add any pre-existing windows. */
     signals_attach() {
-        this.signals.connect(this.settings.desktop_interface, settings =>
-            settings.connect('changed::color-scheme', () => {
-                this.register(Events.global(GlobalEvent.GnomeThemeChanged));
-            }),
-        );
-        this.signals.connect(this.settings.a11y_interface, settings =>
-            settings.connect('changed::high-contrast', () => {
-                this.register(Events.global(GlobalEvent.GnomeThemeChanged));
-            }),
-        );
+        this.gnome_theme.attach(this.signals);
 
         this.tiler.queue.start(100, movement => {
             movement();
@@ -2313,8 +2267,8 @@ export default class ShatterShellExtension extends Extension {
             ext.extension = this;
         }
 
-        ext.reload_theme();
-        ext.register_fn(() => load_theme(ext!.current_style));
+        ext.gnome_theme.reload();
+        ext.register_fn(() => ext!.gnome_theme.load());
 
         if (ext.was_locked) {
             ext.was_locked = false;
@@ -2374,44 +2328,6 @@ export default class ShatterShellExtension extends Extension {
         }
 
         Log.settings = null;
-    }
-}
-
-function stylesheet_path(name: string) {
-    return get_current_path() + '/' + name + '.css';
-}
-
-/** Supplements the loaded theme with the extension's theme. */
-function load_theme(style: Style): string | null {
-    try {
-        const theme_context = St.ThemeContext.get_for_stage(global.stage);
-
-        const existing_theme = theme_context.get_theme() as St.Theme | null;
-
-        const shatter_stylesheet_path = STYLESHEET_PATHS[style];
-
-        if (existing_theme) {
-            /** Must unload stylesheets, or else the previously loaded
-             * stylesheets will persist when {@link Main.loadTheme} is called. */
-            for (const style of Object.values(Style)) {
-                existing_theme.unload_stylesheet(STYLESHEETS[style]);
-            }
-
-            // Merge theme update with shatter shell styling
-            existing_theme.load_stylesheet(STYLESHEETS[style]);
-
-            // Perform theme update
-            theme_context.set_theme(existing_theme);
-        } else {
-            // User does not have a theme loaded, so use shatter styling + default
-            Main.setThemeStylesheet(shatter_stylesheet_path);
-            Main.loadTheme();
-        }
-
-        return shatter_stylesheet_path;
-    } catch (e) {
-        Log.error(`failed to load stylesheet: ${e}`);
-        return null;
     }
 }
 
