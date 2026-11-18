@@ -19,6 +19,10 @@ import { get_current_path } from './paths.js';
 export class Indicator {
     button;
 
+    /** Keeps the tiling toggle and the icon in step with whether auto-tiling is on */
+    private readonly tile_by_default_changed: number;
+    private readonly settings: Gio.Settings;
+
     toggle_tiled;
     toggle_active;
     border_radius;
@@ -27,24 +31,29 @@ export class Indicator {
 
     constructor(ext: Ext) {
         const path = get_current_path();
-        ext.button_auto_on_icon = Gio.icon_new_for_string(`${path}/icons/shatter-shell-auto-on-symbolic.svg`);
-        ext.button_auto_off_icon = Gio.icon_new_for_string(`${path}/icons/shatter-shell-auto-off-symbolic.svg`);
+        const auto_on_icon = Gio.icon_new_for_string(`${path}/icons/shatter-shell-auto-on-symbolic.svg`);
+        const auto_off_icon = Gio.icon_new_for_string(`${path}/icons/shatter-shell-auto-off-symbolic.svg`);
 
-        // oxlint-disable-next-line typescript/no-unsafe-type-assertion (adding an icon property to the button)
-        ext.button = this.button = new PanelMenu.Button(0.5, _('Shatter Shell Settings')) as PanelMenu.Button & {
-            icon: St.Icon | null;
-        };
-        this.button.icon = new St.Icon({
-            gicon: ext.settings.get_tile_by_default() ? ext.button_auto_on_icon : ext.button_auto_off_icon,
+        this.button = new PanelMenu.Button(0.5, _('Shatter Shell Settings'));
+        const icon = new St.Icon({
+            gicon: ext.settings.get_tile_by_default() ? auto_on_icon : auto_off_icon,
             style_class: 'system-status-icon',
         });
 
-        this.button.add_child(this.button.icon);
+        this.button.add_child(icon);
 
         // oxlint-disable-next-line typescript/no-unsafe-type-assertion (not PopupDummyMenu)
         const bm = this.button.menu as PopupMenu;
 
         this.toggle_tiled = tiled(ext);
+
+        // Keep the toggle and icon consistent with settings
+        this.settings = ext.settings.ext;
+        this.tile_by_default_changed = this.settings.connect('changed::tile-by-default', () => {
+            const auto_tiling_on = ext.settings.get_tile_by_default();
+            this.toggle_tiled.setToggleState(auto_tiling_on);
+            icon.gicon = auto_tiling_on ? auto_on_icon : auto_off_icon;
+        });
 
         this.toggle_active = toggle(_('Show active hint'), ext.settings.get_active_hint(), toggle => {
             ext.settings.set_active_hint(toggle.state);
@@ -85,6 +94,7 @@ export class Indicator {
     }
 
     destroy() {
+        this.settings.disconnect(this.tile_by_default_changed);
         this.button.destroy();
     }
 }
@@ -267,9 +277,9 @@ function toggle(desc: string, active: boolean, connect: (toggle: PopupSwitchMenu
 function tiled(ext: Ext) {
     return toggle(_('Tile windows'), null != ext.auto_tiler, (_, shouldTile) => {
         if (shouldTile) {
-            ext.auto_tile_on();
+            ext.gnome_auto_tiling.on();
         } else {
-            ext.auto_tile_off();
+            ext.gnome_auto_tiling.off();
         }
     });
 }

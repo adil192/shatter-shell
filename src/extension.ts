@@ -11,7 +11,6 @@ import * as Events from './events.js';
 import * as Executor from './executor.js';
 import * as exec from './executor.js';
 import * as Focus from './focus.js';
-import * as Forest from './forest.js';
 import { Fork } from './fork.js';
 import * as GrabOp from './grab_op.js';
 import * as Keybindings from './keybindings.js';
@@ -59,6 +58,7 @@ import {
     workspace_on,
 } from './core/monitor_changes.js';
 import { Signals } from './core/signals.js';
+import { GnomeAutoTiling } from './gnome/gnome_auto_tiling.js';
 import { GnomeExceptions } from './gnome/gnome_exceptions.js';
 import { GnomeTheme } from './gnome/gnome_theme.js';
 import { Log } from './log.js';
@@ -90,10 +90,6 @@ export class Ext extends Ecs.System<ExtEvent> {
     overlay = new St.BoxLayout({ style_class: 'shatter-shell-overlay', visible: false });
 
     // State
-
-    button: typeof PanelSettings.Indicator.prototype.button | null = null;
-    button_auto_on_icon: Gio.Icon | null = null;
-    button_auto_off_icon: Gio.Icon | null = null;
 
     readonly conf: Config.Config;
 
@@ -180,6 +176,9 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     /** Manages automatic tiling behaviors in the shell */
     auto_tiler: auto_tiler.AutoTiler | null = null;
+
+    /** Switches auto-tiling on and off */
+    readonly gnome_auto_tiling = new GnomeAutoTiling(this.settings, this);
 
     /** Performs focus selections */
     focus_selector: Focus.FocusSelector = new Focus.FocusSelector();
@@ -1653,14 +1652,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
         // Modes
 
-        if (this.settings.get_tile_by_default() && !this.auto_tiler) {
-            this.auto_tiler = new auto_tiler.AutoTiler(
-                new Forest.Forest()
-                    .connect_on_attach(this.on_tile_attach.bind(this))
-                    .connect_on_detach(this.on_tile_detach.bind(this)),
-                this.register_storage<Entity>(),
-            );
-        }
+        this.gnome_auto_tiling.restore();
 
         // Post-init
 
@@ -1744,66 +1736,6 @@ export class Ext extends Ecs.System<ExtEvent> {
         }
 
         return matched;
-    }
-
-    toggle_tiling() {
-        if (this.settings.get_tile_by_default()) {
-            this.auto_tile_off();
-        } else {
-            this.auto_tile_on();
-        }
-    }
-
-    auto_tile_off() {
-        this.settings.set_edge_tiling(true);
-
-        if (this.auto_tiler) {
-            this.unregister_storage(this.auto_tiler.attached);
-            this.auto_tiler.destroy(this);
-            this.auto_tiler = null;
-            this.settings.set_tile_by_default(false);
-
-            if (indicator) indicator.toggle_tiled.setToggleState(false);
-
-            if (this.button?.icon) this.button.icon.gicon = this.button_auto_off_icon;
-
-            if (this.settings.get_active_hint()) {
-                this.show_border_on_focused();
-            }
-        }
-    }
-
-    auto_tile_on() {
-        this.settings.set_edge_tiling(false);
-
-        if (indicator) indicator.toggle_tiled.setToggleState(true);
-
-        const original = this.active_workspace();
-
-        const tiler = new auto_tiler.AutoTiler(
-            new Forest.Forest()
-                .connect_on_attach(this.on_tile_attach.bind(this))
-                .connect_on_detach(this.on_tile_detach.bind(this)),
-            this.register_storage(),
-        );
-
-        this.auto_tiler = tiler;
-
-        this.settings.set_tile_by_default(true);
-        if (this.button?.icon) this.button.icon.gicon = this.button_auto_on_icon;
-
-        for (const window of this.windows.values()) {
-            if (window.is_tilable()) {
-                const actor = window.meta.get_compositor_private<Meta.WindowActor | null>();
-                if (actor) {
-                    if (!window.meta.minimized) {
-                        tiler.auto_tile(this, window, true);
-                    }
-                }
-            }
-        }
-
-        this.register_fn(() => this.switch_to_workspace(original));
     }
 
     /** Calls a function once windows are no longer queued for movement. */
@@ -2167,7 +2099,7 @@ export default class ShatterShellExtension extends Extension {
         }
 
         if (ext.settings.get_tile_by_default()) {
-            ext.auto_tile_on();
+            ext.gnome_auto_tiling.on();
         }
     }
 
