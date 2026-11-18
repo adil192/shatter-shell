@@ -15,6 +15,7 @@ import * as exec from './executor.js';
 import * as Focus from './focus.js';
 import { Fork } from './fork.js';
 import { GnomeTilingMode } from './gnome/gnome_tiling_mode.js';
+import * as Window from './gnome/mutter_window.js';
 import * as GrabOp from './grab_op.js';
 import * as Keybindings from './keybindings.js';
 import * as Lib from './lib.js';
@@ -23,7 +24,6 @@ import * as PanelSettings from './panel_settings.js';
 import * as Settings from './settings.js';
 import * as stack from './stack.js';
 import * as utils from './utils.js';
-import * as Window from './window.js';
 
 const display = global.display;
 const wim = global.window_manager;
@@ -158,7 +158,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     snapped: Ecs.Storage<boolean> = this.register_storage();
 
     /** Primary storage for the window entities, containing the actual window */
-    windows: Ecs.Storage<Window.ShellWindow> = this.register_storage();
+    windows: Ecs.Storage<Window.MutterWindow> = this.register_storage();
 
     /** Signals which have been registered for each window */
     window_signals: Ecs.Storage<Array<SignalID>> = this.register_storage();
@@ -321,7 +321,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         return monitorID(display.get_current_monitor());
     }
 
-    active_window_list(): Array<Window.ShellWindow> {
+    active_window_list(): Array<Window.MutterWindow> {
         const workspace = wom.get_active_workspace();
         return this.tab_list(Meta.TabList.NORMAL_ALL, workspace);
     }
@@ -332,7 +332,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     /** Connects to a window signal and records it in {@link window_signals} and {@link tilable_window_signals}. */
-    connect_meta(win: Window.ShellWindow, signal: keyof Meta.Window.SignalSignatures, callback: () => void): number {
+    connect_meta(win: Window.MutterWindow, signal: keyof Meta.Window.SignalSignatures, callback: () => void): number {
         const id = win.meta.connect(signal, () => {
             if (win.actor_exists()) callback();
         });
@@ -348,13 +348,17 @@ export class Ext extends Ecs.System<ExtEvent> {
      *
      * See also {@link size_signals_block} and {@link size_signals_unblock}.
      */
-    connect_size_signal(win: Window.ShellWindow, signal: keyof Meta.Window.SignalSignatures, func: () => void): number {
+    connect_size_signal(
+        win: Window.MutterWindow,
+        signal: keyof Meta.Window.SignalSignatures,
+        func: () => void,
+    ): number {
         return this.connect_meta(win, signal, () => {
             if (!this.contains_tag(win.entity, Tags.Blocked)) func();
         });
     }
 
-    connect_tilable_window_signals(win: Window.ShellWindow) {
+    connect_tilable_window_signals(win: Window.MutterWindow) {
         const debounce_size_event = () => {
             const old = this.size_requests.get(win.meta) ?? 0;
             if (old) {
@@ -384,7 +388,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         });
     }
 
-    disconnect_tilable_window_signals(win: Window.ShellWindow) {
+    disconnect_tilable_window_signals(win: Window.MutterWindow) {
         this.tilable_window_signals.take_with(win.entity, signals => {
             const window_signals = this.window_signals.get(win.entity);
 
@@ -452,7 +456,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         this.focus_selector.up(this, null)?.request_activate();
     }
 
-    get_focused_window(): Window.ShellWindow | null {
+    get_focused_window(): Window.MutterWindow | null {
         const meta = display.get_focus_window() as Meta.Window | null;
         return meta ? this.get_window(meta) : null;
     }
@@ -494,7 +498,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     /** Fetches the window component from the entity associated with the metacity window metadata. */
-    private get_window(meta: Meta.Window): Window.ShellWindow | null {
+    private get_window(meta: Meta.Window): Window.MutterWindow | null {
         const entity = this.window_entity(meta);
         return entity ? this.windows.get(entity) : null;
     }
@@ -528,7 +532,7 @@ export class Ext extends Ecs.System<ExtEvent> {
             this.exit_modes();
             this.restack();
 
-            const activate_window = (window: Window.ShellWindow) => {
+            const activate_window = (window: Window.MutterWindow) => {
                 this.on_focused(window);
                 window.request_activate(true);
                 this.focus_history.restart_from(window.entity);
@@ -640,7 +644,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     /** Triggered when a window has been focused */
-    on_focused(win: Window.ShellWindow) {
+    on_focused(win: Window.MutterWindow) {
         // Track history of focused windows, but do not permit duplicates.
         this.focus_history.focused(win.entity, this.active_workspace());
 
@@ -672,7 +676,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                 && prev.name() !== win.name()
                 && prev.workspace_id() === win.workspace_id()
             ) {
-                if (prev.rect().contains_rect(win.rect())) {
+                if (prev.frame().contains_rect(win.frame())) {
                     if (prev.is_maximized()) {
                         prev.meta.unmaximize();
                     }
@@ -689,7 +693,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                 + `  class: "${win.meta.get_wm_class()}",\n`
                 + `  monitor: ${win.monitor_id()},\n`
                 + `  name: ${win.name()},\n`
-                + `  rect: ${geom.fmt(win.rect())},\n`
+                + `  rect: ${geom.fmt(win.frame())},\n`
                 + `  workspace: ${win.workspace_id()},\n`
                 + `  stack: ${win.stack},\n`;
 
@@ -776,7 +780,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     /** Unmaximize any maximized windows on the same workspace. */
-    unmaximize_workspace(win: Window.ShellWindow) {
+    unmaximize_workspace(win: Window.MutterWindow) {
         if (this.gnome_forest) {
             if (!win.is_tilable()) {
                 return;
@@ -853,7 +857,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         this.unset_grab_op();
     }
 
-    on_grab_end_(win: Window.ShellWindow, op?: number) {
+    on_grab_end_(win: Window.MutterWindow, op?: number) {
         this.moved_by_mouse = true;
         this.size_signals_unblock(win);
 
@@ -888,7 +892,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         }
 
         if (this.gnome_forest) {
-            const crect = win.rect();
+            const crect = win.frame();
             const rect = grab_op.rect;
             if (is_move_op(op!)) {
                 const cmon = win.monitor_id();
@@ -932,8 +936,8 @@ export class Ext extends Ecs.System<ExtEvent> {
                         }
 
                         const neighbour_rect = (side: EdgeSide) =>
-                            this.focus_selector.toward(this, side, win)?.rect() ?? null;
-                        if (movement_is_valid(movement, win.rect(), neighbour_rect)) {
+                            this.focus_selector.toward(this, side, win)?.frame() ?? null;
+                        if (movement_is_valid(movement, win.frame(), neighbour_rect)) {
                             forest.resize(this, fork_entity, fork, win.entity, movement, crect);
                             forest.arrange(this, fork.workspace);
                         } else {
@@ -960,7 +964,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
             if (win.is_tilable()) {
                 const entity = win.entity;
-                const rect = win.rect();
+                const rect = win.frame();
 
                 this.unset_grab_op();
 
@@ -1047,7 +1051,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     /** Handle window maximization notifications */
-    on_maximize(win: Window.ShellWindow) {
+    on_maximize(win: Window.MutterWindow) {
         if (win.is_maximized()) {
             // Raise maximized to top so stacks won't appear over them.
             const actor = win.meta.get_compositor_private<Meta.WindowActor | null>();
@@ -1073,7 +1077,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     /** Handle window minimization notifications */
-    on_minimize(win: Window.ShellWindow) {
+    on_minimize(win: Window.MutterWindow) {
         if (this.get_focused_window() == win && this.settings.get_active_hint()) {
             if (win.meta.minimized) {
                 win.hide_border();
@@ -1139,7 +1143,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     /** Handles the event of a window moving from one monitor to another. */
     on_monitor_changed(
-        win: Window.ShellWindow,
+        win: Window.MutterWindow,
         func: (exp_mon: MonitorID | null, act_mon: MonitorID, act_work: WorkspaceID) => void,
     ) {
         const actual_monitor = win.monitor_id();
@@ -1216,7 +1220,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     /** Called when a window changes workspace/monitor */
-    on_workspace_changed(win: Window.ShellWindow) {
+    on_workspace_changed(win: Window.MutterWindow) {
         if (this.gnome_forest && !this.contains_tag(win.entity, Tags.Floating)) {
             const id = this.workspace_id(win);
             const prev_id = this.monitors.get(win.entity);
@@ -1483,7 +1487,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
                     const refocus_tiled_window = () => {
                         // Re-focus a window that was unfocused.
-                        let window: Window.ShellWindow | null = null;
+                        let window: Window.MutterWindow | null = null;
                         for (const entity of this.focus_history.recent()) {
                             window = this.windows.get(entity);
                             if (window) break;
@@ -1665,11 +1669,11 @@ export class Ext extends Ecs.System<ExtEvent> {
         this.gnome_tiling_mode.queue.stop();
     }
 
-    size_signals_block(win: Window.ShellWindow) {
+    size_signals_block(win: Window.MutterWindow) {
         this.add_tag(win.entity, Tags.Blocked);
     }
 
-    size_signals_unblock(win: Window.ShellWindow) {
+    size_signals_unblock(win: Window.MutterWindow) {
         this.delete_tag(win.entity, Tags.Blocked);
     }
 
@@ -1685,7 +1689,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         this.workspace_by_id(id)?.activate(global.get_current_time());
     }
 
-    private tab_list(tablist: Meta.TabList, workspace: Meta.Workspace | null): Array<Window.ShellWindow> {
+    private tab_list(tablist: Meta.TabList, workspace: Meta.Workspace | null): Array<Window.MutterWindow> {
         const windows = display.get_tab_list(tablist, workspace);
 
         const matched = [];
@@ -1931,7 +1935,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         let entity = this.ids.find(comp => comp == id).next().value ?? undefined;
         if (entity) return entity;
 
-        // If not found, create a new entity with a ShellWindow component.
+        // If not found, create a new entity with a MutterWindow component.
         const actor = meta.get_compositor_private<Meta.WindowActor | null>();
         if (!actor) return null;
 
@@ -1953,7 +1957,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         this.ids.insert(entity, id);
         this.names.insert(entity, name);
 
-        const win = new Window.ShellWindow(entity, meta, window_app, this);
+        const win = new Window.MutterWindow(entity, meta, window_app, this);
         this.windows.insert(entity, win);
         this.monitors.insert(entity, [win.monitor_id(), win.workspace_id()]);
 
@@ -1982,7 +1986,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     *windows_at_pointer(cursor: Mtk.Rectangle, monitor: MonitorID, workspace: WorkspaceID) {
         for (const entity of this.monitors.find(m => m[0] == monitor && m[1] == workspace)) {
             const window = this.windows.with(entity, window => {
-                return window.is_tilable() && window.rect().contains_rect(cursor) ? window : null;
+                return window.is_tilable() && window.frame().contains_rect(cursor) ? window : null;
             });
 
             if (window) yield window;
@@ -2000,7 +2004,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         return wom.get_workspace_by_index(id);
     }
 
-    workspace_id(window: Window.ShellWindow | null = null): MonitorWorkspaceID {
+    workspace_id(window: Window.MutterWindow | null = null): MonitorWorkspaceID {
         const id: MonitorWorkspaceID = window
             ? [window.monitor_id(), window.workspace_id()]
             : [this.active_monitor(), this.active_workspace()];

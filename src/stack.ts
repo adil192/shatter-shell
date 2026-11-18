@@ -1,7 +1,7 @@
 import type { Entity } from './ecs.js';
 import type { Ext } from './extension.js';
+import type { MutterWindow } from './gnome/mutter_window.js';
 import type * as Settings from './settings.js';
-import type { ShellWindow } from './window.js';
 
 import * as a from './arena.js';
 import * as Ecs from './ecs.js';
@@ -57,7 +57,7 @@ const TabButton = GObject.registerClass(
         declare _title: St.Label;
         declare _settings: Settings.ExtensionSettings;
 
-        override _init(window: ShellWindow, settings: Settings.ExtensionSettings) {
+        override _init(window: MutterWindow, settings: Settings.ExtensionSettings) {
             this._settings = settings;
 
             const icon = window.icon(Math.floor(TAB_HEIGHT_UNSCALED * 0.4));
@@ -192,7 +192,7 @@ export class Stack {
     }
 
     /** Adds a new window to the stack */
-    add(window: ShellWindow) {
+    add(window: MutterWindow) {
         if (!this.widgets) return;
 
         const entity = window.entity;
@@ -409,7 +409,7 @@ export class Stack {
     }
 
     /** Deactivate the signals belonging to an entity */
-    deactivate(w: ShellWindow) {
+    deactivate(w: MutterWindow) {
         for (const c of this.tabs)
             if (Ecs.entity_eq(c.entity, w.entity)) {
                 this.tab_disconnect(c);
@@ -558,7 +558,7 @@ export class Stack {
         return null;
     }
 
-    replace(window: ShellWindow) {
+    replace(window: MutterWindow) {
         if (!this.widgets) return;
         const tab = this.tabs[this.active_id];
         const actor = window.meta.get_compositor_private<Meta.WindowActor | null>();
@@ -703,7 +703,7 @@ export class Stack {
         this.widgets.tabs.width = rect.width;
     }
 
-    private watch_signals(tab: Tab, window: ShellWindow) {
+    private watch_signals(tab: Tab, window: MutterWindow) {
         const entity = window.entity;
         const widget = this.buttons.get(tab.button);
         if (!widget) return;
@@ -755,7 +755,7 @@ export class Stack {
         this.ext.show_border_on_focused();
     }
 
-    private window_exec(tab: Tab, entity: Entity, func: (window: ShellWindow) => void) {
+    private window_exec(tab: Tab, entity: Entity, func: (window: MutterWindow) => void) {
         const window = this.ext.windows.get(entity);
         if (window && window.actor_exists()) {
             func(window);
