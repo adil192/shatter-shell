@@ -603,10 +603,13 @@ export class ShellWindow {
     }
 
     /**
-     * Unsets the {@link dont_animate_next_movement} flag, provided the window isn't fullscreen or maximized.
-     * Fullscreen/maximized windows are animated by GNOME itself.
+     * Resets the {@link dont_animate_next_movement} flag
+     * based on the window's current state.
+     *
+     * Fullscreen/maximized windows are animated by GNOME itself,
+     * so they must never be animated by shatter-shell.
      */
-    unset_dont_animate_next_movement() {
+    reset_dont_animate_next_movement() {
         this.dont_animate_next_movement = this.meta.is_fullscreen() || this.is_maximized();
     }
 }

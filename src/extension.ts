@@ -244,7 +244,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
                 if (window.dont_animate_next_movement) {
                     this.window_animations.stop(actor);
-                    window.unset_dont_animate_next_movement();
+                    window.reset_dont_animate_next_movement();
                 } else if (!this.settings.get_animate_windows()) {
                     this.window_animations.stop(actor);
                 } else {
@@ -1356,7 +1356,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         if (is_new_window) {
             win.dont_animate_next_movement = true;
             actor.connect('first-frame', () => {
-                if (!this.movements.contains(win.entity)) win.unset_dont_animate_next_movement();
+                if (!this.movements.contains(win.entity)) win.reset_dont_animate_next_movement();
             });
         }
 
