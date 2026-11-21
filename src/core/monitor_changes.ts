@@ -114,3 +114,10 @@ export function workspace_on<Monitor, Workspace>(
     claimed.add(monitor);
     return 0;
 }
+
+/** The lowest workspace number that isn't in `occupied` */
+export function lowest_unused_workspace(occupied: number[]): number {
+    let workspace = 0;
+    while (occupied.includes(workspace)) workspace += 1;
+    return workspace;
+}
