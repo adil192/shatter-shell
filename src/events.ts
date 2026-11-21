@@ -41,7 +41,6 @@ interface GlobalEventMessage {
 }
 
 export enum GlobalEvent {
-    GnomeThemeChanged,
     MonitorsChanged,
     OverviewShown,
 }
