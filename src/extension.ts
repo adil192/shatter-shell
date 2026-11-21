@@ -6,6 +6,8 @@ import type { Indicator } from './panel_settings.js';
 
 import * as auto_tiler from './auto_tiler.js';
 import * as Config from './config.js';
+import * as movement from './core/movement.js';
+import { type EdgeSide, movement_is_valid } from './core/movement.js';
 import * as add_exception from './dialog_add_exception.js';
 import * as Ecs from './ecs.js';
 import * as Events from './events.js';
@@ -17,7 +19,6 @@ import { Fork } from './fork.js';
 import * as GrabOp from './grab_op.js';
 import * as Keybindings from './keybindings.js';
 import * as Lib from './lib.js';
-import * as movement from './movement.js';
 import * as node from './node.js';
 import * as PanelSettings from './panel_settings.js';
 import * as Settings from './settings.js';
@@ -1068,7 +1069,9 @@ export class Ext extends Ecs.System<ExtEvent> {
                             geom.clamp(crect, forest.forks.get(top_level)!.area);
                         }
 
-                        if (this.movement_is_valid(win, movement)) {
+                        const neighbour_rect = (side: EdgeSide) =>
+                            this.focus_selector.toward(this, side, win)?.rect() ?? null;
+                        if (movement_is_valid(movement, win.rect(), neighbour_rect)) {
                             forest.resize(this, fork_entity, fork, win.entity, movement, crect);
                             forest.arrange(this, fork.workspace);
                         } else {
@@ -1084,34 +1087,6 @@ export class Ext extends Ecs.System<ExtEvent> {
         } else if (this.settings.get_snap_to_grid()) {
             this.tiler.snap(this, win);
         }
-    }
-
-    movement_is_valid(win: Window.ShellWindow, movement: movement.Movement) {
-        if ((movement & Movement.SHRINK) !== 0) {
-            if ((movement & Movement.DOWN) !== 0) {
-                const w = this.focus_selector.up(this, win);
-                if (!w) return false;
-                const r = w.rect();
-                if (r.y + r.height > win.rect().y) return false;
-            } else if ((movement & Movement.UP) !== 0) {
-                const w = this.focus_selector.down(this, win);
-                if (!w) return false;
-                const r = w.rect();
-                if (r.y + r.height < win.rect().y) return false;
-            } else if ((movement & Movement.LEFT) !== 0) {
-                const w = this.focus_selector.right(this, win);
-                if (!w) return false;
-                const r = w.rect();
-                if (r.x + r.width < win.rect().x) return false;
-            } else if ((movement & Movement.RIGHT) !== 0) {
-                const w = this.focus_selector.left(this, win);
-                if (!w) return false;
-                const r = w.rect();
-                if (r.x + r.width > win.rect().x) return false;
-            }
-        }
-
-        return true;
     }
 
     /** Triggered when a grab operation has been started */

@@ -1,3 +1,4 @@
+import type { EdgeSide } from './core/movement.js';
 import type { Ext } from './extension.js';
 import type { ShellWindow } from './window.js';
 
@@ -40,6 +41,24 @@ export class FocusSelector {
 
     up(ext: Ext, window: ShellWindow | null): ShellWindow | null {
         return this.select(ext, window_up, window);
+    }
+
+    /**
+     * The window on `side` of `window`.
+     *
+     * Temporary bridge until the focus code takes the direction as a value.
+     */
+    toward(ext: Ext, side: EdgeSide, window: ShellWindow | null): ShellWindow | null {
+        switch (side) {
+            case Geom.Side.TOP:
+                return this.up(ext, window);
+            case Geom.Side.BOTTOM:
+                return this.down(ext, window);
+            case Geom.Side.LEFT:
+                return this.left(ext, window);
+            case Geom.Side.RIGHT:
+                return this.right(ext, window);
+        }
     }
 }
 

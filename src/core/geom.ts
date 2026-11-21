@@ -19,7 +19,7 @@ export enum Side {
     CENTER,
 }
 
-function xend(rect: Rect): number {
+export function xend(rect: Rect): number {
     return rect.x + rect.width;
 }
 
@@ -27,7 +27,7 @@ function xcenter(rect: Rect): number {
     return rect.x + rect.width / 2;
 }
 
-function yend(rect: Rect): number {
+export function yend(rect: Rect): number {
     return rect.y + rect.height;
 }
 
