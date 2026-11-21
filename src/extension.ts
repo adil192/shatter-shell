@@ -54,6 +54,7 @@ import { LayoutSizes } from './core/layout_sizes.js';
 import {
     type Migration as MonitorMigration,
     type MonitorInfo,
+    lowest_unused_workspace,
     monitor_changes,
     plan_migrations,
     unchanged_monitors,
@@ -530,27 +531,17 @@ export class Ext extends Ecs.System<ExtEvent> {
     find_unused_workspace(monitor: MonitorID): [WorkspaceID, Meta.Workspace | null] {
         if (!this.auto_tiler) return [0, wom.get_workspace_by_index(0)];
 
-        let id = 0;
-
-        const tiled_windows = new Array<Window.ShellWindow>();
+        // Workspaces used by the monitor's tiled windows that aren't being moved
+        const occupied: WorkspaceID[] = [];
         for (const [entity] of this.auto_tiler.attached.iter()) {
             if (!this.auto_tiler.attached.contains(entity)) continue;
 
             const win = this.windows.get(entity);
 
-            if (win && !win.reassignment && win.monitor_id() === monitor) tiled_windows.push(win);
+            if (win && !win.reassignment && win.monitor_id() === monitor) occupied.push(win.workspace_id());
         }
 
-        cancel: while (true) {
-            for (const window of tiled_windows) {
-                if (window.workspace_id() === id) {
-                    id += 1;
-                    continue cancel;
-                }
-            }
-
-            break;
-        }
+        let id = lowest_unused_workspace(occupied);
 
         let new_work: Meta.Workspace | null;
         if (id + 1 >= wom.get_n_workspaces()) {

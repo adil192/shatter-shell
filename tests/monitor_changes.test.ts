@@ -4,6 +4,7 @@ import { describe, test } from 'node:test';
 import type { Rect } from '../src/core/geom.js';
 
 import {
+    lowest_unused_workspace,
     type MonitorInfo,
     monitor_changes,
     plan_migrations,
@@ -144,5 +145,20 @@ describe('workspace_on', () => {
     test('later trees get an unused workspace', () => {
         const claimed = new Set([0]);
         assert.equal(workspace_on(0, claimed, unused), 7);
+    });
+});
+
+describe('lowest_unused_workspace', () => {
+    test('is 0 when nothing is occupied', () => {
+        assert.equal(lowest_unused_workspace([]), 0);
+    });
+
+    test('is the first gap', () => {
+        assert.equal(lowest_unused_workspace([0, 1, 3]), 2);
+        assert.equal(lowest_unused_workspace([3, 1, 0, 1]), 2);
+    });
+
+    test('is after the last when there is no gap', () => {
+        assert.equal(lowest_unused_workspace([2, 0, 1]), 3);
     });
 });
