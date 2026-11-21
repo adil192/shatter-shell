@@ -1,6 +1,7 @@
 import type { Entity } from './ecs.js';
 import type { Ext } from './extension.js';
 
+import * as Events from './events.js';
 import * as focus from './focus.js';
 import * as lib from './lib.js';
 import { Tags } from './tags.js';
@@ -305,9 +306,8 @@ export class ShellWindow {
             }
             if (!this.dont_animate_next_movement) actor.remove_all_transitions();
 
-            this.ext.movements.insert(this.entity, rect);
+            this.ext.register(Events.window_move(this.ext, this, rect));
 
-            this.ext.register({ tag: 'window_move', window: this });
             if (on_complete) this.ext.register_fn(on_complete);
             if (meta.appears_focused) {
                 this.update_border_layout();
