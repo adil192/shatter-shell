@@ -92,13 +92,13 @@ export class WindowAnimationController {
                 translationX: 0,
                 translationY: 0,
                 duration: WINDOW_GEOMETRY_ANIMATION_DURATION,
-                mode: Clutter.AnimationMode.EASE_OUT_QUAD,
+                mode: Clutter.AnimationMode.LINEAR,
             });
             actor_clone.ease({
                 ...target,
                 opacity: 0,
                 duration: WINDOW_GEOMETRY_ANIMATION_DURATION,
-                mode: Clutter.AnimationMode.EASE_OUT_QUAD,
+                mode: Clutter.AnimationMode.LINEAR,
                 onComplete: () => this.stop(actor),
             });
         } finally {
