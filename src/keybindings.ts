@@ -35,7 +35,7 @@ export class Keybindings {
 
             'toggle-floating': () => ext.auto_tiler?.toggle_floating(ext),
 
-            'toggle-tiling': () => ext.toggle_tiling(),
+            'toggle-tiling': () => ext.gnome_auto_tiling.toggle(),
 
             'toggle-stacking-global': () => ext.auto_tiler?.toggle_stacking(ext),
 
