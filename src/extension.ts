@@ -165,12 +165,12 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     private workareas_update: SignalID | null = null;
 
-    /** The signals connected to global objects, which are disconnected when the extension is disabled */
+    /** The signals connected to global objects, which are disconnected when the extension is disabled. */
     private readonly signals = new Signals<GObject.Object | Misc.signals.EventEmitter>();
 
     private size_requests: Map<GObject.Object, SignalID> = new Map();
 
-    readonly window_animations = new WindowAnimationController();
+    readonly window_animations = new WindowAnimationController(this.signals);
 
     // Entity-component associations
 
@@ -384,19 +384,6 @@ export class Ext extends Ecs.System<ExtEvent> {
         return this.connect_meta(win, signal, () => {
             if (!this.contains_tag(win.entity, Tags.Blocked)) func();
         });
-    }
-
-    /**
-     * Connects the relevant signals on every known window,
-     * used when the extension is re-enabled.
-     */
-    reconnect_each_windows_signals() {
-        for (const [, window] of this.windows.iter()) {
-            this.disconnect_tilable_window_signals(window);
-            window.bind_window_events();
-            window.was_tilable = false;
-            window.reconsider_tiling(false);
-        }
     }
 
     connect_tilable_window_signals(win: Window.ShellWindow) {
@@ -618,7 +605,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     /** Fetches the window component from the entity associated with the metacity window metadata. */
-    get_window(meta: Meta.Window): Window.ShellWindow | null {
+    private get_window(meta: Meta.Window): Window.ShellWindow | null {
         const entity = this.window_entity(meta);
         return entity ? this.windows.get(entity) : null;
     }
@@ -1354,17 +1341,30 @@ export class Ext extends Ecs.System<ExtEvent> {
             });
         }
 
-        actor.connect('destroy', () => {
-            if (win.border) {
-                win.border.destroy();
-                win.border = null;
+        this.signals.connect(actor, () =>
+            actor.connect('destroy', () => {
+                if (win.border) {
+                    win.border.destroy();
+                    win.border = null;
+                }
+
+                this.on_destroy(win.entity);
+
+                this.signals.forget_source(actor);
+            }),
+        );
+
+        // Disconnect any preexisting signals
+        this.window_signals.take_with(win.entity, signals => {
+            for (const signal of signals) {
+                win.meta.disconnect(signal);
             }
-
-            this.on_destroy(win.entity);
-
-            return false;
         });
+        this.tilable_window_signals.remove(win.entity);
+        win.was_tilable = false;
 
+        // Connect window signals
+        win.bind_window_events();
         win.reconsider_tiling(false);
     }
 
@@ -1789,15 +1789,16 @@ export class Ext extends Ecs.System<ExtEvent> {
 
         // Post-init
 
-        if (this.init) {
-            for (const window of this.tab_list(Meta.TabList.NORMAL, null)) {
-                this.register({ tag: 'window_create', window: window.meta, is_new_window: false });
-            }
+        // Find any new available windows
+        this.tab_list(Meta.TabList.NORMAL, null);
 
-            this.register_fn(() => (this.init = false));
-        } else {
-            this.reconnect_each_windows_signals();
+        // Re-register existing windows
+        for (const window of this.windows.values()) {
+            this.register({ tag: 'window_create', window: window.meta, is_new_window: false });
         }
+
+        // Unset `this.init` after all other idle tasks
+        if (this.init) this.register_fn(() => (this.init = false));
     }
 
     signals_remove() {
@@ -1857,7 +1858,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         this.workspace_by_id(id)?.activate(global.get_current_time());
     }
 
-    tab_list(tablist: Meta.TabList, workspace: Meta.Workspace | null): Array<Window.ShellWindow> {
+    private tab_list(tablist: Meta.TabList, workspace: Meta.Workspace | null): Array<Window.ShellWindow> {
         const windows = display.get_tab_list(tablist, workspace);
 
         const matched = [];
@@ -2175,7 +2176,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     /** Fetches the window entity which is associated with the metacity window metadata. */
-    window_entity(meta: Meta.Window): Entity | null {
+    private window_entity(meta: Meta.Window): Entity | null {
         const id = meta.get_stable_sequence();
 
         // Locate the window entity with the matching ID

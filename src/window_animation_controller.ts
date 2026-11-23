@@ -2,6 +2,7 @@ import Clutter from 'gi://Clutter';
 import Meta from 'gi://Meta';
 import Mtk from 'gi://Mtk';
 
+import { Signals } from './core/signals.js';
 import * as Window from './window.js';
 
 /**
@@ -16,6 +17,8 @@ interface WindowAnimation {
 }
 
 export class WindowAnimationController {
+    constructor(readonly signals: Signals<any>) {}
+
     private readonly animations = new Map<Meta.WindowActor, WindowAnimation>();
 
     /**
@@ -75,12 +78,14 @@ export class WindowAnimationController {
 
             const animation: WindowAnimation = { actor_clone };
             this.animations.set(actor, animation);
-            animation.destroy_signal = actor.connect('destroy', () => {
-                if (this.animations.get(actor) !== animation) return;
-                this.animations.delete(actor);
-                animation.actor_clone.remove_all_transitions();
-                animation.actor_clone.destroy();
-            });
+            animation.destroy_signal = this.signals.connect(actor, () =>
+                actor.connect('destroy', () => {
+                    if (this.animations.get(actor) !== animation) return;
+                    this.animations.delete(actor);
+                    animation.actor_clone.remove_all_transitions();
+                    animation.actor_clone.destroy();
+                }),
+            );
 
             actor.set_pivot_point(0, 0);
             actor.set_translation(x - target.x, y - target.y, 0);
@@ -131,7 +136,7 @@ export class WindowAnimationController {
         this.animations.delete(actor);
 
         if (animation.destroy_signal) {
-            actor.disconnect(animation.destroy_signal);
+            this.signals.disconnect(actor, animation.destroy_signal);
             animation.destroy_signal = undefined;
         }
 

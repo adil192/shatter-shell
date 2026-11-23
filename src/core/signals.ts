@@ -33,4 +33,40 @@ export class Signals<Source extends Disconnectable> {
 
         this.connections.clear();
     }
+
+    /**
+     * Disconnects a specific signal id and removes it from {@link connections}.
+     *
+     * It is programmer error to disconnect an id that's not connected,
+     * since GLib reuses ids.
+     * Like GLib, this function will try regardless to disconnect your id,
+     * here be dragons.
+     */
+    disconnect(source: Source, id: number) {
+        source.disconnect(id);
+
+        const ids = this.connections.get(source);
+        if (ids) {
+            const index = ids.indexOf(id);
+            if (index !== -1) {
+                ids.splice(index, 1);
+
+                if (ids.length === 0) {
+                    this.connections.delete(source);
+                }
+            }
+        }
+    }
+
+    /**
+     * Forgets a source.
+     *
+     * This does not disconnect any signals.
+     *
+     * This can be safely called from a 'destroy' signal handler
+     * because after a source is destroyed, nothing needs to be disconnected.
+     */
+    forget_source(source: Source) {
+        this.connections.delete(source);
+    }
 }
