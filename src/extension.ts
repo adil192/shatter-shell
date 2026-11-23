@@ -2240,8 +2240,8 @@ export default class ShatterShellExtension extends Extension {
             ext.extension = this;
         }
 
-        ext.gnome_theme.reload();
-        ext.register_fn(() => ext!.gnome_theme.load());
+        ext.gnome_theme.pick_style();
+        ext.register_fn(() => ext!.gnome_theme.inject());
 
         if (ext.was_locked) {
             ext.was_locked = false;

@@ -48,33 +48,34 @@ export class GnomeTheme {
 
     /** Connects to GNOME's color scheme and high contrast settings */
     attach(signals: Signals<GObject.Object | Misc.signals.EventEmitter>) {
-        const changed = () => this.defer(() => this.on_changed());
+        const defer_changed = () => this.defer(() => this.on_changed());
 
         signals.connect(this.settings.desktop_interface, settings =>
-            settings.connect('changed::color-scheme', changed),
+            settings.connect('changed::color-scheme', defer_changed),
         );
-        signals.connect(this.settings.a11y_interface, settings => settings.connect('changed::high-contrast', changed));
+        signals.connect(this.settings.a11y_interface, settings =>
+            settings.connect('changed::high-contrast', defer_changed),
+        );
     }
 
     private on_changed() {
-        this.reload();
-        this.load();
+        this.pick_style();
+        this.inject();
     }
 
-    /** Reads which stylesheet goes with GNOME's settings */
-    reload() {
+    /** Chooses a stylesheet that goes with GNOME's settings. */
+    pick_style() {
         this.style = style_of(this.settings.get_is_dark(), this.settings.get_is_high_contrast());
     }
 
-    /** Supplements the loaded theme with the extension's stylesheet, and returns its path */
-    load(): string | null {
-        const style = this.style;
+    /** Supplements the global theme context with the extension's stylesheet. */
+    inject() {
         try {
             const theme_context = St.ThemeContext.get_for_stage(global.stage);
 
             const existing_theme = theme_context.get_theme() as St.Theme | null;
 
-            const shatter_stylesheet_path = STYLESHEET_PATHS[style];
+            const shatter_stylesheet_path = STYLESHEET_PATHS[this.style];
 
             if (existing_theme) {
                 /** Must unload stylesheets, or else the previously loaded
@@ -84,7 +85,7 @@ export class GnomeTheme {
                 }
 
                 // Merge theme update with shatter shell styling
-                existing_theme.load_stylesheet(STYLESHEETS[style]);
+                existing_theme.load_stylesheet(STYLESHEETS[this.style]);
 
                 // Perform theme update
                 theme_context.set_theme(existing_theme);
@@ -93,11 +94,8 @@ export class GnomeTheme {
                 Main.setThemeStylesheet(shatter_stylesheet_path);
                 Main.loadTheme();
             }
-
-            return shatter_stylesheet_path;
         } catch (e) {
             Log.error(`failed to load stylesheet: ${e}`);
-            return null;
         }
     }
 }
