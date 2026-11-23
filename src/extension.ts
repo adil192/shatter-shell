@@ -246,9 +246,9 @@ export class Ext extends Ecs.System<ExtEvent> {
                     return;
                 }
 
-                if (window.dont_animate_next_movement) {
+                if (window.shouldnt_animate_next_movement) {
                     this.window_animations.stop(actor);
-                    window.reset_dont_animate_next_movement();
+                    window.maybe_animate_next_movement();
                 } else if (!this.settings.get_animate_windows()) {
                     this.window_animations.stop(actor);
                 } else {
@@ -1335,9 +1335,9 @@ export class Ext extends Ecs.System<ExtEvent> {
         if (!win) return;
 
         if (is_new_window) {
-            win.dont_animate_next_movement = true;
+            win.dont_animate_next_movement();
             actor.connect('first-frame', () => {
-                if (!this.movements.contains(win.entity)) win.reset_dont_animate_next_movement();
+                if (!this.movements.contains(win.entity)) win.maybe_animate_next_movement();
             });
         }
 
@@ -1558,12 +1558,12 @@ export class Ext extends Ecs.System<ExtEvent> {
                 switch (event) {
                     case Meta.SizeChange.MAXIMIZE:
                     case Meta.SizeChange.UNMAXIMIZE:
-                        win.dont_animate_next_movement = true;
+                        win.dont_animate_next_movement();
                         this.register(Events.window_event(win, WindowEventType.Maximize));
                         break;
                     case Meta.SizeChange.FULLSCREEN:
                     case Meta.SizeChange.UNFULLSCREEN:
-                        win.dont_animate_next_movement = true;
+                        win.dont_animate_next_movement();
                         this.register(Events.window_event(win, WindowEventType.Fullscreen));
                         break;
                     case Meta.SizeChange.MONITOR_MOVE:

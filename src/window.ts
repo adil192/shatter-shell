@@ -49,12 +49,6 @@ export class ShellWindow {
     known_workspace: WorkspaceID;
     grab: boolean = false;
     activate_after_move: boolean = false;
-    /**
-     * Some window animations are already handled by GNOME,
-     * such as fullscreening or opening a new window.
-     * Don't animate them ourselves.
-     */
-    dont_animate_next_movement: boolean = false;
     ignore_detach: boolean = false;
     was_attached_to?: [Entity, boolean | number];
     destroying: boolean = false;
@@ -304,7 +298,7 @@ export class ShellWindow {
             if (this.is_maximized()) {
                 meta.unmaximize();
             }
-            if (!this.dont_animate_next_movement) actor.remove_all_transitions();
+            if (!this.shouldnt_animate_next_movement) actor.remove_all_transitions();
 
             this.ext.register(Events.window_move(this.ext, this, rect));
 
@@ -602,15 +596,36 @@ export class ShellWindow {
         this.restack(RESTACK_STATE.WORKSPACE_CHANGED);
     }
 
+    /** See {@link shouldnt_animate_next_movement} */
+    #shouldnt_animate_next_movement: boolean = false;
+
     /**
-     * Resets the {@link dont_animate_next_movement} flag
-     * based on the window's current state.
-     *
-     * Fullscreen/maximized windows are animated by GNOME itself,
-     * so they must never be animated by shatter-shell.
+     * Some window animations are already handled by GNOME,
+     * such as fullscreening or opening a new window.
+     * Don't animate them ourselves.
      */
-    reset_dont_animate_next_movement() {
-        this.dont_animate_next_movement = this.meta.is_fullscreen() || this.is_maximized();
+    get shouldnt_animate_next_movement() {
+        return this.#shouldnt_animate_next_movement;
+    }
+
+    /**
+     * Sets {@link shouldnt_animate_next_movement} to true.
+     *
+     * See also {@link maybe_animate_next_movement}.
+     */
+    dont_animate_next_movement() {
+        this.#shouldnt_animate_next_movement = true;
+    }
+
+    /**
+     * Sets {@link shouldnt_animate_next_movement} to false
+     * if it is not fullscreen/maximized.
+     *
+     * See also {@link dont_animate_next_movement}.
+     */
+    maybe_animate_next_movement() {
+        const inhibit = this.meta.fullscreen || this.is_maximized();
+        this.#shouldnt_animate_next_movement = inhibit;
     }
 }
 
