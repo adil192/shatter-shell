@@ -615,17 +615,82 @@ export class ShellWindow {
      */
     dont_animate_next_movement() {
         this.#shouldnt_animate_next_movement = true;
+        this.#clear_animate_delay({});
     }
 
     /**
      * Sets {@link shouldnt_animate_next_movement} to false
+     * (after a short delay)
      * if it is not fullscreen/maximized.
      *
      * See also {@link dont_animate_next_movement}.
      */
     maybe_animate_next_movement() {
         const inhibit = this.meta.fullscreen || this.is_maximized();
-        this.#shouldnt_animate_next_movement = inhibit;
+        if (this.#shouldnt_animate_next_movement === inhibit) {
+            // No-op
+            return;
+        }
+        if (inhibit) {
+            // No delay in disabling animations
+            this.#shouldnt_animate_next_movement = inhibit;
+            this.#clear_animate_delay({});
+            return;
+        }
+
+        // Uninhibit after a delay...
+
+        // Clear an existing timeout before starting a new one
+        this.#clear_animate_delay({});
+
+        this.#animate_delay_timeout = GLib.timeout_add(GLib.PRIORITY_LOW, 500, () => {
+            // Recheck in case the window changed
+            const inhibit = this.meta.fullscreen || this.is_maximized();
+            this.#shouldnt_animate_next_movement = inhibit;
+            this.#clear_animate_delay({ remove_timeout: false });
+            return GLib.SOURCE_REMOVE;
+        });
+        this.ext.timeouts.add(this.#animate_delay_timeout);
+
+        const actor = this.meta.get_compositor_private<Meta.WindowActor | null>();
+        if (actor) {
+            // Cancel timeout if actor gets destroyed before it fires
+            this.#animate_delay_on_destroy = this.ext.signals.connect(actor, () =>
+                actor.connect('destroy', () => {
+                    this.ext.signals.forget_source(actor);
+                    this.#clear_animate_delay({ disconnct_destroy_signal: false });
+                }),
+            );
+        }
+    }
+
+    #animate_delay_timeout: number | undefined;
+    #animate_delay_on_destroy: number | undefined;
+    /** Cancels the timeout and removes records of the signal and source. */
+    #clear_animate_delay({
+        remove_timeout = true,
+        disconnct_destroy_signal = true,
+    }: {
+        /** Whether to call GLib.source_remove. Set this to false if calling from the timeout callback itself. */
+        remove_timeout?: boolean;
+        /** Whether to disconnect the 'destroy' signal. Set this to false if calling from the destroy signal itself. */
+        disconnct_destroy_signal?: boolean;
+    }) {
+        if (this.#animate_delay_timeout) {
+            if (remove_timeout) GLib.source_remove(this.#animate_delay_timeout);
+            this.ext.timeouts.delete(this.#animate_delay_timeout);
+            this.#animate_delay_timeout = undefined;
+        }
+
+        if (this.#animate_delay_on_destroy) {
+            if (disconnct_destroy_signal) {
+                const actor = this.meta.get_compositor_private<Meta.WindowActor | null>();
+                if (actor) {
+                    this.ext.signals.disconnect(actor, this.#animate_delay_on_destroy);
+                }
+            }
+            this.#animate_delay_on_destroy = undefined;
+        }
     }
 }
 
