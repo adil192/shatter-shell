@@ -95,4 +95,10 @@ describe('Signals', () => {
         assert.deepEqual(a.disconnected, []);
         assert.deepEqual(b.disconnected, [1]);
     });
+
+    test('forget_source allows a non-connected source', () => {
+        const signals = new Signals<Source>();
+        
+        assert.doesNotThrow(() => signals.forget_source(new Source()));
+    });
 });

@@ -41,7 +41,7 @@ export class WindowAnimationController {
 
         try {
             if (!actor.visible || actor.opacity === 0 || !actor.get_stage()) return;
-            if (window.meta.is_fullscreen() || window.is_maximized()) return;
+            if (window.meta.fullscreen || window.is_maximized()) return;
 
             const parent = actor.get_parent();
             if (!parent) return;

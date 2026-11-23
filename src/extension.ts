@@ -166,7 +166,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     private workareas_update: SignalID | null = null;
 
     /** The signals connected to global objects, which are disconnected when the extension is disabled. */
-    private readonly signals = new Signals<GObject.Object | Misc.signals.EventEmitter>();
+    readonly signals = new Signals<GObject.Object | Misc.signals.EventEmitter>();
 
     private size_requests: Map<GObject.Object, SignalID> = new Map();
 
