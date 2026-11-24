@@ -14,6 +14,7 @@ import * as Executor from './executor.js';
 import * as exec from './executor.js';
 import * as Focus from './focus.js';
 import { Fork } from './fork.js';
+import { GnomeTilingMode } from './gnome/gnome_tiling_mode.js';
 import * as GrabOp from './grab_op.js';
 import * as Keybindings from './keybindings.js';
 import * as Lib from './lib.js';
@@ -21,7 +22,6 @@ import * as node from './node.js';
 import * as PanelSettings from './panel_settings.js';
 import * as Settings from './settings.js';
 import * as stack from './stack.js';
-import * as Tiling from './tiling.js';
 import * as utils from './utils.js';
 import * as Window from './window.js';
 
@@ -177,7 +177,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     focus_selector: Focus.FocusSelector = new Focus.FocusSelector();
 
     /** Calculates window placements when tiling and focus-switching */
-    tiler: Tiling.Tiler = new Tiling.Tiler(this);
+    readonly gnome_tiling_mode = new GnomeTilingMode(this);
 
     constructor(extension: ShatterShellExtension, conf: Config.Config) {
         super(new Executor.GLibExecutor());
@@ -400,7 +400,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     exit_modes() {
-        this.tiler.exit(this);
+        this.gnome_tiling_mode.exit();
         this.overlay.visible = false;
     }
 
@@ -567,7 +567,8 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     on_destroy(win: Entity) {
         // Exit tiling adjustment mode on window destroy.
-        if (this.tiler.window !== null && win == this.tiler.window) this.tiler.exit(this);
+        if (this.gnome_tiling_mode.window !== null && win == this.gnome_tiling_mode.window)
+            this.gnome_tiling_mode.exit();
 
         this.focus_history.forget(win);
 
@@ -946,7 +947,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                 }
             }
         } else if (this.settings.get_snap_to_grid()) {
-            this.tiler.snap(this, win);
+            this.gnome_tiling_mode.snap(win);
         }
     }
 
@@ -1352,7 +1353,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     signals_attach() {
         this.gnome_theme.attach(this.signals);
 
-        this.tiler.queue.start(100, movement => {
+        this.gnome_tiling_mode.queue.start(100, movement => {
             movement();
             return true;
         });
@@ -1661,7 +1662,7 @@ export class Ext extends Ecs.System<ExtEvent> {
             this.workareas_update = null;
         }
 
-        this.tiler.queue.stop();
+        this.gnome_tiling_mode.queue.stop();
     }
 
     size_signals_block(win: Window.ShellWindow) {
@@ -1675,7 +1676,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     // Snaps all windows to the window grid
     snap_windows() {
         for (const window of this.windows.values()) {
-            if (window.is_tilable()) this.tiler.snap(this, window);
+            if (window.is_tilable()) this.gnome_tiling_mode.snap(window);
         }
     }
 
@@ -1918,7 +1919,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     update_snapped() {
         for (const entity of this.snapped.find(val => val)) {
             const window = this.windows.get(entity);
-            if (window) this.tiler.snap(this, window);
+            if (window) this.gnome_tiling_mode.snap(window);
         }
     }
 

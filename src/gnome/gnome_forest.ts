@@ -14,7 +14,7 @@ import * as lib from '../lib.js';
 import * as node from '../node.js';
 import { Result, Ok, Err } from '../result.js';
 import { Stack } from '../stack.js';
-import * as tiling from '../tiling.js';
+import * as tiling from './gnome_tiling_mode.js';
 
 const { NodeKind } = node;
 import { Log } from '../log.js';
@@ -466,7 +466,7 @@ export class GnomeForest {
 
             if (stack) {
                 if (matching_stack) {
-                    this.ext.tiler.move_from_stack(this.ext, stack, win, direction, true);
+                    this.ext.gnome_tiling_mode.move_from_stack(stack, win, direction, true);
                     return true;
                 } else if (attach_to.stack !== null) {
                     const onto_stack = this.find_stack(attach_to.entity);
@@ -475,7 +475,7 @@ export class GnomeForest {
                             swap(placement.orientation, direction);
                             return true;
                         } else {
-                            this.ext.tiler.move_alongside_stack(this.ext, onto_stack, win, direction);
+                            this.ext.gnome_tiling_mode.move_alongside_stack(onto_stack, win, direction);
                         }
 
                         return true;
