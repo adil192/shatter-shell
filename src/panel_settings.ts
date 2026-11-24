@@ -275,7 +275,7 @@ function toggle(desc: string, active: boolean, connect: (toggle: PopupSwitchMenu
 }
 
 function tiled(ext: Ext) {
-    return toggle(_('Tile windows'), null != ext.auto_tiler, (_, shouldTile) => {
+    return toggle(_('Tile windows'), null != ext.gnome_forest, (_, shouldTile) => {
         if (shouldTile) {
             ext.gnome_auto_tiling.on();
         } else {

@@ -515,7 +515,7 @@ export class ShellWindow {
             let dimensions: [number, number, number, number] | null = null;
 
             if (stack_number !== null) {
-                const stack = this.ext.auto_tiler?.forest.stacks.get(stack_number);
+                const stack = this.ext.gnome_forest?.forest.stacks.get(stack_number);
                 if (stack) {
                     let stack_tab_height = stack.tab_height;
 
@@ -569,7 +569,7 @@ export class ShellWindow {
         if (is_tilable) {
             this.ext.connect_tilable_window_signals(this);
             if (!this.meta.minimized) {
-                if (update_auto_tiler) this.ext.auto_tiler?.auto_tile(this.ext, this, this.ext.init);
+                if (update_auto_tiler) this.ext.gnome_forest?.auto_tile(this, this.ext.init);
             }
         } else {
             this.ext.disconnect_tilable_window_signals(this);
@@ -577,7 +577,7 @@ export class ShellWindow {
                 // Retain tiled position for when the window is unmaximized.
             } else {
                 // Untile window
-                if (update_auto_tiler) this.ext.auto_tiler?.detach_window(this.ext, this.entity);
+                if (update_auto_tiler) this.ext.gnome_forest?.detach_window(this.entity);
             }
         }
     }

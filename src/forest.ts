@@ -115,7 +115,7 @@ export class Forest extends Ecs.World {
         this.requested.clear();
 
         for (const [stack] of this.stack_updates.splice(0)) {
-            ext.auto_tiler?.update_stack(ext, stack);
+            ext.gnome_forest?.update_stack(stack);
         }
     }
 
@@ -183,7 +183,7 @@ export class Forest extends Ecs.World {
 
                 this.on_attach(fork.entity, new_entity);
 
-                ext.auto_tiler?.update_stack(ext, stack);
+                ext.gnome_forest?.update_stack(stack);
 
                 if (window.meta.has_focus()) {
                     container.activate(new_entity);
@@ -888,7 +888,7 @@ export class Forest extends Ecs.World {
             case Node.NodeKind.WINDOW:
                 const window = ext.windows.get(branch.inner.entity);
                 const area = window ? geom.fmt(window.rect()) : 'unknown area';
-                const parent = ext.auto_tiler?.attached.get(branch.inner.entity);
+                const parent = ext.gnome_forest?.attached.get(branch.inner.entity);
                 return `Window(${branch.inner.entity}) (${area}; parent: ${parent})`;
             case Node.NodeKind.STACK:
                 let fmt = 'Stack(';

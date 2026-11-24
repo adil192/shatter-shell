@@ -4,8 +4,8 @@ import type { Entity } from '../ecs.js';
 import type { Ext } from '../extension.js';
 import type { ExtensionSettings } from '../settings.js';
 
-import { AutoTiler } from '../auto_tiler.js';
 import { Forest } from '../forest.js';
+import { GnomeForest } from './gnome_forest.js';
 
 /** Switches auto-tiling on and off, keeping the setting and GNOME's edge tiling in step */
 export class GnomeAutoTiling {
@@ -15,9 +15,10 @@ export class GnomeAutoTiling {
     ) {}
 
     /** An auto-tiler over a new, empty forest */
-    private create(): AutoTiler {
+    private create(): GnomeForest {
         const { ext } = this;
-        return new AutoTiler(
+        return new GnomeForest(
+            ext,
             new Forest()
                 .connect_on_attach(ext.on_tile_attach.bind(ext))
                 .connect_on_detach(ext.on_tile_detach.bind(ext)),
@@ -27,7 +28,7 @@ export class GnomeAutoTiling {
 
     /** Turns auto-tiling back on at startup if the setting says so */
     restore() {
-        if (this.settings.get_tile_by_default() && !this.ext.auto_tiler) this.ext.auto_tiler = this.create();
+        if (this.settings.get_tile_by_default() && !this.ext.gnome_forest) this.ext.gnome_forest = this.create();
     }
 
     /** Switches auto-tiling off if it's on, and on if it's off */
@@ -44,11 +45,11 @@ export class GnomeAutoTiling {
         const { ext, settings } = this;
         settings.set_edge_tiling(true);
 
-        if (!ext.auto_tiler) return;
+        if (!ext.gnome_forest) return;
 
-        ext.unregister_storage(ext.auto_tiler.attached);
-        ext.auto_tiler.destroy(ext);
-        ext.auto_tiler = null;
+        ext.unregister_storage(ext.gnome_forest.attached);
+        ext.gnome_forest.destroy();
+        ext.gnome_forest = null;
         settings.set_tile_by_default(false);
 
         if (settings.get_active_hint()) {
@@ -63,8 +64,8 @@ export class GnomeAutoTiling {
 
         const original_workspace = ext.active_workspace();
 
-        const auto_tiler = this.create();
-        ext.auto_tiler = auto_tiler;
+        const gnome_forest = this.create();
+        ext.gnome_forest = gnome_forest;
 
         settings.set_tile_by_default(true);
 
@@ -73,7 +74,7 @@ export class GnomeAutoTiling {
             if (!window.meta.get_compositor_private<Meta.WindowActor | null>()) continue;
             if (window.meta.minimized) continue;
 
-            auto_tiler.auto_tile(ext, window, true);
+            gnome_forest.auto_tile(window, true);
         }
 
         ext.register_fn(() => ext.switch_to_workspace(original_workspace));
