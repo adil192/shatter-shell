@@ -13,7 +13,7 @@ export class Keybindings {
     constructor(ext: Ext) {
         this.ext = ext;
         this.global = {
-            'tile-enter': () => ext.tiler.enter(ext),
+            'tile-enter': () => ext.gnome_tiling_mode.enter(),
         };
 
         this.window_focus = {
@@ -39,13 +39,13 @@ export class Keybindings {
 
             'toggle-stacking-global': () => ext.gnome_forest?.toggle_stacking(),
 
-            'tile-move-left-global': () => ext.tiler.move_left(ext, ext.get_focused_window()?.entity),
+            'tile-move-left-global': () => ext.gnome_tiling_mode.move_left(ext.get_focused_window()?.entity),
 
-            'tile-move-down-global': () => ext.tiler.move_down(ext, ext.get_focused_window()?.entity),
+            'tile-move-down-global': () => ext.gnome_tiling_mode.move_down(ext.get_focused_window()?.entity),
 
-            'tile-move-up-global': () => ext.tiler.move_up(ext, ext.get_focused_window()?.entity),
+            'tile-move-up-global': () => ext.gnome_tiling_mode.move_up(ext.get_focused_window()?.entity),
 
-            'tile-move-right-global': () => ext.tiler.move_right(ext, ext.get_focused_window()?.entity),
+            'tile-move-right-global': () => ext.gnome_tiling_mode.move_right(ext.get_focused_window()?.entity),
         };
     }
 

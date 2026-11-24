@@ -99,8 +99,8 @@ export class Forest extends Ecs.World {
                 if (!window.actor_exists()) return;
             };
 
-            if (ext.tiler.window) {
-                if (Ecs.entity_eq(ext.tiler.window, entity)) {
+            if (ext.gnome_tiling_mode.window) {
+                if (Ecs.entity_eq(ext.gnome_tiling_mode.window, entity)) {
                     on_complete = () => {
                         ext.set_overlay(window.rect());
 
