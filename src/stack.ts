@@ -210,15 +210,10 @@ export class Stack {
         this.watch_signals(tab, window);
         this.widgets.tabs.add_child(button);
 
-        const actor = window.meta.get_compositor_private<Meta.WindowActor | null>();
-        if (actor) {
-            actor.remove_all_transitions();
-            if (active) {
-                actor.show();
-            } else {
-                actor.hide();
-            }
-            actor.opacity = 255;
+        if (active) {
+            window.visibility.show_now();
+        } else {
+            window.visibility.hide_now();
         }
     }
 
@@ -263,17 +258,15 @@ export class Stack {
             let tab_active: TabActive;
 
             this.window_exec(tab, tab.entity, window => {
-                const actor = window.meta.get_compositor_private<Meta.WindowActor | null>();
-
                 if (Ecs.entity_eq(entity, tab.entity)) {
                     this.active_id = id;
                     tab.active = true;
                     tab_active = TabActive.active;
-                    if (actor) this.fade_in(actor);
+                    window.visibility.fade_in();
                 } else {
                     tab.active = false;
                     tab_active = TabActive.inactive;
-                    if (actor) this.fade_out(actor);
+                    window.visibility.fade_out();
                 }
 
                 const button = this.buttons.get(tab.button);
@@ -286,32 +279,6 @@ export class Stack {
         }
 
         this.reset_visibility(permitted);
-    }
-
-    private fade_in(actor: Meta.WindowActor) {
-        if (actor.visible && actor.opacity >= 255) return;
-        actor.remove_all_transitions();
-        if (actor.opacity > 250) actor.opacity = 0;
-        actor.show();
-        actor.ease({
-            opacity: 255,
-            duration: 150 * (1 - actor.opacity / 255),
-            mode: Clutter.AnimationMode.EASE_OUT_QUART,
-        });
-    }
-
-    private fade_out(actor: Meta.WindowActor) {
-        if (!actor.visible) return;
-        actor.remove_all_transitions();
-        actor.ease({
-            opacity: 0,
-            duration: 150 * (actor.opacity / 255),
-            mode: Clutter.AnimationMode.EASE_IN_QUART,
-            onComplete: () => {
-                actor.hide();
-                actor.opacity = 255;
-            },
-        });
     }
 
     /** Connects `on_window_changed` callbacks to the newly-active window */
@@ -391,10 +358,7 @@ export class Stack {
         const window = this.ext.windows.get(c.entity);
         if (window) {
             for (const s of c.signals) window.meta.disconnect(s);
-            if (this.workspace === this.ext.active_workspace()) {
-                const actor = window.meta.get_compositor_private<Meta.WindowActor | null>();
-                if (actor) this.fade_in(actor);
-            }
+            if (this.workspace === this.ext.active_workspace()) window.visibility.fade_in();
         }
 
         c.signals = [];
@@ -432,8 +396,7 @@ export class Stack {
             if (this.workspace === this.ext.active_workspace()) {
                 const win = this.ext.windows.get(c.entity);
                 if (win) {
-                    const actor = win.meta.get_compositor_private<Meta.WindowActor | null>();
-                    if (actor) this.fade_in(actor);
+                    win.visibility.fade_in();
                     win.stack = null;
                 }
             }
@@ -567,9 +530,9 @@ export class Stack {
 
             if (Ecs.entity_eq(window.entity, this.active)) {
                 this.active_connect(window.meta, window.entity);
-                this.fade_in(actor);
+                window.visibility.fade_in();
             } else {
-                this.fade_out(actor);
+                window.visibility.fade_out();
             }
 
             this.watch_signals(tab, window);
@@ -591,7 +554,7 @@ export class Stack {
             return;
         }
 
-        this.fade_in(actor);
+        window.visibility.fade_in();
 
         const parent = actor.get_parent();
 
@@ -625,16 +588,14 @@ export class Stack {
 
         for (const c of this.tabs) {
             this.window_exec(c, c.entity, window => {
-                const actor = window.meta.get_compositor_private<Meta.WindowActor | null>();
-                if (!actor) return;
                 if (this.active_id === idx) {
                     if (permitted) {
-                        this.fade_in(actor);
+                        window.visibility.fade_in();
                     } else {
-                        actor.opacity = 255;
+                        window.visibility.restore_opacity();
                     }
                 } else {
-                    this.fade_out(actor);
+                    window.visibility.fade_out();
                 }
             });
 
@@ -715,10 +676,9 @@ export class Stack {
         tab.button_signal = widget.connect('clicked', () => {
             this.activate(entity);
             this.window_exec(tab, entity, window => {
-                const actor = window.meta.get_compositor_private<Meta.WindowActor | null>();
-                if (!actor) return;
+                if (!window.actor_exists()) return;
 
-                this.fade_in(actor);
+                window.visibility.fade_in();
                 this.ext.register_fn(() => window.request_activate(false));
 
                 this.reposition();

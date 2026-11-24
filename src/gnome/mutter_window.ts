@@ -18,6 +18,7 @@ import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
 import { Log } from '../log.js';
 import { DEFAULT_HINT_COLOR } from '../settings.js';
+import { GnomeVisibility } from './gnome_visibility.js';
 
 const wom = global.workspace_manager;
 
@@ -65,6 +66,8 @@ export class MutterWindow {
 
     prev_rect: Mtk.Rectangle | null = null;
 
+    readonly visibility: GnomeVisibility;
+
     window_app: Shell.App;
 
     private border_size = 0;
@@ -75,6 +78,7 @@ export class MutterWindow {
         this.entity = entity;
         this.meta = window;
         this.ext = ext;
+        this.visibility = new GnomeVisibility(window);
 
         this.known_workspace = this.workspace_id();
 
@@ -298,7 +302,7 @@ export class MutterWindow {
             if (this.is_maximized()) {
                 meta.unmaximize();
             }
-            if (!this.shouldnt_animate_next_movement) actor.remove_all_transitions();
+            if (!this.shouldnt_animate_next_movement) this.visibility.stop_transitions();
 
             this.ext.register(Events.window_move(this.ext, this, rect));
 

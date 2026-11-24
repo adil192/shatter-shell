@@ -1,5 +1,4 @@
 import Clutter from 'gi://Clutter';
-import Meta from 'gi://Meta';
 import Mtk from 'gi://Mtk';
 
 import type { Entity } from '../ecs.js';
@@ -90,8 +89,8 @@ export class GnomeForest {
         a_win.stack = b_stack;
         b_win.stack = a_stack;
 
-        a_win.meta.get_compositor_private<Meta.WindowActor | null>()?.show();
-        b_win.meta.get_compositor_private<Meta.WindowActor | null>()?.show();
+        a_win.visibility.show_now();
+        b_win.visibility.show_now();
 
         this.tile(a_fork, a_fork.area);
         this.tile(b_fork, b_fork.area);
