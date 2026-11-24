@@ -63,14 +63,14 @@ export class Tiler {
 
     toggle_orientation(ext: Ext) {
         const window = ext.get_focused_window();
-        if (window && ext.auto_tiler) {
-            ext.auto_tiler.toggle_orientation(ext, window);
+        if (window && ext.gnome_forest) {
+            ext.gnome_forest.toggle_orientation(window);
             ext.register_fn(() => window.request_activate(true));
         }
     }
 
     toggle_stacking(ext: Ext) {
-        ext.auto_tiler?.toggle_stacking(ext);
+        ext.gnome_forest?.toggle_stacking();
         const win = ext.get_focused_window();
         if (win) this.overlay_watch(ext, win);
     }
@@ -175,9 +175,9 @@ export class Tiler {
         right: Node.Node,
         is_left: boolean,
     ): Fork | null {
-        if (!ext.auto_tiler) return null;
+        if (!ext.gnome_forest) return null;
 
-        const forest = ext.auto_tiler.forest;
+        const forest = ext.gnome_forest.forest;
         const new_fork = forest.create_fork(left, right, fork.area, fork.workspace, fork.monitor);
 
         if (is_left) {
@@ -187,7 +187,7 @@ export class Tiler {
         }
 
         // Associate the new fork with its parent
-        ext.auto_tiler.forest.parents.insert(new_fork[0], fork.entity);
+        ext.gnome_forest.forest.parents.insert(new_fork[0], fork.entity);
 
         // Update parent assignments
         forest.on_attach(new_fork[0], focused.entity);
@@ -216,7 +216,7 @@ export class Tiler {
             ext.register_fn(() => win.request_activate(true));
         };
 
-        if (ext.auto_tiler && win.is_tilable()) {
+        if (ext.gnome_forest && win.is_tilable()) {
             if (this.queue.length === 2) return;
             this.queue.send(() => {
                 const focused = ext.get_focused_window();
@@ -226,8 +226,8 @@ export class Tiler {
 
                     this.moving = true;
 
-                    if (ext.auto_tiler) {
-                        const s = ext.auto_tiler.find_stack(focused.entity);
+                    if (ext.gnome_forest) {
+                        const s = ext.gnome_forest.find_stack(focused.entity);
                         if (s) {
                             this.move_from_stack(ext, s, focused, direction);
                             this.moving = false;
@@ -292,11 +292,11 @@ export class Tiler {
                 break;
         }
 
-        if (!ext.auto_tiler) return;
+        if (!ext.gnome_forest) return;
 
         const inner = branch.inner;
-        Node.stack_remove(ext.auto_tiler.forest, inner, focused.entity);
-        ext.auto_tiler.detach_window(ext, focused.entity);
+        Node.stack_remove(ext.gnome_forest.forest, inner, focused.entity);
+        ext.gnome_forest.detach_window(focused.entity);
 
         focused.stack = null;
 
@@ -320,8 +320,8 @@ export class Tiler {
 
         const modifier = new_fork ?? fork;
         modifier.set_orientation(orientation);
-        ext.auto_tiler.forest.on_attach(modifier.entity, focused.entity);
-        ext.auto_tiler.tile(ext, fork, fork.area);
+        ext.gnome_forest.forest.on_attach(modifier.entity, focused.entity);
+        ext.gnome_forest.tile(fork, fork.area);
         this.overlay_watch(ext, focused);
     }
 
@@ -332,12 +332,12 @@ export class Tiler {
         direction: Direction,
         force_detach: boolean = false,
     ) {
-        if (!ext.auto_tiler) return;
+        if (!ext.gnome_forest) return;
 
         const inner = branch.inner;
 
         if (inner.entities.length === 1) {
-            ext.auto_tiler.toggle_stacking(ext);
+            ext.gnome_forest.toggle_stacking();
             this.overlay_watch(ext, focused);
             return;
         }
@@ -356,11 +356,11 @@ export class Tiler {
             fork.set_area(rect);
         }
 
-        const forest = ext.auto_tiler.forest;
+        const forest = ext.gnome_forest.forest;
         const fentity = focused.entity;
 
         const detach = (orientation: Clutter.Orientation, reverse: boolean) => {
-            if (!ext.auto_tiler) return;
+            if (!ext.gnome_forest) return;
             focused.stack = null;
 
             if (fork.right) {
@@ -384,7 +384,7 @@ export class Tiler {
             const modifier = new_fork ?? fork;
             modifier.set_orientation(orientation);
             forest.on_attach(modifier.entity, fentity);
-            ext.auto_tiler.tile(ext, fork, fork.area);
+            ext.gnome_forest.tile(fork, fork.area);
             this.overlay_watch(ext, focused);
         };
 
@@ -397,7 +397,7 @@ export class Tiler {
                     detach(Clutter.Orientation.HORIZONTAL, false);
                 }
 
-                ext.auto_tiler.update_stack(ext, inner);
+                ext.gnome_forest.update_stack(inner);
                 break;
 
             case Direction.Right:
@@ -408,7 +408,7 @@ export class Tiler {
                     detach(Clutter.Orientation.HORIZONTAL, true);
                 }
 
-                ext.auto_tiler.update_stack(ext, inner);
+                ext.gnome_forest.update_stack(inner);
                 break;
 
             case Direction.Up:
@@ -422,7 +422,7 @@ export class Tiler {
                 break;
         }
 
-        ext.auto_tiler.dissolve_single_stack(ext, inner);
+        ext.gnome_forest.dissolve_single_stack(inner);
     }
 
     move_auto_(
@@ -431,21 +431,21 @@ export class Tiler {
         mov2: Mtk.Rectangle,
         callback: (m: Mtk.Rectangle, a: Mtk.Rectangle, mov: Mtk.Rectangle) => boolean,
     ) {
-        if (ext.auto_tiler && this.window) {
-            const entity = ext.auto_tiler.attached.get(this.window);
+        if (ext.gnome_forest && this.window) {
+            const entity = ext.gnome_forest.attached.get(this.window);
             if (entity) {
-                const fork = ext.auto_tiler.forest.forks.get(entity);
+                const fork = ext.gnome_forest.forest.forks.get(entity);
                 const window = ext.windows.get(this.window);
 
                 if (!fork || !window) return;
 
                 const workspace_id = ext.workspace_id(window);
 
-                const toplevel = ext.auto_tiler.forest.find_toplevel(workspace_id);
+                const toplevel = ext.gnome_forest.forest.find_toplevel(workspace_id);
 
                 if (!toplevel) return;
 
-                const topfork = ext.auto_tiler.forest.forks.get(toplevel);
+                const topfork = ext.gnome_forest.forest.forks.get(toplevel);
 
                 if (!topfork) return;
 
@@ -463,14 +463,14 @@ export class Tiler {
                 ) => {
                     if (func(toparea, crect, mov) || crect.equal(grab_op.rect)) return;
 
-                    ext.auto_tiler!.forest.resize(ext, entity, fork, this.window!, grab_op.operation(crect), crect);
+                    ext.gnome_forest!.forest.resize(ext, entity, fork, this.window!, grab_op.operation(crect), crect);
                     grab_op.rect = crect.copy();
                 };
 
                 resize(mov1, callback);
                 resize(mov2, callback);
 
-                ext.auto_tiler.forest.arrange(ext, fork.workspace);
+                ext.gnome_forest.forest.arrange(ext, fork.workspace);
 
                 ext.register_fn(() => ext.set_overlay(window.rect()));
             }
@@ -546,11 +546,11 @@ export class Tiler {
     ) {
         let watching: window.ShellWindow | null = null;
 
-        const at = ext.auto_tiler;
-        if (at) {
+        const gnome_forest = ext.gnome_forest;
+        if (gnome_forest) {
             if (move_to instanceof ShellWindow) {
                 // Check if we are moving onto a stack, and if so, move into the stack.
-                const stack_info = at.find_stack(move_to.entity);
+                const stack_info = gnome_forest.find_stack(move_to.entity);
                 if (stack_info) {
                     const [stack_fork, branch] = stack_info;
                     const stack = branch.inner;
@@ -558,21 +558,21 @@ export class Tiler {
                     const placement = { auto: 0 } as const;
 
                     focused.ignore_detach = true;
-                    at.detach_window(ext, focused.entity);
+                    gnome_forest.detach_window(focused.entity);
 
-                    at.forest.on_attach(stack_fork.entity, focused.entity);
-                    at.update_stack(ext, stack);
+                    gnome_forest.forest.on_attach(stack_fork.entity, focused.entity);
+                    gnome_forest.update_stack(stack);
 
-                    at.tile(ext, stack_fork, stack_fork.area);
+                    gnome_forest.tile(stack_fork, stack_fork.area);
 
                     focused.ignore_detach = true;
-                    at.detach_window(ext, focused.entity);
-                    at.attach_to_window(ext, move_to, focused, placement, stack_from_left);
+                    gnome_forest.detach_window(focused.entity);
+                    gnome_forest.attach_to_window(move_to, focused, placement, stack_from_left);
                     watching = focused;
                 } else {
-                    const parent = at.windows_are_siblings(focused.entity, move_to.entity);
+                    const parent = gnome_forest.windows_are_siblings(focused.entity, move_to.entity);
                     if (parent) {
-                        const fork = at.forest.forks.get(parent);
+                        const fork = gnome_forest.forest.forks.get(parent);
                         if (fork) {
                             if (!fork.right) {
                                 Log.error('move_auto: detected as sibling, but fork lacks right branch');
@@ -580,7 +580,7 @@ export class Tiler {
                             }
 
                             if (fork.left.inner.kind === Node.NodeKind.STACK) {
-                                Node.stack_remove(at.forest, fork.left.inner, focused.entity);
+                                Node.stack_remove(gnome_forest.forest, fork.left.inner, focused.entity);
                                 focused.stack = null;
                             } else {
                                 const temp = fork.right;
@@ -588,7 +588,7 @@ export class Tiler {
                                 fork.right = fork.left;
                                 fork.left = temp;
 
-                                at.tile(ext, fork, fork.area);
+                                gnome_forest.tile(fork, fork.area);
                                 watching = focused;
                             }
                         }
@@ -598,15 +598,15 @@ export class Tiler {
                         const movement = { src: focused.meta.get_frame_rect() };
 
                         focused.ignore_detach = true;
-                        at.detach_window(ext, focused.entity);
-                        at.attach_to_window(ext, move_to, focused, movement, false);
+                        gnome_forest.detach_window(focused.entity);
+                        gnome_forest.attach_to_window(move_to, focused, movement, false);
                         watching = focused;
                     }
                 }
             } else {
                 focused.ignore_detach = true;
-                at.detach_window(ext, focused.entity);
-                at.attach_to_workspace(ext, focused, [move_to, ext.active_workspace()]);
+                gnome_forest.detach_window(focused.entity);
+                gnome_forest.attach_to_workspace(focused, [move_to, ext.active_workspace()]);
                 watching = focused;
             }
         }
@@ -674,7 +674,7 @@ export class Tiler {
         if (!this.window) return;
         this.resizing_window = true;
 
-        if (ext.auto_tiler && !ext.contains_tag(this.window, Tags.Floating)) {
+        if (ext.gnome_forest && !ext.contains_tag(this.window, Tags.Floating)) {
             this.resize_auto(ext, direction);
         } else {
             let array: [number, number, number, number];
@@ -766,7 +766,7 @@ export class Tiler {
             ext.set_overlay(win.rect());
             ext.overlay.visible = true;
 
-            if (!ext.auto_tiler || ext.contains_tag(win.entity, Tags.Floating)) {
+            if (!ext.gnome_forest || ext.contains_tag(win.entity, Tags.Floating)) {
                 // Make sure overlay is valid
                 this.rect_by_active_area(ext, (_monitor, rect) => {
                     this.change(ext.overlay, rect, 0, 0, 0, 0);
@@ -786,9 +786,9 @@ export class Tiler {
                 if (this.swap_window) {
                     const meta_swap = ext.windows.get(this.swap_window);
                     if (meta_swap) {
-                        if (ext.auto_tiler) {
+                        if (ext.gnome_forest) {
                             tree_swapped = true;
-                            ext.auto_tiler.attach_swap(ext, this.swap_window, this.window);
+                            ext.gnome_forest.attach_swap(this.swap_window, this.window);
                         } else {
                             ext.size_signals_block(meta_swap);
 

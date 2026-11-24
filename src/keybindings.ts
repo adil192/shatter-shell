@@ -27,17 +27,17 @@ export class Keybindings {
 
             'tile-orientation': () => {
                 const win = ext.get_focused_window();
-                if (win && ext.auto_tiler) {
-                    ext.auto_tiler.toggle_orientation(ext, win);
+                if (win && ext.gnome_forest) {
+                    ext.gnome_forest.toggle_orientation(win);
                     ext.register_fn(() => win.request_activate(true));
                 }
             },
 
-            'toggle-floating': () => ext.auto_tiler?.toggle_floating(ext),
+            'toggle-floating': () => ext.gnome_forest?.toggle_floating(),
 
             'toggle-tiling': () => ext.gnome_auto_tiling.toggle(),
 
-            'toggle-stacking-global': () => ext.auto_tiler?.toggle_stacking(ext),
+            'toggle-stacking-global': () => ext.gnome_forest?.toggle_stacking(),
 
             'tile-move-left-global': () => ext.tiler.move_left(ext, ext.get_focused_window()?.entity),
 

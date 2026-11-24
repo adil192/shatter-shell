@@ -79,7 +79,7 @@ export function stack_move_left(ext: Ext, forest: Forest, node: NodeStack, entit
                 // Swap tabs in the stack
                 stack_swap(node, idx - 1, idx);
                 stack.active_id -= 1;
-                ext.auto_tiler?.update_stack(ext, node);
+                ext.gnome_forest?.update_stack(node);
                 return true;
             }
         }
@@ -106,7 +106,7 @@ export function stack_move_right(ext: Ext, forest: Forest, node: NodeStack, enti
             } else {
                 stack_swap(node, idx + 1, idx);
                 stack.active_id += 1;
-                ext.auto_tiler?.update_stack(ext, node);
+                ext.gnome_forest?.update_stack(node);
                 moved = true;
             }
             break;
@@ -119,9 +119,9 @@ export function stack_move_right(ext: Ext, forest: Forest, node: NodeStack, enti
 }
 
 export function stack_replace(ext: Ext, node: NodeStack, window: ShellWindow) {
-    if (!ext.auto_tiler) return;
+    if (!ext.gnome_forest) return;
 
-    const stack = ext.auto_tiler.forest.stacks.get(node.idx);
+    const stack = ext.gnome_forest.forest.stacks.get(node.idx);
     if (!stack) return;
 
     stack.replace(window);
@@ -238,8 +238,8 @@ export class Node<T extends NodeADT = NodeADT> {
                     record(entity, parent, this.inner.rect);
                 }
 
-                if (ext.auto_tiler) {
-                    ext.auto_tiler.forest.stack_updates.push([this.inner, parent]);
+                if (ext.gnome_forest) {
+                    ext.gnome_forest.forest.stack_updates.push([this.inner, parent]);
                 }
         }
     }

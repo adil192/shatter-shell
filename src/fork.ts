@@ -290,7 +290,7 @@ export class Fork {
     }
 
     migrate(ext: Ext, forest: Forest, area: Mtk.Rectangle, monitor: MonitorID, workspace: WorkspaceID) {
-        if (ext.auto_tiler && this.is_toplevel) {
+        if (ext.gnome_forest && this.is_toplevel) {
             const primary = global.display.get_primary_monitor() === monitor;
 
             this.monitor = monitor;
@@ -323,7 +323,7 @@ export class Fork {
                         break;
                     case NodeKind.STACK:
                         for (const entity of child.inner.entities) {
-                            const stack = ext.auto_tiler.forest.stacks.get(child.inner.idx);
+                            const stack = ext.gnome_forest.forest.stacks.get(child.inner.idx);
                             if (stack) {
                                 stack.workspace = workspace;
                             }
