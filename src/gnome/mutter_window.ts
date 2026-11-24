@@ -199,6 +199,16 @@ export class MutterWindow {
         return icon;
     }
 
+    /** Gets the window's minimum size based on mutter hints and borders */
+    minimum_size(): [number, number] {
+        const [known, width, height] = this.meta.get_min_size();
+        if (!known) return [0, 0];
+
+        // Frame size is bigger because of borders/decorations
+        const frame = this.meta.client_rect_to_frame_rect(Mtk.Rectangle.new(0, 0, width, height));
+        return [frame.width, frame.height];
+    }
+
     /** Whether the window is maximized horizontally or vertically (not necessarily both). */
     is_maximized(): boolean {
         return this.meta.maximized_horizontally || this.meta.maximized_vertically;

@@ -410,17 +410,8 @@ function minimum_size(tiler: Forest, ext: Ext, branch: Node): [number, number] {
     }
 }
 
-/** Gets the window's minimum size based on mutter hints and borders */
 function window_minimum_size(ext: Ext, entity: Entity): [number, number] {
-    const window = ext.windows.get(entity);
-    if (!window) return [0, 0];
-
-    const [known, width, height] = window.meta.get_min_size();
-    if (!known) return [0, 0];
-
-    // Frame size is bigger because of borders/decorations
-    const frame = window.meta.client_rect_to_frame_rect(Mtk.Rectangle.new(0, 0, width, height));
-    return [frame.width, frame.height];
+    return ext.windows.get(entity)?.minimum_size() ?? [0, 0];
 }
 
 /** Gets the stack's minimum size based on its windows and the tab bar. */
