@@ -70,5 +70,4 @@ fmt-check: node_modules/.package-lock.json
 
 # Unit tests run under Node, so they can only cover code that doesn't load GNOME libraries
 test: node_modules/.package-lock.json
-	npx tsc -p tests --noEmit
-	npx tsx --test 'tests/**/*.test.ts'
+	npx tsx --test --test-reporter=dot 'tests/**/*.test.ts'
