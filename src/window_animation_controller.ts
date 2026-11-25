@@ -2,8 +2,9 @@ import Clutter from 'gi://Clutter';
 import Meta from 'gi://Meta';
 import Mtk from 'gi://Mtk';
 
+import type { MutterWindow } from './gnome/mutter_window.js';
+
 import { Signals } from './core/signals.js';
-import * as Window from './window.js';
 
 /**
  * GNOME's size change duration from
@@ -33,7 +34,7 @@ export class WindowAnimationController {
      * The caller is responsible for checking {@link ExtensionSettings.get_animate_windows()}
      * to decide whether to call this function.
      */
-    start(window: Window.ShellWindow, actor: Meta.WindowActor, movement: Mtk.Rectangle) {
+    start(window: MutterWindow, actor: Meta.WindowActor, movement: Mtk.Rectangle) {
         const old_animation = this._popAnimation(actor);
         // Reuse the last clone if it exists, or create one later. Must be destroyed if we return early.
         let actor_clone = old_animation?.actor_clone;

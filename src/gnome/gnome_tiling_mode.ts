@@ -17,9 +17,9 @@ import * as Lib from '../lib.js';
 import { Log } from '../log.js';
 import * as Node from '../node.js';
 import { Tags } from '../tags.js';
-import * as window from '../window.js';
+import * as window from './mutter_window.js';
 const { monitorID } = Lib;
-const { ShellWindow } = window;
+const { MutterWindow } = window;
 
 export enum Direction {
     Left,
@@ -169,7 +169,7 @@ export class GnomeTilingMode {
 
     unstack_from_fork(
         stack: NodeStack,
-        focused: window.ShellWindow,
+        focused: window.MutterWindow,
         fork: Fork,
         left: Node.Node,
         right: Node.Node,
@@ -205,7 +205,7 @@ export class GnomeTilingMode {
         w: number,
         h: number,
         direction: Direction,
-        focus: () => window.ShellWindow | MonitorID | null,
+        focus: () => window.MutterWindow | MonitorID | null,
     ) {
         if (!window) return;
         const win = this.ext.windows.get(window);
@@ -250,7 +250,7 @@ export class GnomeTilingMode {
 
     move_alongside_stack(
         [fork, branch, is_left]: [Fork, Node.Node<NodeStack>, boolean],
-        focused: window.ShellWindow,
+        focused: window.MutterWindow,
         direction: Direction,
     ) {
         let new_fork: Fork | null = null;
@@ -325,7 +325,7 @@ export class GnomeTilingMode {
 
     move_from_stack(
         [fork, branch, is_left]: [Fork, Node.Node<NodeStack>, boolean],
-        focused: window.ShellWindow,
+        focused: window.MutterWindow,
         direction: Direction,
         force_detach: boolean = false,
     ) {
@@ -447,7 +447,7 @@ export class GnomeTilingMode {
 
                 const toparea = topfork.area;
 
-                const before = window.rect();
+                const before = window.frame();
 
                 const grab_op = new GrabOp.GrabOp(this.window, before);
 
@@ -475,14 +475,14 @@ export class GnomeTilingMode {
 
                 this.ext.gnome_forest.forest.arrange(this.ext, fork.workspace);
 
-                this.ext.register_fn(() => this.ext.set_overlay(window.rect()));
+                this.ext.register_fn(() => this.ext.set_overlay(window.frame()));
             }
         }
     }
 
-    overlay_watch(window: window.ShellWindow) {
+    overlay_watch(window: window.MutterWindow) {
         this.ext.register_fn(() => {
-            this.ext.set_overlay(window.rect());
+            this.ext.set_overlay(window.frame());
             window.request_activate(false);
         });
     }
@@ -540,12 +540,12 @@ export class GnomeTilingMode {
         );
     }
 
-    move_auto(focused: window.ShellWindow, move_to: window.ShellWindow | MonitorID, stack_from_left: boolean = true) {
-        let watching: window.ShellWindow | null = null;
+    move_auto(focused: window.MutterWindow, move_to: window.MutterWindow | MonitorID, stack_from_left: boolean = true) {
+        let watching: window.MutterWindow | null = null;
 
         const gnome_forest = this.ext.gnome_forest;
         if (gnome_forest) {
-            if (move_to instanceof ShellWindow) {
+            if (move_to instanceof MutterWindow) {
                 // Check if we are moving onto a stack, and if so, move into the stack.
                 const stack_info = gnome_forest.find_stack(move_to.entity);
                 if (stack_info) {
@@ -611,7 +611,7 @@ export class GnomeTilingMode {
         if (watching) {
             this.overlay_watch(watching);
         } else {
-            this.ext.set_overlay(focused.rect());
+            this.ext.set_overlay(focused.frame());
         }
     }
 
@@ -713,9 +713,9 @@ export class GnomeTilingMode {
         this.resizing_window = false;
     }
 
-    swap(selector: window.ShellWindow | null) {
+    swap(selector: window.MutterWindow | null) {
         if (selector) {
-            this.ext.set_overlay(selector.rect());
+            this.ext.set_overlay(selector.frame());
             this.swap_window = selector.entity;
         }
     }
@@ -772,7 +772,7 @@ export class GnomeTilingMode {
             }
 
             // Set overlay to match window
-            this.ext.set_overlay(win.rect());
+            this.ext.set_overlay(win.frame());
             this.ext.overlay.visible = true;
 
             if (!this.ext.gnome_forest || this.ext.contains_tag(win.entity, Tags.Floating)) {
@@ -801,7 +801,7 @@ export class GnomeTilingMode {
                         } else {
                             this.ext.size_signals_block(meta_swap);
 
-                            meta_swap.move(meta.rect(), () => {
+                            meta_swap.move(meta.frame(), () => {
                                 this.ext.size_signals_unblock(meta_swap);
                             });
                         }
@@ -845,9 +845,9 @@ export class GnomeTilingMode {
         }
     }
 
-    snap(win: window.ShellWindow) {
+    snap(win: window.MutterWindow) {
         const mon_geom = this.ext.monitor_work_area(win.monitor_id());
-        const rect = win.rect();
+        const rect = win.frame();
         const columns = Math.floor(mon_geom.width / this.ext.sizes.column_size);
         const rows = Math.floor(mon_geom.height / this.ext.sizes.row_size);
         this.change(rect, monitor_rect(mon_geom, columns, rows), 0, 0, 0, 0);
@@ -858,7 +858,7 @@ export class GnomeTilingMode {
     }
 }
 
-function locate_monitor(win: window.ShellWindow, direction: Meta.DisplayDirection): [MonitorID, Mtk.Rectangle] | null {
+function locate_monitor(win: window.MutterWindow, direction: Meta.DisplayDirection): [MonitorID, Mtk.Rectangle] | null {
     if (!win.actor_exists()) return null;
 
     const from = win.monitor_id();
@@ -924,9 +924,9 @@ function monitor_rect(monitor: Mtk.Rectangle, columns: number, rows: number): Mt
 
 function move_window_or_monitor(
     ext: Ext,
-    method: (ext: Ext, window: window.ShellWindow | null) => window.ShellWindow | null,
+    method: (ext: Ext, window: window.MutterWindow | null) => window.MutterWindow | null,
     direction: Meta.DisplayDirection,
-): () => window.ShellWindow | MonitorID | null {
+): () => window.MutterWindow | MonitorID | null {
     return () => {
         let next_window = method.call(ext.focus_selector, ext, null);
         next_window = next_window && next_window.actor_exists() ? next_window : null;
@@ -942,7 +942,7 @@ function move_window_or_monitor(
             if (!next_monitor || focus.monitor_id() == next_window.monitor_id()) return next_window;
 
             // If the next window is not contained within the next display, return the display.
-            return next_monitor[1].contains_rect(next_window.rect()) ? next_window : next_monitor[0];
+            return next_monitor[1].contains_rect(next_window.frame()) ? next_window : next_monitor[0];
         }
 
         return next_window;

@@ -5,8 +5,8 @@ import type { Ext } from './extension.js';
 import type { Forest } from './forest.js';
 
 import * as Ecs from './ecs.js';
+import { MutterWindow } from './gnome/mutter_window.js';
 import { TAB_HEIGHT_UNSCALED, type Stack } from './stack.js';
-import { ShellWindow } from './window.js';
 
 /** A node is either a fork, a window, or a stack. */
 export enum NodeKind {
@@ -118,7 +118,7 @@ export function stack_move_right(ext: Ext, forest: Forest, node: NodeStack, enti
     return moved;
 }
 
-export function stack_replace(ext: Ext, node: NodeStack, window: ShellWindow) {
+export function stack_replace(ext: Ext, node: NodeStack, window: MutterWindow) {
     if (!ext.gnome_forest) return;
 
     const stack = ext.gnome_forest.forest.stacks.get(node.idx);

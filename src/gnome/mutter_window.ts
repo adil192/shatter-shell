@@ -1,11 +1,11 @@
-import type { Entity } from './ecs.js';
-import type { Ext } from './extension.js';
+import type { Entity } from '../ecs.js';
+import type { Ext } from '../extension.js';
 
-import * as Events from './events.js';
-import * as focus from './focus.js';
-import * as lib from './lib.js';
-import { Tags } from './tags.js';
-import * as utils from './utils.js';
+import * as Events from '../events.js';
+import * as focus from '../focus.js';
+import * as lib from '../lib.js';
+import { Tags } from '../tags.js';
+import * as utils from '../utils.js';
 const { monitorID, workspaceID } = lib;
 
 import Cogl from 'gi://Cogl';
@@ -16,8 +16,8 @@ import Shell from 'gi://Shell';
 import St from 'gi://St';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
-import { Log } from './log.js';
-import { DEFAULT_HINT_COLOR } from './settings.js';
+import { Log } from '../log.js';
+import { DEFAULT_HINT_COLOR } from '../settings.js';
 
 const wom = global.workspace_manager;
 
@@ -41,7 +41,7 @@ enum RESTACK_SPEED {
     NORMAL = 200,
 }
 
-export class ShellWindow {
+export class MutterWindow {
     entity: Entity;
     meta: Meta.Window;
     ext: Ext;
@@ -199,6 +199,16 @@ export class ShellWindow {
         return icon;
     }
 
+    /** Gets the window's minimum size based on mutter hints and borders */
+    minimum_size(): [number, number] {
+        const [known, width, height] = this.meta.get_min_size();
+        if (!known) return [0, 0];
+
+        // Frame size is bigger because of borders/decorations
+        const frame = this.meta.client_rect_to_frame_rect(Mtk.Rectangle.new(0, 0, width, height));
+        return [frame.width, frame.height];
+    }
+
     /** Whether the window is maximized horizontally or vertically (not necessarily both). */
     is_maximized(): boolean {
         return this.meta.maximized_horizontally || this.meta.maximized_vertically;
@@ -321,13 +331,13 @@ export class ShellWindow {
         this.border_size = this.border.get_theme_node().get_border_width(St.Side.TOP);
     }
 
-    rect(): Mtk.Rectangle {
+    frame(): Mtk.Rectangle {
         return this.meta.get_frame_rect();
     }
 
-    swap(other: ShellWindow): void {
-        const ar = this.rect().copy();
-        const br = other.rect().copy();
+    swap(other: MutterWindow): void {
+        const ar = this.frame().copy();
+        const br = other.frame().copy();
 
         other.move(ar);
         this.move(br, () => place_pointer_on(this.ext, this.meta));

@@ -7,9 +7,9 @@ import type { Forest } from './forest.js';
 import type { Node } from './node.js';
 
 import * as Ecs from './ecs.js';
+import { MutterWindow } from './gnome/mutter_window.js';
 import * as node from './node.js';
 import { TAB_HEIGHT_UNSCALED } from './stack.js';
-import { ShellWindow } from './window.js';
 const { NodeKind } = node;
 
 const XPOS = 'x' as const;
@@ -131,7 +131,7 @@ export class Fork {
     }
 
     /** Replaces the association of a window in a fork with another */
-    replace_window(ext: Ext, a: ShellWindow, b: ShellWindow): (() => void) | null {
+    replace_window(ext: Ext, a: MutterWindow, b: MutterWindow): (() => void) | null {
         let closure = null;
 
         const check_right = () => {
@@ -410,17 +410,8 @@ function minimum_size(tiler: Forest, ext: Ext, branch: Node): [number, number] {
     }
 }
 
-/** Gets the window's minimum size based on mutter hints and borders */
 function window_minimum_size(ext: Ext, entity: Entity): [number, number] {
-    const window = ext.windows.get(entity);
-    if (!window) return [0, 0];
-
-    const [known, width, height] = window.meta.get_min_size();
-    if (!known) return [0, 0];
-
-    // Frame size is bigger because of borders/decorations
-    const frame = window.meta.client_rect_to_frame_rect(Mtk.Rectangle.new(0, 0, width, height));
-    return [frame.width, frame.height];
+    return ext.windows.get(entity)?.minimum_size() ?? [0, 0];
 }
 
 /** Gets the stack's minimum size based on its windows and the tab bar. */

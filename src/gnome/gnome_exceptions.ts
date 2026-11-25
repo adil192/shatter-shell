@@ -5,7 +5,7 @@ import { ControlsState } from 'resource:///org/gnome/shell/ui/overviewControls.j
 
 import type { Config } from '../config.js';
 import type { Ext } from '../extension.js';
-import type { ShellWindow } from '../window.js';
+import type { MutterWindow } from './mutter_window.js';
 
 import * as add_exception from '../dialog_add_exception.js';
 import { Log } from '../log.js';
@@ -79,7 +79,7 @@ export class GnomeExceptions {
     }
 
     /** Asks whether to add an exception for the picked window's app, or for only that window */
-    add(win: ShellWindow) {
+    add(win: MutterWindow) {
         this.picking = false;
 
         const d = new add_exception.AddExceptionDialog(
