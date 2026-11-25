@@ -44,6 +44,7 @@ import { ScreenShield } from 'resource:///org/gnome/shell/ui/screenShield.js';
 
 import { FocusHistory } from './core/focus_history.js';
 import * as geom from './core/geom.js';
+import { Grab } from './core/grab.js';
 import { LayoutSizes } from './core/layout_sizes.js';
 import {
     type Migration as MonitorMigration,
@@ -102,7 +103,9 @@ export class Ext extends Ecs.System<ExtEvent> {
     /** Opens the floating exceptions, and applies them to the windows */
     readonly gnome_exceptions: GnomeExceptions;
 
-    readonly gnome_grab = new GnomeGrab(this);
+    readonly grab = new Grab();
+
+    readonly gnome_grab = new GnomeGrab(this, this.grab);
 
     /** A display config update is triggered on a workspace addition */
     ignore_display_update: boolean = false;
