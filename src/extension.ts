@@ -14,6 +14,7 @@ import * as Executor from './executor.js';
 import * as exec from './executor.js';
 import * as Focus from './focus.js';
 import { Fork } from './fork.js';
+import { GnomeSizes } from './gnome/gnome_sizes.js';
 import { GnomeTilingMode } from './gnome/gnome_tiling_mode.js';
 import * as GrabOp from './grab_op.js';
 import * as Keybindings from './keybindings.js';
@@ -31,7 +32,6 @@ const wom = global.workspace_manager;
 
 const Movement = movement.Movement;
 
-import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
 import GObject from 'gi://GObject';
 import Meta from 'gi://Meta';
@@ -110,6 +110,8 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     /** Information about a current possible grab operation */
     grab_op: GrabOp.GrabOp | null = null;
+
+    readonly gnome_sizes = new GnomeSizes(this);
 
     /** A display config update is triggered on a workspace addition */
     ignore_display_update: boolean = false;
@@ -753,28 +755,6 @@ export class Ext extends Ecs.System<ExtEvent> {
         return false;
     }
 
-    on_gap_inner() {
-        const change = this.sizes.set_gap_inner(this.settings.get_gap_inner());
-
-        if (change != 0) {
-            this.update_inner_gap();
-            Gio.Settings.sync();
-        }
-    }
-
-    update_inner_gap() {
-        if (this.gnome_forest) {
-            for (const [entity] of this.gnome_forest.forest.toplevel.values()) {
-                const fork = this.gnome_forest.forest.forks.get(entity);
-                if (fork) {
-                    this.gnome_forest.tile(fork, fork.area);
-                }
-            }
-        } else {
-            this.update_snapped();
-        }
-    }
-
     /** Unmaximize any maximized windows on the same workspace. */
     unmaximize_workspace(win: Window.ShellWindow) {
         if (this.gnome_forest) {
@@ -797,42 +777,6 @@ export class Ext extends Ecs.System<ExtEvent> {
                     compare.meta.unmaximize();
                 }
             }
-        }
-    }
-
-    on_gap_outer() {
-        const change = this.sizes.set_gap_outer(this.settings.get_gap_outer());
-
-        if (change != 0) {
-            this.update_outer_gap(change);
-
-            Gio.Settings.sync();
-        }
-    }
-
-    /**
-     * Moves every tree `change` pixels further in from its monitor's edges, and retiles it. A
-     * smart-gapped tree has no outer gap, so its area stays, but it is retiled too, as a new scale
-     * changes its inner gaps and tabs.
-     */
-    update_outer_gap(change: number) {
-        if (this.gnome_forest) {
-            for (const [entity] of this.gnome_forest.forest.toplevel.values()) {
-                const fork = this.gnome_forest.forest.forks.get(entity);
-
-                if (fork) {
-                    if (!fork.smart_gapped) {
-                        fork.area.x += change;
-                        fork.area.y += change;
-                        fork.area.width -= change * 2;
-                        fork.area.height -= change * 2;
-                    }
-
-                    this.gnome_forest.tile(fork, fork.area);
-                }
-            }
-        } else {
-            this.update_snapped();
         }
     }
 
@@ -1161,18 +1105,6 @@ export class Ext extends Ecs.System<ExtEvent> {
         this.unset_grab_op();
     }
 
-    on_smart_gap() {
-        if (this.gnome_forest) {
-            const smart_gaps = this.settings.get_smart_gaps();
-            for (const [entity, [mon]] of this.gnome_forest.forest.toplevel.values()) {
-                const node = this.gnome_forest.forest.forks.get(entity);
-                if (node?.right === null) {
-                    this.gnome_forest.update_toplevel(node, mon, smart_gaps);
-                }
-            }
-        }
-    }
-
     on_window_create(window: Meta.Window, actor: Meta.WindowActor, is_new_window: boolean) {
         const win = this.get_window(window);
         if (!win) return;
@@ -1407,26 +1339,11 @@ export class Ext extends Ecs.System<ExtEvent> {
             }),
         );
 
-        this.signals.connect_with(this.settings.ext, ext =>
-            ext.connect('changed', (_s, key) => {
-                switch (key) {
-                    case 'active-hint':
-                        if (indicator) indicator.toggle_active.setToggleState(this.settings.get_active_hint());
-                        this.show_border_on_focused();
-                        break;
-                    case 'gap-inner':
-                        this.on_gap_inner();
-                        break;
-                    case 'gap-outer':
-                        this.on_gap_outer();
-                        break;
-                    case 'smart-gaps':
-                        this.on_smart_gap();
-                        this.show_border_on_focused();
-                        break;
-                }
-            }),
+        this.signals.connect_with(this.settings.ext, settings =>
+            settings.connect('changed::active-hint', () => this.show_border_on_focused()),
         );
+
+        this.gnome_sizes.attach(this.signals);
 
         this.signals.connect_with(this.settings.mutter, mutter =>
             mutter.connect('changed::workspaces-only-on-primary', () => {
@@ -1601,12 +1518,6 @@ export class Ext extends Ecs.System<ExtEvent> {
             workspace_manager.connect('showing-desktop-changed', () => {
                 this.hide_all_borders();
                 this.focus_history.clear();
-            }),
-        );
-
-        this.signals.connect_with(St.ThemeContext.get_for_stage(global.stage), themeContext =>
-            themeContext.connect('notify::scale-factor', () => {
-                return this.update_scale();
             }),
         );
 
@@ -1903,24 +1814,6 @@ export class Ext extends Ecs.System<ExtEvent> {
             this.displays_updating = null;
             return false;
         });
-    }
-
-    update_scale() {
-        const change = this.sizes.set_scale(St.ThemeContext.get_for_stage(global.stage).scale_factor);
-
-        // Both retile, with the new inner gap too
-        if (change != 0) {
-            this.update_outer_gap(change);
-        } else {
-            this.update_inner_gap();
-        }
-    }
-
-    update_snapped() {
-        for (const entity of this.snapped.find(val => val)) {
-            const window = this.windows.get(entity);
-            if (window) this.gnome_tiling_mode.snap(window);
-        }
     }
 
     /** Fetches the window entity which is associated with the metacity window metadata. */

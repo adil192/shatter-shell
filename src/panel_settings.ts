@@ -25,6 +25,8 @@ export class Indicator {
 
     toggle_tiled;
     toggle_active;
+    /** Keeps the active hint toggle in step with the setting */
+    private readonly active_hint_changed: number;
     border_radius;
 
     entry_gaps;
@@ -57,6 +59,10 @@ export class Indicator {
 
         this.toggle_active = toggle(_('Show active hint'), ext.settings.get_active_hint(), toggle => {
             ext.settings.set_active_hint(toggle.state);
+        });
+
+        this.active_hint_changed = this.settings.connect('changed::active-hint', () => {
+            this.toggle_active.setToggleState(ext.settings.get_active_hint());
         });
 
         this.entry_gaps = number_entry(_('Gaps'), ext.settings.get_gap_inner(), value => {
@@ -95,6 +101,7 @@ export class Indicator {
 
     destroy() {
         this.settings.disconnect(this.tile_by_default_changed);
+        this.settings.disconnect(this.active_hint_changed);
         this.button.destroy();
     }
 }

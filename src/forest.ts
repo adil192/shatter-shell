@@ -352,6 +352,27 @@ export class Forest extends Ecs.World {
         return [entity, fork];
     }
 
+    /** Moves every tree `change` pixels in from each edge, except smart-gapped ones */
+    move_in(change: number) {
+        for (const [entity] of this.toplevel.values()) {
+            const fork = this.forks.get(entity);
+            if (!fork || fork.smart_gapped) continue;
+
+            fork.area.x += change;
+            fork.area.y += change;
+            fork.area.width -= change * 2;
+            fork.area.height -= change * 2;
+        }
+    }
+
+    /** The trees that hold a single window, with their monitors */
+    *lone_trees(): Generator<[Fork.Fork, MonitorID], void> {
+        for (const [entity, [monitor]] of this.toplevel.values()) {
+            const fork = this.forks.get(entity);
+            if (fork?.right === null) yield [fork, monitor];
+        }
+    }
+
     /** Create a new top level fork */
     create_toplevel(window: Entity, area: Mtk.Rectangle, id: MonitorWorkspaceID): [Entity, Fork.Fork] {
         const [entity, fork] = this.create_fork(Node.Node.window(window), null, area, id[1], id[0]);
