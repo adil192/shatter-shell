@@ -26,7 +26,7 @@ export class GnomeGrab {
     /** Information about a current possible grab operation */
     grab_op: GrabOp.GrabOp | null = null;
 
-    private drag_signal: SignalID | null = null;
+    private preview_timer: SignalID | null = null;
 
     constructor(private readonly ext: Ext) {}
 
@@ -67,10 +67,10 @@ export class GnomeGrab {
 
     cancel() {
         const { ext } = this;
-        if (this.drag_signal !== null) {
+        if (this.preview_timer !== null) {
             ext.overlay.visible = false;
-            GLib.source_remove(this.drag_signal);
-            this.drag_signal = null;
+            GLib.source_remove(this.preview_timer);
+            this.preview_timer = null;
         }
 
         if (this.grab_op !== null) {
@@ -196,97 +196,88 @@ export class GnomeGrab {
     }
 
     private started(meta: Meta.Window | null, op: number) {
-        const { ext } = this;
         if (!meta) return;
+
+        const { ext } = this;
         const win = ext.get_window(meta);
-        if (win) {
-            win.grab = true;
+        if (!win) return;
 
-            if (win.is_tilable()) {
-                const entity = win.entity;
-                const rect = win.frame();
+        win.grab = true;
+        if (!win.is_tilable()) return;
 
-                this.cancel();
+        this.cancel();
 
-                this.grab_op = new GrabOp.GrabOp(entity, rect);
+        this.grab_op = new GrabOp.GrabOp(win.entity, win.frame());
 
-                ext.size_signals_block(win);
+        ext.size_signals_block(win);
 
-                /** Display an overlay indicating where the window will be placed if dropped */
+        if (overview.visible || is_keyboard_op(op) || is_resize_op(op)) return;
 
-                if (overview.visible || is_keyboard_op(op) || is_resize_op(op)) return;
+        const workspace = ext.active_workspace();
+        this.preview_timer = GLib.timeout_add(GLib.PRIORITY_LOW, 200, () => this.preview(win, workspace));
+    }
 
-                const workspace = ext.active_workspace();
+    private preview(win: MutterWindow, workspace: WorkspaceID): boolean {
+        const { ext } = this;
+        ext.overlay.visible = false;
 
-                this.drag_signal = GLib.timeout_add(GLib.PRIORITY_LOW, 200, () => {
-                    ext.overlay.visible = false;
+        if (!ext.gnome_forest || !this.grab_op || this.grab_op.entity !== win.entity) {
+            this.preview_timer = null;
+            return GLib.SOURCE_REMOVE;
+        }
 
-                    if (!ext.gnome_forest || !this.grab_op || this.grab_op.entity !== entity) {
-                        this.drag_signal = null;
-                        return GLib.SOURCE_REMOVE;
-                    }
+        const [cursor, monitor] = ext.cursor_status();
 
-                    const [cursor, monitor] = ext.cursor_status();
-
-                    let attach_to = null;
-                    for (const found of ext.windows_at_pointer(cursor, monitor, workspace)) {
-                        if (found != win && ext.gnome_forest.attached.contains(found.entity)) {
-                            attach_to = found;
-                            break;
-                        }
-                    }
-
-                    const fork = ext.gnome_forest.get_parent_fork(entity);
-                    if (!fork) return GLib.SOURCE_CONTINUE;
-
-                    const windowless = ext.gnome_forest.largest_on_workspace(monitor, workspace) === null;
-
-                    if (attach_to === null) {
-                        if (
-                            fork.left.inner.kind === node.NodeKind.WINDOW
-                            && fork.right?.inner.kind === node.NodeKind.WINDOW
-                        ) {
-                            const attaching = fork.left.is_window(entity)
-                                ? fork.right.inner.entity
-                                : fork.left.inner.entity;
-
-                            attach_to = ext.windows.get(attaching);
-                        }
-                    }
-
-                    let area, monitor_attachment;
-
-                    if (windowless) {
-                        [area, monitor_attachment] = [ext.monitor_work_area(monitor), true];
-                        area.x += ext.sizes.gap_outer;
-                        area.y += ext.sizes.gap_outer;
-                        area.width -= ext.sizes.gap_outer * 2;
-                        area.height -= ext.sizes.gap_outer * 2;
-                    } else if (attach_to) {
-                        const is_sibling = ext.gnome_forest.windows_are_siblings(entity, attach_to.entity);
-
-                        [area, monitor_attachment] =
-                            (win.stack === null && attach_to.stack === null && is_sibling)
-                            || (win.stack === null && is_sibling)
-                                ? [fork.area, false]
-                                : [attach_to.meta.get_frame_rect(), false];
-                    } else {
-                        return GLib.SOURCE_CONTINUE;
-                    }
-
-                    // A window dropped on a monitor takes all of it
-                    let side = geom.Side.CENTER;
-                    if (!monitor_attachment) {
-                        const stacking_with_mouse = ext.settings.get_stacking_with_mouse();
-                        side = geom.nearest_side([cursor.x, cursor.y], area, stacking_with_mouse).side;
-                    }
-
-                    ext.set_overlay(geom.overlay_area(area, side));
-                    ext.overlay.visible = true;
-
-                    return GLib.SOURCE_CONTINUE;
-                });
+        let attach_to = null;
+        for (const found of ext.windows_at_pointer(cursor, monitor, workspace)) {
+            if (found != win && ext.gnome_forest.attached.contains(found.entity)) {
+                attach_to = found;
+                break;
             }
         }
+
+        const fork = ext.gnome_forest.get_parent_fork(win.entity);
+        if (!fork) return GLib.SOURCE_CONTINUE;
+
+        const windowless = ext.gnome_forest.largest_on_workspace(monitor, workspace) === null;
+
+        if (attach_to === null) {
+            if (fork.left.inner.kind === node.NodeKind.WINDOW && fork.right?.inner.kind === node.NodeKind.WINDOW) {
+                const attaching = fork.left.is_window(win.entity) ? fork.right.inner.entity : fork.left.inner.entity;
+
+                attach_to = ext.windows.get(attaching);
+            }
+        }
+
+        let area, monitor_attachment;
+
+        if (windowless) {
+            [area, monitor_attachment] = [ext.monitor_work_area(monitor), true];
+            area.x += ext.sizes.gap_outer;
+            area.y += ext.sizes.gap_outer;
+            area.width -= ext.sizes.gap_outer * 2;
+            area.height -= ext.sizes.gap_outer * 2;
+        } else if (attach_to) {
+            const is_sibling = ext.gnome_forest.windows_are_siblings(win.entity, attach_to.entity);
+
+            [area, monitor_attachment] =
+                (win.stack === null && attach_to.stack === null && is_sibling) || (win.stack === null && is_sibling)
+                    ? [fork.area, false]
+                    : [attach_to.meta.get_frame_rect(), false];
+        } else {
+            return GLib.SOURCE_CONTINUE;
+        }
+
+        // A window dropped on a monitor takes all of it
+        let side = geom.Side.CENTER;
+        if (!monitor_attachment) {
+            const stacking_with_mouse = ext.settings.get_stacking_with_mouse();
+            side = geom.nearest_side([cursor.x, cursor.y], area, stacking_with_mouse).side;
+        }
+
+        ext.set_overlay(geom.overlay_area(area, side));
+        ext.overlay.visible = true;
+
+        return GLib.SOURCE_CONTINUE;
     }
 }
