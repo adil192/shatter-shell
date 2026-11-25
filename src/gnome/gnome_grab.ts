@@ -153,45 +153,55 @@ export class GnomeGrab {
                     }
                 }
             } else {
-                const fork_entity = ext.gnome_forest.attached.get(win.entity);
-                if (fork_entity) {
-                    const forest = ext.gnome_forest.forest;
-                    const fork = forest.forks.get(fork_entity);
-                    if (fork) {
-                        const movement = grab_op.operation(crect);
+                const movement = grab_op.operation(crect);
 
-                        // A click on a resize edge can begin and end a grab without
-                        // changing the window. Do not turn that into a tree resize.
-                        if (movement === Movement.NONE) return;
+                // A click on a resize edge can begin and end a grab without
+                // changing the window. Do not turn that into a tree resize.
+                if (movement === Movement.NONE) return;
 
-                        if (win.stack != null) {
-                            const tab_dimension = ext.sizes.scale * stack.TAB_HEIGHT_UNSCALED;
-                            crect.height += tab_dimension;
-                            crect.y -= tab_dimension;
-                        }
-
-                        const top_level = forest.find_toplevel(ext.workspace_id());
-                        if (top_level) {
-                            geom.clamp(crect, forest.forks.get(top_level)!.area);
-                        }
-
-                        const neighbour_rect = (side: EdgeSide) =>
-                            ext.focus_selector.toward(ext, side, win)?.frame() ?? null;
-                        if (movement_is_valid(movement, win.frame(), neighbour_rect)) {
-                            forest.resize(ext, fork_entity, fork, win.entity, movement, crect);
-                            forest.arrange(ext, fork.workspace);
-                        } else {
-                            forest.tile(ext, fork, fork.area);
-                        }
-                    } else {
-                        Log.error(`no fork component found`);
-                    }
-                } else {
-                    Log.error(`no fork entity found`);
-                }
+                this.resize(win, movement);
             }
         } else if (ext.settings.get_snap_to_grid()) {
             ext.gnome_tiling_mode.snap(win);
+        }
+    }
+
+    private resize(win: MutterWindow, movement: Movement) {
+        const { ext } = this;
+        const at = ext.gnome_forest;
+        if (!at) return;
+
+        const fork_entity = at.attached.get(win.entity);
+        if (!fork_entity) {
+            Log.error(`no fork entity found`);
+            return;
+        }
+
+        const forest = at.forest;
+        const fork = forest.forks.get(fork_entity);
+        if (!fork) {
+            Log.error(`no fork component found`);
+            return;
+        }
+
+        const crect = win.frame();
+        if (win.stack != null) {
+            const tab_dimension = ext.sizes.scale * stack.TAB_HEIGHT_UNSCALED;
+            crect.height += tab_dimension;
+            crect.y -= tab_dimension;
+        }
+
+        const top_level = forest.find_toplevel(ext.workspace_id());
+        if (top_level) {
+            geom.clamp(crect, forest.forks.get(top_level)!.area);
+        }
+
+        const neighbour_rect = (side: EdgeSide) => ext.focus_selector.toward(ext, side, win)?.frame() ?? null;
+        if (movement_is_valid(movement, win.frame(), neighbour_rect)) {
+            forest.resize(ext, fork_entity, fork, win.entity, movement, crect);
+            forest.arrange(ext, fork.workspace);
+        } else {
+            forest.tile(ext, fork, fork.area);
         }
     }
 
