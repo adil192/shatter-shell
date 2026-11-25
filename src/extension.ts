@@ -6,17 +6,15 @@ import type { GnomeForest } from './gnome/gnome_forest.js';
 import type { Indicator } from './panel_settings.js';
 
 import * as Config from './config.js';
-import * as movement from './core/movement.js';
-import { type EdgeSide, movement_is_valid } from './core/movement.js';
 import * as Ecs from './ecs.js';
 import * as Events from './events.js';
 import * as Executor from './executor.js';
 import * as exec from './executor.js';
 import * as Focus from './focus.js';
 import { Fork } from './fork.js';
+import { GnomeGrab } from './gnome/gnome_grab.js';
 import { GnomeTilingMode } from './gnome/gnome_tiling_mode.js';
 import * as Window from './gnome/mutter_window.js';
-import * as GrabOp from './grab_op.js';
 import * as Keybindings from './keybindings.js';
 import * as Lib from './lib.js';
 import * as node from './node.js';
@@ -29,8 +27,6 @@ const display = global.display;
 const wim = global.window_manager;
 const wom = global.workspace_manager;
 
-const Movement = movement.Movement;
-
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
 import GObject from 'gi://GObject';
@@ -39,7 +35,7 @@ import Mtk from 'gi://Mtk';
 import Shell from 'gi://Shell';
 import St from 'gi://St';
 const { GlobalEvent, WindowEventType } = Events;
-const { cursor_rect, is_keyboard_op, is_resize_op, is_move_op } = Lib;
+const { cursor_rect } = Lib;
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 const { layoutManager, modalActorFocusStack, overview, panel, screenShield } = Main;
 import type { Misc } from '@girs/gnome-shell';
@@ -103,13 +99,10 @@ export class Ext extends Ecs.System<ExtEvent> {
     /** The sizes in pixels that the layout uses: the gaps, the snap-to-grid cells, and the scale factor */
     readonly sizes = new LayoutSizes(St.ThemeContext.get_for_stage(global.stage).scale_factor);
 
-    drag_signal: SignalID | null = null;
-
     /** Opens the floating exceptions, and applies them to the windows */
     readonly gnome_exceptions: GnomeExceptions;
 
-    /** Information about a current possible grab operation */
-    grab_op: GrabOp.GrabOp | null = null;
+    readonly gnome_grab = new GnomeGrab(this);
 
     /** A display config update is triggered on a workspace addition */
     ignore_display_update: boolean = false;
@@ -243,12 +236,12 @@ export class Ext extends Ecs.System<ExtEvent> {
 
                 switch (event.event) {
                     case WindowEventType.Maximize:
-                        this.unset_grab_op();
+                        this.gnome_grab.cancel();
                         this.on_maximize(win);
                         break;
 
                     case WindowEventType.Minimize:
-                        this.unset_grab_op();
+                        this.gnome_grab.cancel();
                         this.on_minimize(win);
                         break;
 
@@ -495,7 +488,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     /** Fetches the window component from the entity associated with the metacity window metadata. */
-    private get_window(meta: Meta.Window): Window.MutterWindow | null {
+    get_window(meta: Meta.Window): Window.MutterWindow | null {
         const entity = this.window_entity(meta);
         return entity ? this.windows.get(entity) : null;
     }
@@ -837,215 +830,6 @@ export class Ext extends Ecs.System<ExtEvent> {
         }
     }
 
-    /** Triggered when a grab operation has been ended */
-    on_grab_end(meta: Meta.Window, op?: number) {
-        const win = this.get_window(meta);
-
-        if (win !== null) {
-            win.grab = false;
-        }
-
-        if (null === win || !win.is_tilable()) {
-            this.unset_grab_op();
-            return;
-        }
-
-        this.on_grab_end_(win, op);
-        this.unset_grab_op();
-    }
-
-    on_grab_end_(win: Window.MutterWindow, op?: number) {
-        this.size_signals_unblock(win);
-
-        if (win.meta.minimized) {
-            this.on_minimize(win);
-            return;
-        }
-
-        if (win.is_maximized()) {
-            return;
-        }
-
-        const grab_op = this.grab_op;
-
-        if (this.gnome_forest && op == undefined) {
-            const mon = this.monitors.get(win.entity);
-            if (mon) {
-                const rect = win.meta.get_work_area_for_monitor(mon[0]);
-                if (rect.contains_rect(cursor_rect())) {
-                    this.gnome_forest.reflow(win.entity);
-                } else {
-                    this.gnome_forest.on_drop(win, true);
-                }
-            }
-
-            return;
-        }
-
-        if (!(grab_op && Ecs.entity_eq(grab_op.entity, win.entity))) {
-            Log.error(`grabbed entity is not the same as the one that was dropped`);
-            return;
-        }
-
-        if (this.gnome_forest) {
-            const crect = win.frame();
-            const rect = grab_op.rect;
-            if (is_move_op(op!)) {
-                const cmon = win.monitor_id();
-                const prev_mon = this.monitors.get(win.entity);
-                const mon_drop = prev_mon ? prev_mon[0] !== cmon : false;
-
-                this.monitors.insert(win.entity, [win.monitor_id(), win.workspace_id()]);
-
-                if (rect.x != crect.x || rect.y != crect.y) {
-                    if (rect.contains_rect(cursor_rect())) {
-                        if (this.gnome_forest.attached.contains(win.entity)) {
-                            this.gnome_forest.on_drop(win, mon_drop);
-                        } else {
-                            this.gnome_forest.reflow(win.entity);
-                        }
-                    } else {
-                        this.gnome_forest.on_drop(win, mon_drop);
-                    }
-                }
-            } else {
-                const fork_entity = this.gnome_forest.attached.get(win.entity);
-                if (fork_entity) {
-                    const forest = this.gnome_forest.forest;
-                    const fork = forest.forks.get(fork_entity);
-                    if (fork) {
-                        const movement = grab_op.operation(crect);
-
-                        // A click on a resize edge can begin and end a grab without
-                        // changing the window. Do not turn that into a tree resize.
-                        if (movement === Movement.NONE) return;
-
-                        if (win.stack != null) {
-                            const tab_dimension = this.sizes.scale * stack.TAB_HEIGHT_UNSCALED;
-                            crect.height += tab_dimension;
-                            crect.y -= tab_dimension;
-                        }
-
-                        const top_level = forest.find_toplevel(this.workspace_id());
-                        if (top_level) {
-                            geom.clamp(crect, forest.forks.get(top_level)!.area);
-                        }
-
-                        const neighbour_rect = (side: EdgeSide) =>
-                            this.focus_selector.toward(this, side, win)?.frame() ?? null;
-                        if (movement_is_valid(movement, win.frame(), neighbour_rect)) {
-                            forest.resize(this, fork_entity, fork, win.entity, movement, crect);
-                            forest.arrange(this, fork.workspace);
-                        } else {
-                            forest.tile(this, fork, fork.area);
-                        }
-                    } else {
-                        Log.error(`no fork component found`);
-                    }
-                } else {
-                    Log.error(`no fork entity found`);
-                }
-            }
-        } else if (this.settings.get_snap_to_grid()) {
-            this.gnome_tiling_mode.snap(win);
-        }
-    }
-
-    /** Triggered when a grab operation has been started */
-    on_grab_start(meta: Meta.Window | null, op: number) {
-        if (!meta) return;
-        const win = this.get_window(meta);
-        if (win) {
-            win.grab = true;
-
-            if (win.is_tilable()) {
-                const entity = win.entity;
-                const rect = win.frame();
-
-                this.unset_grab_op();
-
-                this.grab_op = new GrabOp.GrabOp(entity, rect);
-
-                this.size_signals_block(win);
-
-                /** Display an overlay indicating where the window will be placed if dropped */
-
-                if (overview.visible || is_keyboard_op(op) || is_resize_op(op)) return;
-
-                const workspace = this.active_workspace();
-
-                this.drag_signal = GLib.timeout_add(GLib.PRIORITY_LOW, 200, () => {
-                    this.overlay.visible = false;
-
-                    if (!this.gnome_forest || !this.grab_op || this.grab_op.entity !== entity) {
-                        this.drag_signal = null;
-                        return GLib.SOURCE_REMOVE;
-                    }
-
-                    const [cursor, monitor] = this.cursor_status();
-
-                    let attach_to = null;
-                    for (const found of this.windows_at_pointer(cursor, monitor, workspace)) {
-                        if (found != win && this.gnome_forest.attached.contains(found.entity)) {
-                            attach_to = found;
-                            break;
-                        }
-                    }
-
-                    const fork = this.gnome_forest.get_parent_fork(entity);
-                    if (!fork) return GLib.SOURCE_CONTINUE;
-
-                    const windowless = this.gnome_forest.largest_on_workspace(monitor, workspace) === null;
-
-                    if (attach_to === null) {
-                        if (
-                            fork.left.inner.kind === node.NodeKind.WINDOW
-                            && fork.right?.inner.kind === node.NodeKind.WINDOW
-                        ) {
-                            const attaching = fork.left.is_window(entity)
-                                ? fork.right.inner.entity
-                                : fork.left.inner.entity;
-
-                            attach_to = this.windows.get(attaching);
-                        }
-                    }
-
-                    let area, monitor_attachment;
-
-                    if (windowless) {
-                        [area, monitor_attachment] = [this.monitor_work_area(monitor), true];
-                        area.x += this.sizes.gap_outer;
-                        area.y += this.sizes.gap_outer;
-                        area.width -= this.sizes.gap_outer * 2;
-                        area.height -= this.sizes.gap_outer * 2;
-                    } else if (attach_to) {
-                        const is_sibling = this.gnome_forest.windows_are_siblings(entity, attach_to.entity);
-
-                        [area, monitor_attachment] =
-                            (win.stack === null && attach_to.stack === null && is_sibling)
-                            || (win.stack === null && is_sibling)
-                                ? [fork.area, false]
-                                : [attach_to.meta.get_frame_rect(), false];
-                    } else {
-                        return GLib.SOURCE_CONTINUE;
-                    }
-
-                    // A window dropped on a monitor takes all of it
-                    let side = geom.Side.CENTER;
-                    if (!monitor_attachment) {
-                        const stacking_with_mouse = this.settings.get_stacking_with_mouse();
-                        side = geom.nearest_side([cursor.x, cursor.y], area, stacking_with_mouse).side;
-                    }
-
-                    this.set_overlay(geom.overlay_area(area, side));
-                    this.overlay.visible = true;
-
-                    return GLib.SOURCE_CONTINUE;
-                });
-            }
-        }
-    }
-
     /** Handle window maximization notifications */
     on_maximize(win: Window.MutterWindow) {
         if (win.is_maximized()) {
@@ -1158,7 +942,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     on_overview_shown() {
         this.exit_modes();
-        this.unset_grab_op();
+        this.gnome_grab.cancel();
     }
 
     on_smart_gap() {
@@ -1542,35 +1326,7 @@ export class Ext extends Ecs.System<ExtEvent> {
             }),
         );
 
-        this.signals.connect_with(display, () =>
-            display.connect('grab-op-begin', (_display, win, op) => {
-                this.on_grab_start(win, op);
-            }),
-        );
-
-        this.signals.connect_with(display, () =>
-            display.connect('grab-op-end', (_display, win, op) => {
-                this.register_fn(() => this.on_grab_end(win, op));
-            }),
-        );
-
-        this.signals.connect_with(overview, () =>
-            overview.connect('window-drag-begin', (_, win) => {
-                this.on_grab_start(win, 1);
-            }),
-        );
-
-        this.signals.connect_with(overview, () =>
-            overview.connect('window-drag-end', (_, win) => {
-                this.register_fn(() => this.on_grab_end(win));
-            }),
-        );
-
-        this.signals.connect_with(overview, () =>
-            overview.connect('window-drag-cancelled', () => {
-                this.unset_grab_op();
-            }),
-        );
+        this.gnome_grab.attach(this.signals);
 
         this.signals.connect_with(wim, () =>
             wim.connect('switch-workspace', () => {
@@ -1650,7 +1406,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         }
         this.timeouts.clear();
 
-        this.unset_grab_op();
+        this.gnome_grab.cancel();
 
         if (this.displays_updating !== null) {
             GLib.source_remove(this.displays_updating);
@@ -1717,20 +1473,6 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     should_ignore_workspace(monitor: MonitorID): boolean {
         return this.settings.get_workspaces_only_on_primary() && monitor !== global.display.get_primary_monitor();
-    }
-
-    unset_grab_op() {
-        if (this.drag_signal !== null) {
-            this.overlay.visible = false;
-            GLib.source_remove(this.drag_signal);
-            this.drag_signal = null;
-        }
-
-        if (this.grab_op !== null) {
-            const window = this.windows.get(this.grab_op.entity);
-            if (window) this.size_signals_unblock(window);
-            this.grab_op = null;
-        }
     }
 
     update_display_configuration(workareas_only: boolean) {

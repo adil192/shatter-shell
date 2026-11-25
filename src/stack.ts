@@ -452,8 +452,8 @@ export class Stack {
     }
 
     private on_grab(or: () => void) {
-        if (this.ext.grab_op !== null) {
-            if (Ecs.entity_eq(this.ext.grab_op.entity, this.active)) {
+        if (this.ext.gnome_grab.grab_op !== null) {
+            if (Ecs.entity_eq(this.ext.gnome_grab.grab_op.entity, this.active)) {
                 if (this.widgets) {
                     const parent = this.widgets.tabs.get_parent();
                     const actor = this.active_meta()?.get_compositor_private<Meta.WindowActor | null>();
