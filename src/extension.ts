@@ -1,4 +1,4 @@
-import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';
+import { Extension, InjectionManager } from 'resource:///org/gnome/shell/extensions/extension.js';
 
 import type { Entity } from './ecs.js';
 import type { ExtEvent } from './events.js';
@@ -70,12 +70,6 @@ const { monitorID, workspaceID } = Lib;
 
 const sessionMode = Main.sessionMode as typeof Main.sessionMode & { isLocked?: boolean };
 
-interface Injection<T extends object, K extends keyof T = keyof T> {
-    object: T;
-    method: K;
-    func: T[K];
-}
-
 export class Ext extends Ecs.System<ExtEvent> {
     extension: ShatterShellExtension | null;
 
@@ -121,9 +115,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     ignore_display_update: boolean = false;
 
     /** Functions replaced in GNOME */
-    injections: {
-        screen_unlock?: Injection<ScreenShield, 'deactivate'>;
-    } = {};
+    private readonly injections = new InjectionManager();
 
     /** Misc GLib timeouts that will need to be removed when the extension is `disable`d. */
     readonly timeouts = new Set<number>();
@@ -508,24 +500,16 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     injections_add() {
-        const screen_unlock_fn = ScreenShield.prototype['deactivate'];
-        this.injections.screen_unlock = {
-            // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-            object: ScreenShield.prototype as ScreenShield,
-            method: 'deactivate',
-            func: screen_unlock_fn,
-        };
-        ScreenShield.prototype['deactivate'] = (animate: boolean) => {
-            screen_unlock_fn.apply(screenShield, [animate]);
-            this.update_display_configuration(true);
-        };
+        this.injections.overrideMethod(ScreenShield.prototype, 'deactivate', originalMethod => {
+            return (animate: boolean) => {
+                originalMethod.call(screenShield, animate);
+                this.update_display_configuration(true);
+            };
+        });
     }
 
     injections_remove() {
-        for (const injection of Object.values(this.injections)) {
-            injection.object[injection.method] = injection.func;
-        }
-        this.injections = {};
+        this.injections.clear();
     }
 
     load_settings() {
