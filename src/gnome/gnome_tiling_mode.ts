@@ -9,10 +9,10 @@ import type { Ext } from '../extension.js';
 import type { NodeStack } from '../node.js';
 
 import * as geom from '../core/geom.js';
+import { calculate } from '../core/movement.js';
 import * as exec from '../executor.js';
 import { Fork } from '../fork.js';
 // import * as Ecs from './ecs.js';
-import * as GrabOp from '../grab_op.js';
 import * as Lib from '../lib.js';
 import { Log } from '../log.js';
 import * as Node from '../node.js';
@@ -449,25 +449,26 @@ export class GnomeTilingMode {
 
                 const before = window.frame();
 
-                const grab_op = new GrabOp.GrabOp(this.window, before);
+                // The frame before the last resize
+                let last = before;
 
-                const crect = grab_op.rect.copy();
+                const crect = before.copy();
 
                 const resize = (
                     mov: Mtk.Rectangle,
                     func: (m: Mtk.Rectangle, a: Mtk.Rectangle, mov: Mtk.Rectangle) => boolean,
                 ) => {
-                    if (func(toparea, crect, mov) || crect.equal(grab_op.rect)) return;
+                    if (func(toparea, crect, mov) || crect.equal(last)) return;
 
                     this.ext.gnome_forest!.forest.resize(
                         this.ext,
                         entity,
                         fork,
                         this.window!,
-                        grab_op.operation(crect),
+                        calculate(last, crect),
                         crect,
                     );
-                    grab_op.rect = crect.copy();
+                    last = crect.copy();
                 };
 
                 resize(mov1, callback);
