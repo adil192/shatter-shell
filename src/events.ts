@@ -3,7 +3,7 @@ import Mtk from 'gi://Mtk';
 
 import type { Ext } from './extension.js';
 
-import * as Window from './window.js';
+import * as Window from './gnome/mutter_window.js';
 
 /** Events handled by the extension's system. */
 export type ExtEvent = CallbackEvent | WindowMove | CreateWindow | WindowEvent | GlobalEventMessage;
@@ -18,7 +18,7 @@ interface CallbackEvent {
 /** Event that moves a registered window */
 interface WindowMove {
     tag: 'window_move';
-    window: Window.ShellWindow;
+    window: Window.MutterWindow;
 }
 
 /** Event that registers a new window */
@@ -31,7 +31,7 @@ interface CreateWindow {
 
 interface WindowEvent {
     tag: 'window_event';
-    window: Window.ShellWindow;
+    window: Window.MutterWindow;
     event: WindowEventType;
 }
 
@@ -58,11 +58,11 @@ export function global(event: GlobalEvent): GlobalEventMessage {
     return { tag: 'global', event };
 }
 
-export function window_move(ext: Ext, window: Window.ShellWindow, rect: Mtk.Rectangle): WindowMove {
+export function window_move(ext: Ext, window: Window.MutterWindow, rect: Mtk.Rectangle): WindowMove {
     ext.movements.insert(window.entity, rect);
     return { tag: 'window_move', window };
 }
 
-export function window_event(window: Window.ShellWindow, event: WindowEventType): WindowEvent {
+export function window_event(window: Window.MutterWindow, event: WindowEventType): WindowEvent {
     return { tag: 'window_event', window, event };
 }

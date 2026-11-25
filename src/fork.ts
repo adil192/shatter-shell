@@ -7,9 +7,9 @@ import type { Forest } from './forest.js';
 import type { Node } from './node.js';
 
 import * as Ecs from './ecs.js';
+import { MutterWindow } from './gnome/mutter_window.js';
 import * as node from './node.js';
 import { TAB_HEIGHT_UNSCALED } from './stack.js';
-import { ShellWindow } from './window.js';
 const { NodeKind } = node;
 
 const XPOS = 'x' as const;
@@ -131,7 +131,7 @@ export class Fork {
     }
 
     /** Replaces the association of a window in a fork with another */
-    replace_window(ext: Ext, a: ShellWindow, b: ShellWindow): (() => void) | null {
+    replace_window(ext: Ext, a: MutterWindow, b: MutterWindow): (() => void) | null {
         let closure = null;
 
         const check_right = () => {
@@ -222,7 +222,7 @@ export class Fork {
     ) {
         let ratio = null;
 
-        const manually_moved = ext.grab_op !== null || ext.gnome_tiling_mode.resizing_window;
+        const manually_moved = ext.grab.window !== null || ext.gnome_tiling_mode.resizing_window;
 
         if (!this.is_toplevel) {
             if (this.orientation_changed) {
