@@ -655,7 +655,7 @@ export class ShellWindow {
         const actor = this.meta.get_compositor_private<Meta.WindowActor | null>();
         if (actor) {
             // Cancel timeout if actor gets destroyed before it fires
-            this.#animate_delay_on_destroy = this.ext.signals.connect(actor, () =>
+            this.#animate_delay_on_destroy = this.ext.signals.connect_with(actor, () =>
                 actor.connect('destroy', () => {
                     this.ext.signals.forget_source(actor);
                     this.#clear_animate_delay({ disconnct_destroy_signal: false });

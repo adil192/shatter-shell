@@ -50,10 +50,10 @@ export class GnomeTheme {
     attach(signals: Signals<GObject.Object | Misc.signals.EventEmitter>) {
         const defer_changed = () => this.defer(() => this.on_changed());
 
-        signals.connect(this.settings.desktop_interface, settings =>
+        signals.connect_with(this.settings.desktop_interface, settings =>
             settings.connect('changed::color-scheme', defer_changed),
         );
-        signals.connect(this.settings.a11y_interface, settings =>
+        signals.connect_with(this.settings.a11y_interface, settings =>
             settings.connect('changed::high-contrast', defer_changed),
         );
     }

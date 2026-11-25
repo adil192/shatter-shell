@@ -8,11 +8,11 @@ export class Signals<Source extends Disconnectable> {
     private readonly connections = new Map<Source, Array<number>>();
 
     /**
-     * Connects to `source` with `connect`, and keeps the signal's id.
+     * Connects to `source` with a `connect` function, and records the signal's id.
      *
      * @param connect Connects a signal on `source`, and returns its id
      */
-    connect<T extends Source>(source: T, connect: (source: T) => number): number {
+    connect_with<T extends Source>(source: T, connect: (source: T) => number): number {
         const id = connect(source);
 
         const ids = this.connections.get(source);

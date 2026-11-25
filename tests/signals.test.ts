@@ -22,11 +22,11 @@ describe('Signals', () => {
         const signals = new Signals<Source>();
         const source = new Source();
         assert.equal(
-            signals.connect(source, s => s.connect()),
+            signals.connect_with(source, s => s.connect()),
             1,
         );
         assert.equal(
-            signals.connect(source, s => s.connect()),
+            signals.connect_with(source, s => s.connect()),
             2,
         );
     });
@@ -36,9 +36,9 @@ describe('Signals', () => {
         const a = new Source();
         const b = new Source();
 
-        signals.connect(a, s => s.connect());
-        signals.connect(b, s => s.connect());
-        signals.connect(a, s => s.connect());
+        signals.connect_with(a, s => s.connect());
+        signals.connect_with(b, s => s.connect());
+        signals.connect_with(a, s => s.connect());
         signals.disconnect_all();
 
         assert.deepEqual(a.disconnected, [1, 2]);
@@ -49,7 +49,7 @@ describe('Signals', () => {
         const signals = new Signals<Source>();
         const source = new Source();
 
-        signals.connect(source, s => s.connect());
+        signals.connect_with(source, s => s.connect());
         signals.disconnect_all();
         signals.disconnect_all();
 
@@ -60,9 +60,9 @@ describe('Signals', () => {
         const signals = new Signals<Source>();
         const source = new Source();
 
-        signals.connect(source, s => s.connect());
-        signals.connect(source, s => s.connect());
-        signals.connect(source, s => s.connect());
+        signals.connect_with(source, s => s.connect());
+        signals.connect_with(source, s => s.connect());
+        signals.connect_with(source, s => s.connect());
         signals.disconnect(source, 1);
 
         assert.deepEqual(source.disconnected, [1]);
@@ -75,7 +75,7 @@ describe('Signals', () => {
         const signals = new Signals<Source>();
         const source = new Source();
 
-        signals.connect(source, s => s.connect());
+        signals.connect_with(source, s => s.connect());
         signals.disconnect(source, 404);
 
         assert.deepEqual(source.disconnected, [404]);
@@ -86,9 +86,9 @@ describe('Signals', () => {
         const a = new Source();
         const b = new Source();
 
-        signals.connect(a, s => s.connect());
-        signals.connect(a, s => s.connect());
-        signals.connect(b, s => s.connect());
+        signals.connect_with(a, s => s.connect());
+        signals.connect_with(a, s => s.connect());
+        signals.connect_with(b, s => s.connect());
         signals.forget_source(a);
         signals.disconnect_all();
 

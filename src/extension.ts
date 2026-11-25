@@ -1224,7 +1224,7 @@ export class Ext extends Ecs.System<ExtEvent> {
             });
         }
 
-        this.signals.connect(actor, () =>
+        this.signals.connect_with(actor, () =>
             actor.connect('destroy', () => {
                 if (win.border) {
                     win.border.destroy();
@@ -1403,7 +1403,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         for (const [, ws] of iter_workspaces(workspace_manager)) {
             let index = workspaceID(ws.index());
 
-            this.signals.connect(ws, () =>
+            this.signals.connect_with(ws, () =>
                 ws.connect('notify::workspace-index', () => {
                     if (ws !== null) {
                         const new_index = workspaceID(ws.index());
@@ -1414,13 +1414,13 @@ export class Ext extends Ecs.System<ExtEvent> {
             );
         }
 
-        this.signals.connect(display, () =>
+        this.signals.connect_with(display, () =>
             display.connect('workareas-changed', () => {
                 this.update_display_configuration(true);
             }),
         );
 
-        this.signals.connect(wim, () =>
+        this.signals.connect_with(wim, () =>
             wim.connect('size-change', (_, actor, event) => {
                 if (!this.auto_tiler) return;
 
@@ -1447,7 +1447,7 @@ export class Ext extends Ecs.System<ExtEvent> {
             }),
         );
 
-        this.signals.connect(this.settings.ext, ext =>
+        this.signals.connect_with(this.settings.ext, ext =>
             ext.connect('changed', (_s, key) => {
                 switch (key) {
                     case 'active-hint':
@@ -1468,20 +1468,20 @@ export class Ext extends Ecs.System<ExtEvent> {
             }),
         );
 
-        this.signals.connect(this.settings.mutter, mutter =>
+        this.signals.connect_with(this.settings.mutter, mutter =>
             mutter.connect('changed::workspaces-only-on-primary', () => {
                 this.register(Events.global(GlobalEvent.MonitorsChanged));
             }),
         );
 
-        this.signals.connect(layoutManager, () =>
+        this.signals.connect_with(layoutManager, () =>
             // @ts-expect-error GObject.Object.connect types are borked
             layoutManager.connect('monitors-changed', () => {
                 this.register(Events.global(GlobalEvent.MonitorsChanged));
             }),
         );
 
-        this.signals.connect(sessionMode, () =>
+        this.signals.connect_with(sessionMode, () =>
             sessionMode.connect('updated', () => {
                 if (indicator) {
                     indicator.button.visible = !sessionMode.isLocked;
@@ -1493,13 +1493,13 @@ export class Ext extends Ecs.System<ExtEvent> {
             }),
         );
 
-        this.signals.connect(overview, () =>
+        this.signals.connect_with(overview, () =>
             overview.connect('showing', () => {
                 this.register(Events.global(GlobalEvent.OverviewShown));
             }),
         );
 
-        this.signals.connect(overview, () =>
+        this.signals.connect_with(overview, () =>
             overview.connect('hiding', () => {
                 const window = this.get_focused_window();
                 if (window) {
@@ -1512,7 +1512,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         this.register_fn(() => {
             if (screenShield?.locked) this.update_display_configuration(false);
 
-            this.signals.connect(display, () =>
+            this.signals.connect_with(display, () =>
                 display.connect('notify::focus-window', () => {
                     // Disallow refocus if a modal window is active
                     if (Main.modalCount !== 0 && modalActorFocusStack.length) {
@@ -1576,75 +1576,75 @@ export class Ext extends Ecs.System<ExtEvent> {
             return false;
         });
 
-        this.signals.connect(display, () =>
+        this.signals.connect_with(display, () =>
             display.connect('window-created', (_, window) => {
                 this.register({ tag: 'window_create', window, is_new_window: true });
             }),
         );
 
-        this.signals.connect(display, () =>
+        this.signals.connect_with(display, () =>
             display.connect('grab-op-begin', (_display, win, op) => {
                 this.on_grab_start(win, op);
             }),
         );
 
-        this.signals.connect(display, () =>
+        this.signals.connect_with(display, () =>
             display.connect('grab-op-end', (_display, win, op) => {
                 this.register_fn(() => this.on_grab_end(win, op));
             }),
         );
 
-        this.signals.connect(overview, () =>
+        this.signals.connect_with(overview, () =>
             overview.connect('window-drag-begin', (_, win) => {
                 this.on_grab_start(win, 1);
             }),
         );
 
-        this.signals.connect(overview, () =>
+        this.signals.connect_with(overview, () =>
             overview.connect('window-drag-end', (_, win) => {
                 this.register_fn(() => this.on_grab_end(win));
             }),
         );
 
-        this.signals.connect(overview, () =>
+        this.signals.connect_with(overview, () =>
             overview.connect('window-drag-cancelled', () => {
                 this.unset_grab_op();
             }),
         );
 
-        this.signals.connect(wim, () =>
+        this.signals.connect_with(wim, () =>
             wim.connect('switch-workspace', () => {
                 this.hide_all_borders();
             }),
         );
 
-        this.signals.connect(workspace_manager, () =>
+        this.signals.connect_with(workspace_manager, () =>
             workspace_manager.connect('active-workspace-changed', () => {
                 this.on_active_workspace_changed();
             }),
         );
 
-        this.signals.connect(workspace_manager, () =>
+        this.signals.connect_with(workspace_manager, () =>
             workspace_manager.connect('workspace-removed', (_, number) => {
                 this.on_workspace_removed(number);
             }),
         );
 
-        this.signals.connect(workspace_manager, () =>
+        this.signals.connect_with(workspace_manager, () =>
             workspace_manager.connect('workspace-added', (_, number) => {
                 this.on_workspace_added(number);
             }),
         );
 
         // Bind show desktop and remove the active hint
-        this.signals.connect(workspace_manager, () =>
+        this.signals.connect_with(workspace_manager, () =>
             workspace_manager.connect('showing-desktop-changed', () => {
                 this.hide_all_borders();
                 this.focus_history.clear();
             }),
         );
 
-        this.signals.connect(St.ThemeContext.get_for_stage(global.stage), themeContext =>
+        this.signals.connect_with(St.ThemeContext.get_for_stage(global.stage), themeContext =>
             themeContext.connect('notify::scale-factor', () => {
                 return this.update_scale();
             }),

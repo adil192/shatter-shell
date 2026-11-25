@@ -78,7 +78,7 @@ export class WindowAnimationController {
 
             const animation: WindowAnimation = { actor_clone };
             this.animations.set(actor, animation);
-            animation.destroy_signal = this.signals.connect(actor, () =>
+            animation.destroy_signal = this.signals.connect_with(actor, () =>
                 actor.connect('destroy', () => {
                     if (this.animations.get(actor) !== animation) return;
                     this.animations.delete(actor);
