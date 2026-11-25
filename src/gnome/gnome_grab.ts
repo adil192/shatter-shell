@@ -3,18 +3,17 @@ import type GObject from 'gi://GObject';
 
 import GLib from 'gi://GLib';
 import Meta from 'gi://Meta';
-import Mtk from 'gi://Mtk';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
 import type { Grab, Target } from '../core/grab.js';
-import type { EdgeSide } from '../core/movement.js';
+import type { EdgeSide, Movement } from '../core/movement.js';
 import type { Signals } from '../core/signals.js';
 import type { Ext } from '../extension.js';
 import type { MutterWindow } from './mutter_window.js';
 
 import * as geom from '../core/geom.js';
 import { GrabKind } from '../core/grab.js';
-import { calculate, Movement, movement_is_valid } from '../core/movement.js';
+import { movement_is_valid } from '../core/movement.js';
 import * as lib from '../lib.js';
 import { Log } from '../log.js';
 import * as node from '../node.js';
@@ -22,7 +21,7 @@ import * as stack from '../stack.js';
 
 const { overview } = Main;
 
-/** Connects GNOME's grabs of windows to the extension */
+/** Connects GNOME's grabs of windows to {@link Grab}, and carries out what it decides */
 export class GnomeGrab {
     private preview_timer: SignalID | null = null;
 
@@ -87,87 +86,71 @@ export class GnomeGrab {
     }
 
     private ended(meta: Meta.Window, op?: number) {
-        const { ext } = this;
-        const win = ext.get_window(meta);
+        const win = this.ext.get_window(meta);
 
         if (win !== null) {
             win.grab = false;
         }
 
-        if (null === win || !win.is_tilable()) {
-            this.cancel();
-            return;
-        }
+        if (win !== null && win.is_tilable()) this.drop(win, op);
 
-        this.drop(win, op);
         this.cancel();
     }
 
     private drop(win: MutterWindow, op?: number) {
         const { ext } = this;
+        const at = ext.gnome_forest;
+
         ext.size_signals_unblock(win);
 
-        if (win.meta.minimized) {
-            ext.on_minimize(win);
-            return;
+        const pointer = lib.cursor_rect();
+        const kind = kind_of(op);
+
+        // The monitor and workspace that the window was last seen on
+        const seen = ext.monitors.get(win.entity);
+        if (kind === GrabKind.OverviewDrag && at && !seen) return;
+        const monitor = seen ? seen[0] : win.monitor_id();
+
+        const outcome = this.grab.end(win, {
+            kind,
+            minimized: win.meta.minimized,
+            maximized: win.is_maximized(),
+            auto_tiling: at !== null,
+            in_tree: at?.attached.contains(win.entity) ?? false,
+            other_monitor: seen ? seen[0] !== win.monitor_id() : false,
+            pointer_in_work_area: win.meta.get_work_area_for_monitor(monitor).contains_rect(pointer),
+            pointer: [pointer.x, pointer.y],
+            snap_to_grid: ext.settings.get_snap_to_grid(),
+        });
+
+        // A tiled window that was moved is now seen where it was dropped
+        const moved = outcome.kind === 'none' || outcome.kind === 'reflow' || outcome.kind === 'drop';
+        const move_op = kind === GrabKind.MouseMove || kind === GrabKind.KeyboardMove;
+        if (at && move_op && moved && !win.meta.minimized && !win.is_maximized()) {
+            ext.monitors.insert(win.entity, [win.monitor_id(), win.workspace_id()]);
         }
 
-        if (win.is_maximized()) {
-            return;
-        }
-
-        if (ext.gnome_forest && op == undefined) {
-            const mon = ext.monitors.get(win.entity);
-            if (mon) {
-                const rect = win.meta.get_work_area_for_monitor(mon[0]);
-                if (rect.contains_rect(lib.cursor_rect())) {
-                    ext.gnome_forest.reflow(win.entity);
-                } else {
-                    ext.gnome_forest.on_drop(win, true);
-                }
-            }
-
-            return;
-        }
-
-        const start = this.grab.start_frame;
-        if (start === null || !this.grab.holds(win)) {
-            Log.error(`grabbed entity is not the same as the one that was dropped`);
-            return;
-        }
-
-        if (ext.gnome_forest) {
-            const crect = win.frame();
-            if (lib.is_move_op(op!)) {
-                const cmon = win.monitor_id();
-                const prev_mon = ext.monitors.get(win.entity);
-                const mon_drop = prev_mon ? prev_mon[0] !== cmon : false;
-
-                ext.monitors.insert(win.entity, [win.monitor_id(), win.workspace_id()]);
-
-                if (start.x != crect.x || start.y != crect.y) {
-                    const at_start = Mtk.Rectangle.new(start.x, start.y, start.width, start.height);
-                    if (at_start.contains_rect(lib.cursor_rect())) {
-                        if (ext.gnome_forest.attached.contains(win.entity)) {
-                            ext.gnome_forest.on_drop(win, mon_drop);
-                        } else {
-                            ext.gnome_forest.reflow(win.entity);
-                        }
-                    } else {
-                        ext.gnome_forest.on_drop(win, mon_drop);
-                    }
-                }
-            } else {
-                const movement = calculate(start, crect);
-
-                // A click on a resize edge can begin and end a grab without
-                // changing the window. Do not turn that into a tree resize.
-                if (movement === Movement.NONE) return;
-
-                this.resize(win, movement);
-            }
-        } else if (ext.settings.get_snap_to_grid()) {
-            ext.gnome_tiling_mode.snap(win);
+        switch (outcome.kind) {
+            case 'none':
+                break;
+            case 'not_grabbed':
+                Log.error(`grabbed entity is not the same as the one that was dropped`);
+                break;
+            case 'minimized':
+                ext.on_minimize(win);
+                break;
+            case 'reflow':
+                at?.reflow(win.entity);
+                break;
+            case 'drop':
+                at?.on_drop(win, outcome.other_monitor);
+                break;
+            case 'resize':
+                this.resize(win, outcome.movement);
+                break;
+            case 'snap':
+                ext.gnome_tiling_mode.snap(win);
+                break;
         }
     }
 
