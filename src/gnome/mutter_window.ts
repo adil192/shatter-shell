@@ -1,3 +1,4 @@
+import type { WindowHandle } from '../core/window_handle.js';
 import type { Entity } from '../ecs.js';
 import type { Ext } from '../extension.js';
 
@@ -41,7 +42,7 @@ enum RESTACK_SPEED {
     NORMAL = 200,
 }
 
-export class MutterWindow {
+export class MutterWindow implements WindowHandle {
     entity: Entity;
     meta: Meta.Window;
     ext: Ext;

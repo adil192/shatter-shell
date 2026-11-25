@@ -3,6 +3,7 @@ import type GObject from 'gi://GObject';
 
 import GLib from 'gi://GLib';
 import Meta from 'gi://Meta';
+import Mtk from 'gi://Mtk';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
 import type { Grab, Target } from '../core/grab.js';
@@ -12,10 +13,9 @@ import type { Ext } from '../extension.js';
 import type { MutterWindow } from './mutter_window.js';
 
 import * as geom from '../core/geom.js';
-import { Movement, movement_is_valid } from '../core/movement.js';
-import * as Ecs from '../ecs.js';
-import * as GrabOp from '../grab_op.js';
-import { cursor_rect, is_keyboard_op, is_move_op, is_resize_op } from '../lib.js';
+import { GrabKind } from '../core/grab.js';
+import { calculate, Movement, movement_is_valid } from '../core/movement.js';
+import * as lib from '../lib.js';
 import { Log } from '../log.js';
 import * as node from '../node.js';
 import * as stack from '../stack.js';
@@ -24,10 +24,10 @@ const { overview } = Main;
 
 /** Connects GNOME's grabs of windows to the extension */
 export class GnomeGrab {
-    /** Information about a current possible grab operation */
-    grab_op: GrabOp.GrabOp | null = null;
-
     private preview_timer: SignalID | null = null;
+
+    /** The window whose size signals the grab blocked */
+    private blocked: MutterWindow | null = null;
 
     constructor(
         private readonly ext: Ext,
@@ -52,7 +52,7 @@ export class GnomeGrab {
 
         signals.connect_with(overview, () =>
             overview.connect('window-drag-begin', (_, win) => {
-                this.started(win, 1);
+                this.started(win);
             }),
         );
 
@@ -71,17 +71,19 @@ export class GnomeGrab {
 
     cancel() {
         const { ext } = this;
+
         if (this.preview_timer !== null) {
             ext.overlay.visible = false;
             GLib.source_remove(this.preview_timer);
             this.preview_timer = null;
         }
 
-        if (this.grab_op !== null) {
-            const window = ext.windows.get(this.grab_op.entity);
-            if (window) ext.size_signals_unblock(window);
-            this.grab_op = null;
+        if (this.blocked !== null) {
+            ext.size_signals_unblock(this.blocked);
+            this.blocked = null;
         }
+
+        this.grab.cancel();
     }
 
     private ended(meta: Meta.Window, op?: number) {
@@ -114,13 +116,11 @@ export class GnomeGrab {
             return;
         }
 
-        const grab_op = this.grab_op;
-
         if (ext.gnome_forest && op == undefined) {
             const mon = ext.monitors.get(win.entity);
             if (mon) {
                 const rect = win.meta.get_work_area_for_monitor(mon[0]);
-                if (rect.contains_rect(cursor_rect())) {
+                if (rect.contains_rect(lib.cursor_rect())) {
                     ext.gnome_forest.reflow(win.entity);
                 } else {
                     ext.gnome_forest.on_drop(win, true);
@@ -130,23 +130,24 @@ export class GnomeGrab {
             return;
         }
 
-        if (!(grab_op && Ecs.entity_eq(grab_op.entity, win.entity))) {
+        const start = this.grab.start_frame;
+        if (start === null || !this.grab.holds(win)) {
             Log.error(`grabbed entity is not the same as the one that was dropped`);
             return;
         }
 
         if (ext.gnome_forest) {
             const crect = win.frame();
-            const rect = grab_op.rect;
-            if (is_move_op(op!)) {
+            if (lib.is_move_op(op!)) {
                 const cmon = win.monitor_id();
                 const prev_mon = ext.monitors.get(win.entity);
                 const mon_drop = prev_mon ? prev_mon[0] !== cmon : false;
 
                 ext.monitors.insert(win.entity, [win.monitor_id(), win.workspace_id()]);
 
-                if (rect.x != crect.x || rect.y != crect.y) {
-                    if (rect.contains_rect(cursor_rect())) {
+                if (start.x != crect.x || start.y != crect.y) {
+                    const at_start = Mtk.Rectangle.new(start.x, start.y, start.width, start.height);
+                    if (at_start.contains_rect(lib.cursor_rect())) {
                         if (ext.gnome_forest.attached.contains(win.entity)) {
                             ext.gnome_forest.on_drop(win, mon_drop);
                         } else {
@@ -157,7 +158,7 @@ export class GnomeGrab {
                     }
                 }
             } else {
-                const movement = grab_op.operation(crect);
+                const movement = calculate(start, crect);
 
                 // A click on a resize edge can begin and end a grab without
                 // changing the window. Do not turn that into a tree resize.
@@ -209,7 +210,7 @@ export class GnomeGrab {
         }
     }
 
-    private started(meta: Meta.Window | null, op: number) {
+    private started(meta: Meta.Window | null, op?: number) {
         if (!meta) return;
 
         const { ext } = this;
@@ -221,11 +222,12 @@ export class GnomeGrab {
 
         this.cancel();
 
-        this.grab_op = new GrabOp.GrabOp(win.entity, win.frame());
+        const preview = this.grab.start(win, kind_of(op), overview.visible);
 
         ext.size_signals_block(win);
+        this.blocked = win;
 
-        if (overview.visible || is_keyboard_op(op) || is_resize_op(op)) return;
+        if (!preview) return;
 
         const workspace = ext.active_workspace();
         this.preview_timer = GLib.timeout_add(GLib.PRIORITY_LOW, 200, () => this.preview(win, workspace));
@@ -236,7 +238,7 @@ export class GnomeGrab {
         ext.overlay.visible = false;
 
         const at = ext.gnome_forest;
-        if (!at || !this.grab_op || this.grab_op.entity !== win.entity) {
+        if (!at || !this.grab.holds(win)) {
             this.preview_timer = null;
             return GLib.SOURCE_REMOVE;
         }
@@ -292,4 +294,11 @@ export class GnomeGrab {
 
         return GLib.SOURCE_CONTINUE;
     }
+}
+
+/** An overview drag has no grab op. A keyboard resize counts as a resize. */
+function kind_of(op: number | undefined): GrabKind {
+    if (op === undefined) return GrabKind.OverviewDrag;
+    if (lib.is_resize_op(op)) return GrabKind.Resize;
+    return lib.is_keyboard_op(op) ? GrabKind.KeyboardMove : GrabKind.MouseMove;
 }

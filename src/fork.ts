@@ -222,7 +222,7 @@ export class Fork {
     ) {
         let ratio = null;
 
-        const manually_moved = ext.gnome_grab.grab_op !== null || ext.gnome_tiling_mode.resizing_window;
+        const manually_moved = ext.grab.window !== null || ext.gnome_tiling_mode.resizing_window;
 
         if (!this.is_toplevel) {
             if (this.orientation_changed) {

@@ -1,4 +1,13 @@
+import type { WindowHandle } from './window_handle.js';
+
 import { nearest_side, overlay_area, type Rect, Side } from './geom.js';
+
+export enum GrabKind {
+    MouseMove,
+    KeyboardMove,
+    Resize,
+    OverviewDrag,
+}
 
 /** Where the dragged window would go, as the GNOME side found it */
 export interface Target {
@@ -10,8 +19,36 @@ export interface Target {
     in_stack: boolean;
 }
 
-/** Decides where the overlay previews a drop */
+/** Keeps the grabbed window, and decides where the overlay previews a drop */
 export class Grab {
+    /** The window being grabbed, and its frame when the grab started */
+    private session: { window: WindowHandle; rect: Rect } | null = null;
+
+    get window(): WindowHandle | null {
+        return this.session?.window ?? null;
+    }
+
+    holds(window: WindowHandle): boolean {
+        return this.session?.window === window;
+    }
+
+    /** @returns Whether to preview where the window would go */
+    start(window: WindowHandle, kind: GrabKind, in_overview: boolean): boolean {
+        const { x, y, width, height } = window.frame();
+        this.session = { window, rect: { x, y, width, height } };
+
+        return kind === GrabKind.MouseMove && !in_overview;
+    }
+
+    cancel() {
+        this.session = null;
+    }
+
+    /** The window's frame when the grab started */
+    get start_frame(): Rect | null {
+        return this.session?.rect ?? null;
+    }
+
     /** @param empty_area The work area that the window would fill, if the workspace has no tiled window */
     overlay_for(
         pointer: [x: number, y: number],

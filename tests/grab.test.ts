@@ -2,12 +2,46 @@ import assert from 'node:assert/strict';
 import { describe, test } from 'node:test';
 
 import type { Rect } from '../src/core/geom.js';
+import type { WindowHandle } from '../src/core/window_handle.js';
 
-import { Grab, type Target } from '../src/core/grab.js';
+import { Grab, GrabKind, type Target } from '../src/core/grab.js';
+
+/** A window whose frame the test moves */
+class FakeWindow implements WindowHandle {
+    constructor(public rect: Rect) {}
+    frame(): Rect {
+        return { ...this.rect };
+    }
+}
 
 const at = (x: number, y: number, width = 100, height = 100): Rect => ({ x, y, width, height });
 
+/** A window grabbed at (0, 0), and the grab */
+function grabbed(kind = GrabKind.MouseMove) {
+    const window = new FakeWindow(at(0, 0));
+    const grab = new Grab();
+    grab.start(window, kind, false);
+    return { window, grab };
+}
+
 describe('Grab', () => {
+    describe('start', () => {
+        test('previews only a move with the mouse, outside the overview', () => {
+            const window = new FakeWindow(at(0, 0));
+            assert.equal(new Grab().start(window, GrabKind.MouseMove, false), true);
+            assert.equal(new Grab().start(window, GrabKind.MouseMove, true), false);
+            assert.equal(new Grab().start(window, GrabKind.KeyboardMove, false), false);
+            assert.equal(new Grab().start(window, GrabKind.Resize, false), false);
+        });
+
+        test('remembers the grabbed window until it is cancelled', () => {
+            const { window, grab } = grabbed();
+            assert.equal(grab.window, window);
+            grab.cancel();
+            assert.equal(grab.window, null);
+        });
+    });
+
     describe('overlay_for', () => {
         const grab = new Grab();
         const target = (changes: Partial<Target> = {}): Target => ({
