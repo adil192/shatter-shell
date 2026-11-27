@@ -505,38 +505,42 @@ export class ShellWindow {
     }
 
     update_border_layout() {
-        let { x, y, width, height } = this.meta.get_frame_rect();
-
         const border = this.border;
         if (!border) return;
 
+        const frame = this.meta.get_frame_rect();
+
         const borderSize = this.is_max_screen() || this.is_snap_edge() ? 0 : this.border_size;
 
-        let dimensions: [number, number, number, number];
-
         const stack = this.stack ? this.ext.gnome_forest?.forest.stacks.get(this.stack) : null;
+
+        let x: number, y: number, width: number, height: number;
         if (stack) {
             // zero in max screen state
             let stack_tab_height = !borderSize || this.grab ? 0 : stack.tab_height;
 
-            dimensions = [
-                x - borderSize,
-                y - stack_tab_height - borderSize,
-                width + 2 * borderSize,
-                height + stack_tab_height + 2 * borderSize,
-            ];
+            x = frame.x - borderSize;
+            y = frame.y - stack_tab_height - borderSize;
+            width = frame.width + 2 * borderSize;
+            height = frame.height + stack_tab_height + 2 * borderSize;
         } else {
-            dimensions = [x - borderSize, y - borderSize, width + 2 * borderSize, height + 2 * borderSize];
+            x = frame.x - borderSize;
+            y = frame.y - borderSize;
+            width = frame.width + 2 * borderSize;
+            height = frame.height + 2 * borderSize;
         }
 
-        [x, y, width, height] = dimensions;
-
+        // Limit to work area so that the border is always visible
         const workspace = this.meta.get_workspace() as Meta.Workspace | null;
-        if (workspace == null) return;
-
-        const screen = workspace.get_work_area_for_monitor(this.monitor_id());
-        width = Math.min(width, screen.x + screen.width);
-        height = Math.min(height, screen.y + screen.height);
+        if (workspace) {
+            const screen = workspace.get_work_area_for_monitor(this.monitor_id());
+            const right = Math.min(x + width, screen.x + screen.width);
+            const bottom = Math.min(y + height, screen.y + screen.height);
+            x = Math.max(x, screen.x);
+            y = Math.max(y, screen.y);
+            width = right - x;
+            height = bottom - y;
+        }
 
         border.set_position(x, y);
         border.set_size(width, height);
