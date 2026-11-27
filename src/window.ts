@@ -538,8 +538,8 @@ export class ShellWindow {
             const bottom = Math.min(y + height, screen.y + screen.height);
             x = Math.max(x, screen.x);
             y = Math.max(y, screen.y);
-            width = right - x;
-            height = bottom - y;
+            width = Math.max(0, right - x);
+            height = Math.max(0, bottom - y);
         }
 
         border.set_position(x, y);
