@@ -505,50 +505,45 @@ export class ShellWindow {
     }
 
     update_border_layout() {
-        let { x, y, width, height } = this.meta.get_frame_rect();
-
         const border = this.border;
-        if (border) {
-            const borderSize = this.is_max_screen() || this.is_snap_edge() ? 0 : this.border_size;
+        if (!border) return;
 
-            const stack_number = this.stack;
-            let dimensions: [number, number, number, number] | null = null;
+        const frame = this.meta.get_frame_rect();
 
-            if (stack_number !== null) {
-                const stack = this.ext.gnome_forest?.forest.stacks.get(stack_number);
-                if (stack) {
-                    let stack_tab_height = stack.tab_height;
+        const borderSize = this.is_max_screen() || this.is_snap_edge() ? 0 : this.border_size;
 
-                    if (borderSize === 0 || this.grab) {
-                        // not in max screen state
-                        stack_tab_height = 0;
-                    }
+        const stack = this.stack !== null ? this.ext.gnome_forest?.forest.stacks.get(this.stack) : null;
 
-                    dimensions = [
-                        x - borderSize,
-                        y - stack_tab_height - borderSize,
-                        width + 2 * borderSize,
-                        height + stack_tab_height + 2 * borderSize,
-                    ];
-                }
-            } else {
-                dimensions = [x - borderSize, y - borderSize, width + 2 * borderSize, height + 2 * borderSize];
-            }
+        let x: number, y: number, width: number, height: number;
+        if (stack) {
+            // zero in max screen state
+            let stack_tab_height = !borderSize || this.grab ? 0 : stack.tab_height;
 
-            if (dimensions) {
-                [x, y, width, height] = dimensions;
-
-                const workspace = this.meta.get_workspace() as Meta.Workspace | null;
-                if (workspace == null) return;
-
-                const screen = workspace.get_work_area_for_monitor(this.monitor_id());
-                width = Math.min(width, screen.x + screen.width);
-                height = Math.min(height, screen.y + screen.height);
-
-                border.set_position(x, y);
-                border.set_size(width, height);
-            }
+            x = frame.x - borderSize;
+            y = frame.y - stack_tab_height - borderSize;
+            width = frame.width + 2 * borderSize;
+            height = frame.height + stack_tab_height + 2 * borderSize;
+        } else {
+            x = frame.x - borderSize;
+            y = frame.y - borderSize;
+            width = frame.width + 2 * borderSize;
+            height = frame.height + 2 * borderSize;
         }
+
+        // Limit to work area so that the border is always visible
+        const workspace = this.meta.get_workspace() as Meta.Workspace | null;
+        if (workspace) {
+            const screen = workspace.get_work_area_for_monitor(this.monitor_id());
+            const right = Math.min(x + width, screen.x + screen.width);
+            const bottom = Math.min(y + height, screen.y + screen.height);
+            x = Math.max(x, screen.x);
+            y = Math.max(y, screen.y);
+            width = Math.max(0, right - x);
+            height = Math.max(0, bottom - y);
+        }
+
+        border.set_position(x, y);
+        border.set_size(width, height);
     }
 
     update_border_style() {
