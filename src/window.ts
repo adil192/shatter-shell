@@ -512,7 +512,7 @@ export class ShellWindow {
 
         const borderSize = this.is_max_screen() || this.is_snap_edge() ? 0 : this.border_size;
 
-        const stack = this.stack ? this.ext.gnome_forest?.forest.stacks.get(this.stack) : null;
+        const stack = this.stack !== null ? this.ext.gnome_forest?.forest.stacks.get(this.stack) : null;
 
         let x: number, y: number, width: number, height: number;
         if (stack) {
