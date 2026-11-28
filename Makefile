@@ -15,12 +15,32 @@ INSTALLNAME = $(UUID)
 
 SOURCES = src/*.ts src/*/*.ts *.scss icons/*.svg schemas/*.gschema.xml metadata.json README.md
 
-.PHONY: all clean compile debug listen install local-install uninstall zip-file lint fmt fmt-check test
+.PHONY: help clean compile debug listen install local-install uninstall zip-file lint fmt fmt-check test
 
 # We no longer call `glib-compile-schemas`. This flag now controls whether the .gschemas.xml file is included in _build.
 COMPILE_SCHEMAS = true
 
-all: compile
+define HELP
+Run `make local-install` to get started or make another target...
+
+make targets:
+  compile          Compiles everything into _build.
+  zip-file         Compiles and produces an installable zip.
+  local-install    Compiles and installs with gnome-extensions.
+  install          Basic install without compiling schemas:
+                   you probably want `local-install` if you're not a packager.
+  uninstall        Uninstalls the extension.
+  clean            Deletes build artifacts.
+  debug            Starts a nested GNOME session for testing your changes.
+  test             Runs unit tests.
+  lint             Analyzes code with oxlint.
+  fmt              Formats code with oxfmt.
+  fmt-check        Checks code formatting with oxfmt.
+  help             Prints this help message.
+endef
+export HELP
+help:
+	@echo "$$HELP"
 
 clean:
 	rm -rf _build schemas/gschemas.compiled target tsconfig.tsbuildinfo $(UUID)_*.zip

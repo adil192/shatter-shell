@@ -78,7 +78,9 @@ To get the latest bleeding edge changes, build Shatter Shell from source:
     make local-install
     ```
 
-**Note**: Make sure to use `make local-install` NOT `make install`. The latter is intended for package maintainers and bypasses the GNOME extension installation process.
+    **Note**: Make sure to use `make local-install` NOT `make install`.
+    The latter is intended for package maintainers and bypasses the GNOME extension installation process.
+    Run `make help` to see an outline of all targets.
 </details>
 <br>
 
